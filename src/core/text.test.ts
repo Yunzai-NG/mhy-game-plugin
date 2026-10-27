@@ -99,6 +99,11 @@ describe("failText", () => {
     expect(failText(fail({ kind: "cookie" }))).toBe("ck已失效，请「#刷新ck」，无效则重新「#扫码登录」")
   })
 
+  it("没有可用 CK 是插件自己判的，不带接口名 —— 那句话已说清该做什么，后缀只是噪音", () => {
+    const text = failText(fail({ kind: "nock", retcode: 0, api: "dailyNote", message: "该 uid 未绑定你本人的 ck" }))
+    expect(text).toBe("该 uid 未绑定你本人的 ck")
+  })
+
   it("接口一句话都没给时仍有一句可读的话", () => {
     expect(failText(fail({ message: "", retcode: 0, api: "" }))).toBe("查询失败，请稍后重试")
   })

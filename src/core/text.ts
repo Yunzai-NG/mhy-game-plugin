@@ -44,6 +44,8 @@ export function failText(fail: QueryFail): string {
   const fixed = FAIL_TEXT[fail.kind]
   if (fixed) return fixed
   const raw = fail.message || "查询失败，请稍后重试"
+  // 没有可用 CK 是插件自己判的、一个请求都没发：那句话已说清该做什么，接口名对使用者只是噪音
+  if (fail.kind === "nock") return raw
   const mark = [fail.api, fail.retcode ? `retcode ${fail.retcode}` : ""].filter(one => !!one).join(" ")
   return mark ? `${raw}（${mark}）` : raw
 }
