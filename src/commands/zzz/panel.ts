@@ -221,6 +221,12 @@ export async function zzzRefreshPanel(s: Session, deps: MhyDeps, force?: "enka" 
     await s.text("面板功能未启用")
     return
   }
+  // 先判元数据再取数（理由见 commands/panel.ts 的 refreshPanel）：绝区零那一路没元数据时映射出零位代理人，
+  // 回的是「请把角色放进展柜」，与真正的原因对不上，还占掉冷却
+  if (!deps.meta?.loader.ready("zzz")) {
+    await s.text("面板计算需要元数据（代理人、音擎与驱动盘的数据都在里面），请先让主人发送 #更新元数据")
+    return
+  }
 
   const uid = await targetUid(s, deps)
   if (!uid) {

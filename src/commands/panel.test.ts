@@ -226,10 +226,17 @@ describe("noSuchCharText", () => {
 
 describe("#更新面板 缺省源：绑 CK 走米游社，否则回落面板服务", () => {
   /** 造依赖：byMys 是配置开关，hasCk 是该 uid 有没有绑 Cookie；记下走了哪条路的接口 */
-  const mk = (opts: { byMys: boolean; hasCk: boolean }) => {
+  const mk = (opts: { byMys: boolean; hasCk: boolean; meta?: boolean }) => {
     const calls: string[] = []
-    const s = { game: "gs", user: "u1", rest: "100000001", text: async () => undefined } as unknown as Session
+    const texts: string[] = []
+    const s = {
+      game: "gs",
+      user: "u1",
+      rest: "100000001",
+      text: async (t: string) => void texts.push(t)
+    } as unknown as Session
     const deps = {
+      panelBuilder: { ready: () => opts.meta ?? true },
       config: () => ({ panelUpdateByMys: opts.byMys }),
       users: { uid: async () => "100000001" },
       cookies: { find: async () => (opts.hasCk ? { ltuid: "1" } : undefined) },
@@ -240,7 +247,10 @@ describe("#更新面板 缺省源：绑 CK 走米游社，否则回落面板服�
         }
       },
       panel: {
-        cooldown: async () => 0,
+        cooldown: async () => {
+          calls.push("serv:cooldown")
+          return 0
+        },
         fetch: async () => {
           calls.push("serv:fetch")
           return { result: { ok: false, kind: "error" }, serv: { name: "面板服务" } }
@@ -248,8 +258,17 @@ describe("#更新面板 缺省源：绑 CK 走米游社，否则回落面板服�
       },
       panels: { of: () => ({}) }
     } as unknown as MhyDeps
-    return { s, deps, calls }
+    return { s, deps, calls, texts }
   }
+
+  it("没装元数据时一个请求都不发、不碰冷却 —— 取了也只落一份没有武器名的残缺库，装完立刻更新还被冷却挡住", async () => {
+    for (const byMys of [true, false]) {
+      const { s, deps, calls, texts } = mk({ byMys, hasCk: true, meta: false })
+      await refreshPanelEntry(s, deps)
+      expect(calls).toEqual([])
+      expect(texts.join("")).toContain("#更新元数据")
+    }
+  })
 
   it("缺省开启且该 uid 绑了 CK：走米游社", async () => {
     const { s, deps, calls } = mk({ byMys: true, hasCk: true })

@@ -344,6 +344,10 @@ export async function refreshPanel(s: Session, deps: MhyDeps): Promise<void> {
     return
   }
 
+  // 先判元数据再取数：天赋映射、元素与武器名都是取数当时查元数据得来的，没装就取等于落一份残缺的库、
+  // 还白白占掉冷却 —— 装完元数据立刻再更新会被「请 N 秒后再试」挡住，看面板则读到那份残缺的
+  if (!(await needMeta(s, deps, game))) return
+
   const uid = await targetUid(s, deps, game)
   if (!uid) {
     await askUid(s)
@@ -394,6 +398,9 @@ export async function mysRefreshPanel(s: Session, deps: MhyDeps): Promise<void> 
     await s.text("面板功能未启用")
     return
   }
+
+  // 同 refreshPanel：没装元数据先不打米游社
+  if (!(await needMeta(s, deps, game))) return
 
   // 消息里写了 uid 就查那一个（refreshPanelEntry 也按它判有没有本人的 CK），否则查当前绑定的
   const want = uidInText(s.rest)

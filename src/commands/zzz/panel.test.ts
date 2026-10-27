@@ -248,6 +248,16 @@ describe("取数的请求次数", () => {
     expect(sent.images.at(-1)?.data["msg"]).toContain("本次取到 3 位代理人")
   })
 
+  it("没装元数据时一个请求都不发、不落库 —— 否则回的是「请把角色放进展柜」，还白占冷却", async () => {
+    for (const serv of ["enkaZZZ", "mysPanelZZZ"]) {
+      const { s, deps, sent } = make({ serv, metaReady: false, hasCk: true, roster: [[1431, "叶瞬光", 60]] })
+      await zzzRefreshPanel(s, deps)
+      expect(sent.calls).toHaveLength(0)
+      expect(sent.merged).toHaveLength(0)
+      expect(sent.texts.join("")).toContain("#更新元数据")
+    }
+  })
+
   it("配置选 Enka 时走展柜、一个米游社请求都不打", async () => {
     const { s, deps, sent } = make({ serv: "enkaZZZ", roster: [[1431, "叶瞬光", 60]] })
     await zzzRefreshPanel(s, deps)
