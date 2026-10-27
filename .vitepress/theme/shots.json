@@ -1,0 +1,782 @@
+{
+ "account/qr": [
+  1280,
+  1298
+ ],
+ "account/uid": [
+  1280,
+  1500
+ ],
+ "daily/abyss": [
+  1280,
+  3181
+ ],
+ "daily/abyss-floor": [
+  1280,
+  1750
+ ],
+ "daily/abyss-sr": [
+  768,
+  3064
+ ],
+ "daily/achieve-sr": [
+  1280,
+  1053
+ ],
+ "daily/actcal": [
+  1280,
+  2313
+ ],
+ "daily/actcal-sr": [
+  1280,
+  2250
+ ],
+ "daily/actcal-zzz": [
+  1280,
+  1678
+ ],
+ "daily/avatars": [
+  1280,
+  2599
+ ],
+ "daily/avatars-sr": [
+  1280,
+  1136
+ ],
+ "daily/avatars-zzz": [
+  1280,
+  1107
+ ],
+ "daily/blueprint": [
+  1280,
+  1036
+ ],
+ "daily/boss-sr": [
+  768,
+  4900
+ ],
+ "daily/buddy-zzz": [
+  1280,
+  708
+ ],
+ "daily/calc": [
+  1280,
+  1713
+ ],
+ "daily/calc-sr": [
+  1280,
+  1768
+ ],
+ "daily/calc-zzz": [
+  1280,
+  1847
+ ],
+ "daily/chest-sr": [
+  1280,
+  2323
+ ],
+ "daily/combat": [
+  1280,
+  12095
+ ],
+ "daily/deadly-zzz": [
+  768,
+  2070
+ ],
+ "daily/defense-zzz": [
+  768,
+  3071
+ ],
+ "daily/explore": [
+  1280,
+  11927
+ ],
+ "daily/explore-zzz": [
+  1280,
+  1461
+ ],
+ "daily/garden-zzz": [
+  768,
+  1436
+ ],
+ "daily/gcg": [
+  1280,
+  992
+ ],
+ "daily/gcg-card": [
+  1280,
+  1152
+ ],
+ "daily/gcg-one": [
+  1280,
+  953
+ ],
+ "daily/grid-sr": [
+  1280,
+  1906
+ ],
+ "daily/grid-sr-2": [
+  1280,
+  1906
+ ],
+ "daily/hard": [
+  1280,
+  1996
+ ],
+ "daily/holo-zzz": [
+  768,
+  1975
+ ],
+ "daily/info": [
+  1280,
+  2775
+ ],
+ "daily/info-sr": [
+  1280,
+  908
+ ],
+ "daily/info-zzz": [
+  1280,
+  1070
+ ],
+ "daily/ledger": [
+  1040,
+  1210
+ ],
+ "daily/ledger-sr": [
+  1040,
+  1189
+ ],
+ "daily/ledger-zzz": [
+  1040,
+  1023
+ ],
+ "daily/lost-zzz": [
+  1280,
+  1405
+ ],
+ "daily/magic-empty-sr": [
+  892,
+  663
+ ],
+ "daily/magic-sr": [
+  892,
+  1615
+ ],
+ "daily/master": [
+  1280,
+  922
+ ],
+ "daily/note-gs": [
+  1280,
+  1671
+ ],
+ "daily/note-sr": [
+  1280,
+  1065
+ ],
+ "daily/note-zzz": [
+  1280,
+  1626
+ ],
+ "daily/pct": [
+  1280,
+  1770
+ ],
+ "daily/pct-hard": [
+  1280,
+  1770
+ ],
+ "daily/peak-sr": [
+  768,
+  2342
+ ],
+ "daily/rogue-sr": [
+  892,
+  1842
+ ],
+ "daily/story-sr": [
+  768,
+  4910
+ ],
+ "daily/tarot": [
+  1280,
+  1143
+ ],
+ "daily/tower-zzz": [
+  768,
+  1444
+ ],
+ "daily/void-zzz": [
+  768,
+  2865
+ ],
+ "daily/weapon": [
+  1280,
+  1209
+ ],
+ "daily/weapon-sr": [
+  1280,
+  829
+ ],
+ "daily/weapon-zzz": [
+  1280,
+  1055
+ ],
+ "daily/zenkov-detail-zzz": [
+  1280,
+  1341
+ ],
+ "daily/zenkov-zzz": [
+  1280,
+  872
+ ],
+ "deploy/admin": [
+  1280,
+  1272
+ ],
+ "gacha/banner-all": [
+  1280,
+  3907
+ ],
+ "gacha/banner-all-4": [
+  1280,
+  3347
+ ],
+ "gacha/banner-all-sr": [
+  1280,
+  3696
+ ],
+ "gacha/banner-all-weapon": [
+  1280,
+  4019
+ ],
+ "gacha/banner-all-zzz": [
+  1280,
+  2669
+ ],
+ "gacha/banner-one": [
+  1280,
+  3327
+ ],
+ "gacha/record": [
+  1280,
+  1799
+ ],
+ "gacha/record-sr": [
+  1280,
+  1685
+ ],
+ "gacha/record-zzz": [
+  1280,
+  1556
+ ],
+ "gacha/stat": [
+  1280,
+  3583
+ ],
+ "gacha/stat-sr": [
+  1280,
+  2939
+ ],
+ "gacha/stat-zzz": [
+  1280,
+  2988
+ ],
+ "gacha/weapon": [
+  1280,
+  950
+ ],
+ "gacha/weapon-sr": [
+  1280,
+  1075
+ ],
+ "gacha/weapon-zzz": [
+  1280,
+  946
+ ],
+ "more/abyss-sr": [
+  1280,
+  3017
+ ],
+ "more/achieve-sr": [
+  1280,
+  1038
+ ],
+ "more/admin": [
+  1280,
+  1377
+ ],
+ "more/artis-sr": [
+  1200,
+  3930
+ ],
+ "more/artis-zzz": [
+  1200,
+  3276
+ ],
+ "more/avatars-sr": [
+  1280,
+  856
+ ],
+ "more/avatars-zzz": [
+  1280,
+  1102
+ ],
+ "more/bangboo": [
+  1280,
+  635
+ ],
+ "more/banner-all": [
+  1280,
+  4509
+ ],
+ "more/blueprint": [
+  1280,
+  1033
+ ],
+ "more/boss-sr": [
+  1280,
+  3864
+ ],
+ "more/buddy-zzz": [
+  1280,
+  703
+ ],
+ "more/calc": [
+  1280,
+  1710
+ ],
+ "more/calc-sr": [
+  1280,
+  1754
+ ],
+ "more/calendar": [
+  1280,
+  2960
+ ],
+ "more/calendar-sr": [
+  1280,
+  858
+ ],
+ "more/card-sr": [
+  1280,
+  627
+ ],
+ "more/change-sr": [
+  1200,
+  3136
+ ],
+ "more/chest-sr": [
+  1280,
+  2453
+ ],
+ "more/combat": [
+  1280,
+  9125
+ ],
+ "more/cons": [
+  1280,
+  1991
+ ],
+ "more/cons-sr": [
+  1280,
+  1929
+ ],
+ "more/cons-zzz": [
+  1280,
+  2390
+ ],
+ "more/deadly-zzz": [
+  1280,
+  1566
+ ],
+ "more/defense-zzz": [
+  1280,
+  2617
+ ],
+ "more/dmg-sr": [
+  1200,
+  3460
+ ],
+ "more/dmg-zzz": [
+  1200,
+  2734
+ ],
+ "more/explore": [
+  1280,
+  2679
+ ],
+ "more/explore-zzz": [
+  1280,
+  1596
+ ],
+ "more/garden-zzz": [
+  1280,
+  1212
+ ],
+ "more/gcg": [
+  1280,
+  989
+ ],
+ "more/gcg-card": [
+  1280,
+  1149
+ ],
+ "more/grid-sr": [
+  1280,
+  2033
+ ],
+ "more/guide-bind": [
+  1280,
+  1702
+ ],
+ "more/guide-gacha": [
+  1280,
+  1611
+ ],
+ "more/guide-panel": [
+  1280,
+  1961
+ ],
+ "more/guide-rank": [
+  1280,
+  1541
+ ],
+ "more/hard": [
+  1280,
+  1346
+ ],
+ "more/holo-zzz": [
+  1280,
+  1669
+ ],
+ "more/lost-zzz": [
+  1280,
+  1225
+ ],
+ "more/magic-sr": [
+  1280,
+  1236
+ ],
+ "more/master": [
+  1280,
+  915
+ ],
+ "more/material-sr": [
+  1280,
+  1051
+ ],
+ "more/pct": [
+  1280,
+  1767
+ ],
+ "more/pct-hard": [
+  1280,
+  1767
+ ],
+ "more/peak-sr": [
+  1280,
+  2194
+ ],
+ "more/rogue-sr": [
+  1280,
+  1516
+ ],
+ "more/set-sr": [
+  1280,
+  1074
+ ],
+ "more/set-zzz": [
+  1280,
+  1044
+ ],
+ "more/stat-sr": [
+  1280,
+  1093
+ ],
+ "more/stat-zzz": [
+  1280,
+  1389
+ ],
+ "more/story-sr": [
+  1280,
+  3874
+ ],
+ "more/talent-zzz": [
+  1280,
+  8720
+ ],
+ "more/tarot": [
+  1280,
+  1213
+ ],
+ "more/tower-zzz": [
+  1280,
+  1353
+ ],
+ "more/void-zzz": [
+  1280,
+  2665
+ ],
+ "more/weapon": [
+  1280,
+  1206
+ ],
+ "more/weapon-sr": [
+  1280,
+  815
+ ],
+ "more/wiki-sr": [
+  1280,
+  1282
+ ],
+ "more/wiki-zzz": [
+  1280,
+  1380
+ ],
+ "more/zenkov-detail-zzz": [
+  1280,
+  1336
+ ],
+ "more/zenkov-zzz": [
+  1280,
+  867
+ ],
+ "panel/artis": [
+  1200,
+  3415
+ ],
+ "panel/artis-all": [
+  1200,
+  4429
+ ],
+ "panel/artis-all-sr": [
+  1200,
+  4440
+ ],
+ "panel/artis-all-zzz": [
+  1200,
+  4452
+ ],
+ "panel/artis-sr": [
+  1200,
+  3946
+ ],
+ "panel/artis-zzz": [
+  1200,
+  3842
+ ],
+ "panel/card": [
+  1280,
+  648
+ ],
+ "panel/card-sr": [
+  1280,
+  641
+ ],
+ "panel/card-zzz": [
+  1280,
+  643
+ ],
+ "panel/change": [
+  1200,
+  3107
+ ],
+ "panel/change-cons": [
+  1200,
+  3721
+ ],
+ "panel/change-sr": [
+  1200,
+  3242
+ ],
+ "panel/change-zzz": [
+  1200,
+  3374
+ ],
+ "panel/detail": [
+  1200,
+  3015
+ ],
+ "panel/detail-sr": [
+  1200,
+  3084
+ ],
+ "panel/detail-zzz": [
+  1200,
+  3284
+ ],
+ "panel/dmg": [
+  1200,
+  3565
+ ],
+ "panel/dmg-sr": [
+  1200,
+  3476
+ ],
+ "panel/dmg-zzz": [
+  1200,
+  2742
+ ],
+ "panel/list": [
+  1280,
+  939
+ ],
+ "panel/list-sr": [
+  1280,
+  701
+ ],
+ "panel/list-zzz": [
+  1280,
+  934
+ ],
+ "panel/refresh": [
+  1280,
+  1145
+ ],
+ "panel/stat": [
+  1280,
+  1314
+ ],
+ "panel/stat-sr": [
+  1280,
+  1126
+ ],
+ "panel/stat-zzz": [
+  1280,
+  1394
+ ],
+ "rank/dmg": [
+  1280,
+  1309
+ ],
+ "rank/mark": [
+  1280,
+  1309
+ ],
+ "rank/mark-sr": [
+  1280,
+  1161
+ ],
+ "rank/mark-zzz": [
+  1280,
+  1182
+ ],
+ "rank/top": [
+  1200,
+  3015
+ ],
+ "start/guide-bind": [
+  1280,
+  1705
+ ],
+ "start/guide-gacha": [
+  1280,
+  1614
+ ],
+ "start/guide-panel": [
+  1280,
+  1964
+ ],
+ "start/guide-rank": [
+  1280,
+  1544
+ ],
+ "start/help": [
+  1280,
+  4564
+ ],
+ "start/help-master": [
+  1280,
+  5415
+ ],
+ "wiki/bangboo": [
+  1280,
+  640
+ ],
+ "wiki/calendar": [
+  1280,
+  3605
+ ],
+ "wiki/calendar-sr": [
+  1280,
+  1305
+ ],
+ "wiki/calendar-zzz": [
+  1280,
+  776
+ ],
+ "wiki/char": [
+  1280,
+  2198
+ ],
+ "wiki/cons": [
+  1280,
+  1994
+ ],
+ "wiki/cons-sr": [
+  1280,
+  1943
+ ],
+ "wiki/cons-zzz": [
+  1280,
+  2395
+ ],
+ "wiki/material": [
+  1280,
+  1137
+ ],
+ "wiki/material-sr": [
+  1280,
+  1066
+ ],
+ "wiki/set": [
+  1280,
+  1293
+ ],
+ "wiki/set-sr": [
+  1280,
+  1088
+ ],
+ "wiki/set-zzz": [
+  1280,
+  1049
+ ],
+ "wiki/talent": [
+  1280,
+  3635
+ ],
+ "wiki/talent-sr": [
+  1280,
+  2904
+ ],
+ "wiki/talent-zzz": [
+  1280,
+  8725
+ ],
+ "wiki/today": [
+  1280,
+  2573
+ ],
+ "wiki/weapon": [
+  1280,
+  1219
+ ],
+ "wiki/weapon-sr": [
+  1280,
+  1199
+ ],
+ "wiki/weapon-zzz": [
+  1280,
+  1329
+ ],
+ "wiki/wiki-sr": [
+  1280,
+  2260
+ ],
+ "wiki/wiki-zzz": [
+  1280,
+  1560
+ ]
+}

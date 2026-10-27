@@ -1,0 +1,420 @@
+/*
+ * 文档站主题：与 Yunzai NG 主站同一套 —— 南瓜橙（主色）+ 天蓝（辅色）
+ *
+ * 只改 VitePress 的令牌与少数选择器，不替换默认布局 —— 导航、侧栏、搜索的交互照旧。
+ * 深色底是海军蓝；浅色取暖白，正文里的橙压到 #b4521a 一档，白底上才够 4.5:1。
+ * 本站自己的只有文末那一节：三个游戏的标记与命令表。
+ */
+
+:root {
+  --yz-brand-1: #b4521a;
+  --yz-brand-2: #d0661f;
+  --yz-brand-3: #e8792e;
+  --yz-brand-soft: rgb(232 121 46 / 13%);
+  --yz-sky: #1f86c0;
+  --yz-sky-soft: rgb(43 154 214 / 12%);
+  --yz-violet: #6d5bd0;
+  --yz-glow: rgb(232 121 46 / 22%);
+  --yz-grid: rgb(90 40 10 / 7%);
+  --yz-radius: 14px;
+
+  --vp-c-brand-1: var(--yz-brand-1);
+  --vp-c-brand-2: var(--yz-brand-2);
+  --vp-c-brand-3: var(--yz-brand-3);
+  --vp-c-brand-soft: var(--yz-brand-soft);
+
+  --vp-c-bg: #fdfbf8;
+  --vp-c-bg-alt: #f8f3ed;
+  --vp-c-bg-soft: #f4ede4;
+  --vp-c-bg-elv: #ffffff;
+  --vp-c-divider: #ebe2d6;
+  --vp-c-gutter: #efe7dc;
+
+  --vp-c-tip-1: var(--yz-sky);
+  --vp-c-tip-2: #1a74a8;
+  --vp-c-tip-3: #16618d;
+  --vp-c-tip-soft: var(--yz-sky-soft);
+
+  --vp-button-brand-bg: var(--yz-brand-2);
+  --vp-button-brand-hover-bg: var(--yz-brand-1);
+  --vp-button-brand-active-bg: var(--yz-brand-1);
+  --vp-button-brand-text: #fffaf5;
+  --vp-button-brand-hover-text: #fffaf5;
+
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(120deg, #e8792e 10%, #f2a65a 45%, #2b9ad6 95%);
+
+  --vp-font-family-mono: "JetBrains Mono", "Cascadia Code", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --vp-layout-max-width: 1440px;
+}
+
+.dark {
+  --yz-brand-1: #ffb37a;
+  --yz-brand-2: #ff9d55;
+  --yz-brand-3: #e8792e;
+  --yz-brand-soft: rgb(255 157 85 / 12%);
+  --yz-sky: #63c7f2;
+  --yz-sky-soft: rgb(99 199 242 / 12%);
+  --yz-violet: #a594ff;
+  --yz-glow: rgb(255 157 85 / 20%);
+  --yz-grid: rgb(170 200 255 / 6%);
+
+  --vp-c-bg: #0b1220;
+  --vp-c-bg-alt: #080d18;
+  --vp-c-bg-soft: #121b2d;
+  --vp-c-bg-elv: #142036;
+  --vp-c-divider: #1e2a40;
+  --vp-c-gutter: #070b15;
+
+  --vp-c-tip-1: var(--yz-sky);
+  --vp-c-tip-2: #8ad6f6;
+  --vp-c-tip-3: #b0e4fa;
+
+  --vp-button-brand-bg: var(--yz-brand-2);
+  --vp-button-brand-hover-bg: var(--yz-brand-1);
+  --vp-button-brand-active-bg: var(--yz-brand-3);
+  --vp-button-brand-text: #1f0f04;
+  --vp-button-brand-hover-text: #1f0f04;
+}
+
+/* ─────────────── 滚动条：页面、侧栏、目录、代码块与表格统一成细的橙色滑块 ─────────────── */
+
+:root {
+  --yz-sb-thumb: rgb(180 82 26 / 28%);
+  --yz-sb-thumb-hover: rgb(180 82 26 / 55%);
+}
+
+.dark {
+  --yz-sb-thumb: rgb(255 179 122 / 22%);
+  --yz-sb-thumb-hover: rgb(255 179 122 / 50%);
+}
+
+/* Firefox 只认这两项；Chromium 121 起两套都认且以这两项为准，故 webkit 那套放进 @supports 里只给 Safari 与旧版 */
+html,
+.VPSidebar,
+.VPDocAsideOutline,
+.vp-doc div[class*="language-"] pre,
+.vp-doc table,
+.term-body,
+.code-body pre {
+  scrollbar-width: thin;
+  scrollbar-color: var(--yz-sb-thumb) transparent;
+}
+
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background: var(--yz-sb-thumb) padding-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--yz-sb-thumb-hover) padding-box;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}
+
+.VPSidebar:hover,
+.vp-doc div[class*="language-"] pre:hover,
+.vp-doc table:hover,
+.term-body:hover,
+.code-body pre:hover {
+  scrollbar-color: var(--yz-sb-thumb-hover) transparent;
+}
+
+/* ─────────────── 页头：无侧栏的页面（首页滚动后）半透明毛玻璃，下沿一道橙蓝渐变细线 ─────────────── */
+
+@media (min-width: 960px) {
+  .VPNavBar:not(.has-sidebar):not(.home.top) {
+    background-color: color-mix(in srgb, var(--vp-c-bg) 78%, transparent) !important;
+    backdrop-filter: saturate(160%) blur(14px);
+    -webkit-backdrop-filter: saturate(160%) blur(14px);
+  }
+
+  .VPNavBar:not(.home.top) .divider-line {
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--yz-brand-3) 45%, transparent) 30%, color-mix(in srgb, var(--yz-sky) 45%, transparent) 70%, transparent) !important;
+  }
+}
+
+.VPNavBarTitle .title {
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+/* 页头是南瓜图形 + 站名文字，图形比默认的 24px 略大一档 */
+.VPNavBarTitle .logo {
+  height: 30px;
+  width: auto;
+}
+
+/*
+ * 含当前页的分组在首屏就展开
+ *
+ * 各组都声明了 collapsed，服务端渲染出来全是折起的，脚本跑起来才把当前那组打开 ——
+ * 首屏会闪一下。has-active 在服务端就已算好，据它先把这一组撑开。只管脚本接管之前：
+ * Sidebar.vue 挂载后给根元素打上 data-sidebar-ready，此后手动折起当前组才折得起来。
+ */
+:root:not([data-sidebar-ready]) .VPSidebarItem.collapsed.has-active > .items {
+  display: block;
+}
+
+:root:not([data-sidebar-ready]) .VPSidebarItem.collapsed.has-active > .item .caret-icon {
+  transform: rotate(90deg);
+}
+
+/* ─────────────── 侧栏：当前项左侧一道发光竖条 ─────────────── */
+
+.VPSidebar {
+  background: var(--vp-c-bg-alt);
+}
+
+.VPSidebarItem.level-0 > .item > .text {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--vp-c-text-2);
+}
+
+.VPSidebarItem.level-0 > .item > h2.text,
+.VPSidebarItem.level-0 > .item > .text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.VPSidebarItem.level-0 > .item > .text::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: linear-gradient(135deg, var(--yz-brand-2), var(--yz-sky));
+  flex: none;
+}
+
+.VPSidebarItem.is-active > .item .link > .text {
+  font-weight: 700;
+}
+
+.VPSidebarItem.is-active > .item > .indicator {
+  background: linear-gradient(180deg, var(--yz-brand-2), var(--yz-sky));
+  box-shadow: 0 0 10px var(--yz-glow);
+  width: 3px;
+  border-radius: 3px;
+}
+
+/* ─────────────── 正文 ─────────────── */
+
+.vp-doc h1 {
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  background: linear-gradient(110deg, var(--vp-c-text-1) 40%, var(--yz-brand-2) 75%, var(--yz-sky));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.vp-doc h2 {
+  border-top: none;
+  padding-top: 8px;
+  margin-top: 44px;
+  position: relative;
+}
+
+.vp-doc h2::before {
+  content: "";
+  display: block;
+  width: 36px;
+  height: 3px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--yz-brand-2), var(--yz-sky));
+}
+
+.vp-doc a {
+  text-underline-offset: 3px;
+}
+
+.vp-doc table {
+  display: table;
+  width: 100%;
+  border-radius: var(--yz-radius);
+  overflow: hidden;
+  border: 1px solid var(--vp-c-divider);
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.vp-doc tr {
+  border-top: none;
+}
+
+.vp-doc th,
+.vp-doc td {
+  border: none;
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+
+.vp-doc tr:last-child td {
+  border-bottom: none;
+}
+
+.vp-doc th {
+  background: var(--vp-c-bg-soft);
+}
+
+/* 窄屏：表格整体横滑，不挤成竖条 */
+@media (max-width: 640px) {
+  .vp-doc table {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+.vp-doc div[class*="language-"] {
+  border-radius: var(--yz-radius);
+  border: 1px solid var(--vp-c-divider);
+}
+
+.dark .vp-doc div[class*="language-"] {
+  background: #0f1828;
+}
+
+.vp-doc .custom-block {
+  border-radius: var(--yz-radius);
+  border-left-width: 4px;
+}
+
+.vp-doc .custom-block.tip {
+  border-color: var(--yz-sky);
+}
+
+.vp-doc .custom-block.warning {
+  border-left-color: #e0a12b;
+}
+
+.vp-doc .custom-block.danger {
+  border-left-color: #e5484d;
+}
+
+.vp-doc img {
+  border-radius: 10px;
+}
+
+/* 等宽字体里的连字会把 => 画成 ⇒，照抄的人会以为要打那个符号 */
+code,
+pre,
+kbd {
+  font-variant-ligatures: none;
+}
+
+::selection {
+  background: var(--yz-brand-soft);
+}
+
+/* ─────────────── 步骤条：<div class="steps"> 里的每个 h3 是一步 ─────────────── */
+
+.vp-doc .steps {
+  counter-reset: step;
+  margin: 24px 0;
+  padding-left: 22px;
+  border-left: 2px dashed var(--vp-c-divider);
+}
+
+.vp-doc .steps > h3 {
+  counter-increment: step;
+  position: relative;
+  margin-top: 36px;
+}
+
+.vp-doc .steps > h3:first-child {
+  margin-top: 8px;
+}
+
+.vp-doc .steps > h3::before {
+  content: counter(step);
+  position: absolute;
+  left: -40px;
+  top: -2px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--yz-brand-2), var(--yz-sky));
+  color: var(--vp-c-bg);
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: 0 0 0 5px var(--vp-c-bg), 0 0 18px var(--yz-glow);
+}
+
+/* ─────────────── 本站：三个游戏的标记与命令表 ─────────────── */
+
+/* 颜色与帮助图一致：原神金、星铁紫、绝区零绿；浅色底上各压暗一档 */
+:root {
+  --mhy-gs: #b98a00;
+  --mhy-sr: #5b6ad8;
+  --mhy-zzz: #5f8a00;
+}
+
+.dark {
+  --mhy-gs: #ffcf4b;
+  --mhy-sr: #8b9cff;
+  --mhy-zzz: #c5f23b;
+}
+
+/* `<span class="g gs">原神</span>` */
+.vp-doc .g {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 20px;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid currentColor;
+}
+
+.vp-doc .g + .g {
+  margin-left: 4px;
+}
+
+.vp-doc .g.gs {
+  color: var(--mhy-gs);
+}
+
+.vp-doc .g.sr {
+  color: var(--mhy-sr);
+}
+
+.vp-doc .g.zzz {
+  color: var(--mhy-zzz);
+}
+
+/* 命令表第一列的命令不折行 */
+.vp-doc td:first-child code {
+  white-space: nowrap;
+}
+
+/* 尊重「减少动态效果」：全站动画一律停下 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,138 @@
+<script setup lang="ts">
+/**
+ * 替换默认主题的 VPSidebar（config.mts 里经别名换入），只多一处：换页时重建分组
+ *
+ * 默认主题里分组一旦展开就一直开着，翻过几页后侧栏全是展开的组。各组都声明了
+ * `collapsed: true`，重建时它们回到折起，只有含当前页的那一串由默认逻辑再展开，
+ * 于是每次只看得到正在读的那一组。只在路径变化时重建，页内锚点跳转不动；
+ * 重建的是 nav 里的分组而非外层 aside，侧栏自身的滚动位置不丢。
+ *
+ * 其余照抄 VPSidebar（vitepress 1.6.4），升级 vitepress 时对一下原文件。
+ * 原版的滚动锁用 @vueuse/core，pnpm 下本目录解析不到它，故手写。
+ */
+import { inBrowser, useRoute } from "vitepress"
+import { onMounted, onUnmounted, ref, watch } from "vue"
+import { useSidebar } from "vitepress/dist/client/theme-default/composables/sidebar.js"
+// 经别名引入（见 config.mts）：直接写包内路径时，类型检查会顺着它查进默认主题的内部组件，
+// 那里的 .js 模块不带类型声明，报一串与本站无关的错
+import VPSidebarGroup from "@vp-theme/VPSidebarGroup.vue"
+
+const { sidebarGroups, hasSidebar } = useSidebar()
+const route = useRoute()
+
+const props = defineProps<{
+  open: boolean
+}>()
+
+const navEl = ref<HTMLElement | null>(null)
+
+function lock(on: boolean) {
+  if (inBrowser) document.body.style.overflow = on ? "hidden" : ""
+}
+
+watch(
+  [props, navEl],
+  () => {
+    lock(props.open)
+    if (props.open) navEl.value?.focus()
+  },
+  { immediate: true, flush: "post" }
+)
+
+onUnmounted(() => lock(false))
+
+// 交给 style.css：此后分组的展开与折起全由组件状态决定，不再按 has-active 强撑
+onMounted(() => document.documentElement.setAttribute("data-sidebar-ready", ""))
+
+const key = ref(0)
+
+watch(sidebarGroups, () => (key.value += 1), { deep: true })
+watch(
+  () => route.path,
+  () => (key.value += 1)
+)
+</script>
+
+<template>
+  <aside v-if="hasSidebar" ref="navEl" class="VPSidebar" :class="{ open }" @click.stop>
+    <div class="curtain" />
+
+    <nav id="VPSidebarNav" class="nav" aria-labelledby="sidebar-aria-label" tabindex="-1">
+      <span id="sidebar-aria-label" class="visually-hidden">Sidebar Navigation</span>
+
+      <slot name="sidebar-nav-before" />
+      <VPSidebarGroup :key="key" :items="sidebarGroups" />
+      <slot name="sidebar-nav-after" />
+    </nav>
+  </aside>
+</template>
+
+<style scoped>
+.VPSidebar {
+  position: fixed;
+  top: var(--vp-layout-top-height, 0px);
+  bottom: 0;
+  left: 0;
+  z-index: var(--vp-z-index-sidebar);
+  padding: 32px 32px 96px;
+  width: calc(100vw - 64px);
+  max-width: 320px;
+  background-color: var(--vp-sidebar-bg-color);
+  opacity: 0;
+  box-shadow: var(--vp-c-shadow-3);
+  overflow-x: hidden;
+  overflow-y: auto;
+  transform: translateX(-100%);
+  transition: opacity 0.5s, transform 0.25s ease;
+  overscroll-behavior: contain;
+}
+
+.VPSidebar.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+  transition: opacity 0.25s, transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.dark .VPSidebar {
+  box-shadow: var(--vp-shadow-1);
+}
+
+@media (min-width: 960px) {
+  .VPSidebar {
+    padding-top: var(--vp-nav-height);
+    width: var(--vp-sidebar-width);
+    max-width: 100%;
+    background-color: var(--vp-sidebar-bg-color);
+    opacity: 1;
+    visibility: visible;
+    box-shadow: none;
+    transform: translateX(0);
+  }
+}
+
+@media (min-width: 1440px) {
+  .VPSidebar {
+    padding-left: max(32px, calc((100% - (var(--vp-layout-max-width) - 64px)) / 2));
+    width: calc((100% - (var(--vp-layout-max-width) - 64px)) / 2 + var(--vp-sidebar-width) - 32px);
+  }
+}
+
+@media (min-width: 960px) {
+  .curtain {
+    position: sticky;
+    top: -64px;
+    left: 0;
+    z-index: 1;
+    margin-top: calc(var(--vp-nav-height) * -1);
+    margin-right: -32px;
+    margin-left: -32px;
+    height: var(--vp-nav-height);
+    background-color: var(--vp-sidebar-bg-color);
+  }
+}
+
+.nav {
+  outline: 0;
+}
+</style>
