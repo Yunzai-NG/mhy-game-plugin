@@ -277,6 +277,7 @@
     <div class="artis">
       {{ if game === 'gs' }}
       <div class="artis-weapon">
+        {{if weapon && weapon.name}}
         <div class="item weapon">
           <div class="img" style="background-image:url('{{_meta_path}}{{weapon.img}}')"></div>
           <div class="head">
@@ -284,19 +285,21 @@
             <span class="info"><span
               class="affix affix-{{weapon.affix}}">精{{weapon.affix}}</span> Lv.{{weapon.leve || weapon.level}} </span>
             <div class="weapon-attr">
-              <div><span>攻击</span> +{{weapon.attrs.atkBase}}</div>
+              {{if weapon.attrs}}
+              {{if weapon.attrs.atkBase}}<div><span>攻击</span> +{{weapon.attrs.atkBase}}</div>{{/if}}
               {{each weapon.attrs v k}} {{if k!== 'atkBase' }}
               {{ set titleMap = {atkPct:'攻击',mastery:'精通',dmg:'伤害',hpPct:'生命',defPct:'防御',
               cpct:'暴击', cdmg:'爆伤', phy:'物伤', recharge:'充能', heal:'治疗', shield:'护盾'} }}
               <div><span>{{ titleMap[k] }}</span> +{{v}}</div>
               {{/if}} {{/each}}
+              {{/if}}
             </div>
           </div>
           <div class="weapon-desc-cont">
             <div class="weapon-desc">{{@weapon.desc?.desc}}</div>
           </div>
         </div>
-
+        {{/if}}
       </div>
       {{/if}}
 

@@ -386,9 +386,7 @@ export class PanelBuilder {
   #buildWeapon(game: SelfCalcGame, one: StoredAvatar): BuiltWeapon | undefined {
     const w = one.weapon
     if (!w) return undefined
-    // 原神的源给武器名，星铁的源只给光锥 id，故两条路都要留
-    const item = game === "gs" ? this.#opts.meta.byName(game, w.name ?? "") : this.#opts.meta.byId(game, w.id ?? "")
-    const fallback = item ?? (w.name ? this.#opts.meta.byName(game, w.name) : undefined)
+    const fallback = this.#weaponItem(game, w)
     if (!fallback) return undefined
 
     const level = Number(w.level) || 1
@@ -431,6 +429,22 @@ export class PanelBuilder {
   }
 
   /**
+   * 查库里那件武器在元数据里的条目
+   *
+   * 名字与 id 两条路都走：展柜源的武器名是取数当时查元数据得来的，那时元数据还没装好就只存下 id
+   * —— 只认名字的话这件武器永远查不到，面板整块没有武器。
+   * @param game 游戏
+   * @param w 库里存的武器
+   * @returns 元数据条目；两条路都查不到时 undefined
+   */
+  #weaponItem(game: SelfCalcGame, w: NonNullable<StoredAvatar["weapon"]>): MetaItem | undefined {
+    const byName = w.name ? this.#opts.meta.byName(game, w.name) : undefined
+    const byId = w.id !== undefined && w.id !== "" ? this.#opts.meta.byId(game, String(w.id)) : undefined
+    // 原神的源给武器名，星铁的源只给光锥 id：各取各的主路，另一条兜底
+    return game === "gs" ? (byName ?? byId) : (byId ?? byName)
+  }
+
+  /**
    * 取武器的属性元数据
    * @param game 游戏
    * @param one 库里存的角色面板
@@ -439,8 +453,7 @@ export class PanelBuilder {
   #weaponMeta(game: SelfCalcGame, one: StoredAvatar): AttrWeaponMeta | undefined {
     const w = one.weapon
     if (!w) return undefined
-    const key = game === "gs" ? (w.name ?? "") : (w.id ?? w.name ?? "")
-    const item = game === "gs" ? this.#opts.meta.byName(game, String(key)) : this.#opts.meta.byId(game, String(key))
+    const item = this.#weaponItem(game, w)
     if (!item) return undefined
     const detail = this.#opts.meta.detail(game, item.id || item.name)
 

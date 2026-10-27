@@ -634,6 +634,12 @@ const CASES: readonly { name: string; label?: string; data: Record<string, unkno
   },
   { name: "character/profile-detail", data: profileDetailData(one, { mode: "profile" }) },
   {
+    // 库里这件武器查不到元数据时面板没有 weapon：模板读 `weapon.attrs.atkBase` 会抛错、整张图退回文字
+    name: "character/profile-detail",
+    label: "没有武器",
+    data: profileDetailData({ ...one, weapon: undefined } as typeof one, { mode: "profile" })
+  },
+  {
     // 伤害计算开着时是另一份数据：多出伤害表那一整块
     name: "character/profile-detail",
     label: "带伤害表",
