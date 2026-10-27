@@ -1,5 +1,6 @@
 # 文档站：本仓库即插件仓库的 docs 分支，推上去后 VitePress 构建、由 GitHub Pages 发布。
-# 仓库设置里 Pages 的来源要选 GitHub Actions，且 github-pages 环境的可部署分支要放行 docs，否则这里构建成功也发不出去。
+# 仓库设置里 Pages 的来源要选 GitHub Actions，且 github-pages 环境的可部署分支要放行 docs，否则发不出去。
+# 构建与发布分开判：Pages 没开时照样构建（死链、编译错误照样拦），只跳过发布，不让整条流水线红在取 Pages 设置那一步。
 name: Docs
 
 on:
@@ -20,6 +21,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      pages: ${{ steps.pages.outcome }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -33,23 +36,30 @@ jobs:
         with:
           node-version: 20.11.0
 
-      # 站点路径随 Pages 设置走（项目路径或自定义域名），不写死网址
+      # 站点路径随 Pages 设置走（项目路径或自定义域名），不写死网址；Pages 没开时取不到，按项目路径构建
       - id: pages
         uses: actions/configure-pages@v5
+        continue-on-error: true
 
       - name: 构建
         env:
-          DOCS_BASE: ${{ steps.pages.outputs.base_path }}
+          DOCS_BASE: ${{ steps.pages.outputs.base_path || format('/{0}', github.event.repository.name) }}
         run: |
           pnpm install --frozen-lockfile --registry=https://registry.npmjs.org
           pnpm run build
 
-      - uses: actions/upload-pages-artifact@v3
+      - if: steps.pages.outcome == 'success'
+        uses: actions/upload-pages-artifact@v3
         with:
           path: .vitepress/dist
 
+      - name: Pages 未开启，跳过发布
+        if: steps.pages.outcome != 'success'
+        run: echo "::warning::仓库还没开 GitHub Pages（Settings → Pages → Source 选 GitHub Actions），本次只构建、不发布"
+
   deploy:
     needs: build
+    if: needs.build.outputs.pages == 'success'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
