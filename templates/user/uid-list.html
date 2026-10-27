@@ -1,0 +1,83 @@
+<!--
+  模块职责：uid 列表（`#我的uid`）—— 一张图并列三个游戏，每段各穿自己那套皮肤
+  依赖方向：extend skinLayout，include common/skin 下的 head 与 foot
+  生命周期：静态模板
+  注意事项：三处判据。一是外框走中性皮肤、每段 `.pic` 上另加 `skin-gs` 一类，皮肤变量就近覆盖；
+            段上漏掉那个 class 则整段取中性色、不报错。二是记号用段自己的 `mark` 而非 `_hash`，
+            后者按发起命令的游戏算，印在另两段上就成了别家的前缀。三是标记里的「CK」表示可查
+            私有数据、「绑定」只能查公开数据，两者的文案不可互换。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<div class="hub">
+  <div class="hub-h">
+    <h3>我的 UID</h3>
+    <span>原神命令以#开头，星铁加*，绝区零加%</span>
+  </div>
+
+  {{each uids game}}
+  <div class="pic skin-{{game.key}}">
+    <% include(_tpl_path + '/skin/head.html', [{
+      kick: game.key === 'gs' ? 'GENSHIN IMPACT' : (game.key === 'sr' ? 'HONKAI: STAR RAIL' : 'ZENLESS ZONE ZERO'),
+      title: game.name,
+      sub: '使用' + game.mark + 'uid1切换uid'
+    }, {_res_path, _meta_path, _face_path, who}]) %>
+
+    {{if game.uidList && game.uidList.length > 0}}
+    <div class="u-list">
+      {{each game.uidList uid idx}}
+      <!-- 行底名片：绝区零取插件自带的 zzz/other/banner.png，其余按 meta- 前缀挑根；
+           逐行的值只能留在内联 style 里（css 见 base.css 的 `.u-row.u-bn`） -->
+      {{set bn = uid.zzz_banner ? _res_path + 'zzz/other/banner.png' : (uid.banner ? (('' + uid.banner).indexOf('meta-') === 0 ? _meta_path : _res_path) + uid.banner : '')}}
+      <div class="u-row {{game.uid*1 === uid.uid*1 ? 'on' : ''}} {{bn ? 'u-bn' : ''}}"{{if bn}} style="background-image:url('{{bn}}')"{{/if}}>
+        <span class="u-idx">{{idx+1}}</span>
+        <i class="p-face u-face e-none">
+          <img src="{{uid.fromFace ? _face_path : _res_path}}{{uid.face}}" onerror="whenError(this)" alt="">
+        </i>
+        <div class="u-main">
+          <div class="u-id">
+            {{uid.uid}}
+            <small>{{uid.region}}</small>
+            {{if uid.active}}<span class="tag hi"><img class="u-check" src="{{_res_path}}user/imgs/check.webp" alt="">当前</span>{{/if}}
+          </div>
+          {{if uid.name && uid.level}}
+          <div class="u-name">{{uid.name}} Lv.{{uid.level}}</div>
+          {{else if game.key !== 'zzz'}}
+          <div class="u-name none">暂无uid信息，可通过更新面板获取信息</div>
+          {{else}}
+          <div class="u-name none">暂无uid信息</div>
+          {{/if}}
+        </div>
+        <div class="u-flags">
+          {{if uid.type === 'ck'}}
+          <span class="flag ok">CK</span>
+          {{else}}
+          <span class="flag off">绑定</span>
+          {{/if}}
+          {{if uid.device === 'bound'}}
+          <span class="flag ok">真机</span>
+          {{else if uid.device === 'virtual'}}
+          <span class="flag">虚拟设备</span>
+          {{/if}}
+        </div>
+      </div>
+      {{/each}}
+    </div>
+    {{else}}
+    <div class="u-empty">
+      <b>暂无uid</b>
+      <span>请发送CK或通过 {{game.mark}}绑定123456789 来绑定UID</span>
+    </div>
+    {{/if}}
+  </div>
+  {{/each}}
+
+  <div class="hub-tips">
+    <span>私聊发送CK可绑定CK对应uid</span>
+    <span>昵称、等级与头像取自面板数据，如无信息或不准确请重发「{{_hash}}更新面板」</span>
+    <span><b>{{_hash}}切换uid1</b> 切换到指定序号　<b>{{_hash}}删除uid1</b> 删除指定序号</span>
+    <span><b>{{_hash}}我的CK</b> 查看已绑账号　<b>{{_hash}}删除CK</b> 删除当前CK</span>
+  </div>
+</div>
+{{/block}}

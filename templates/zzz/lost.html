@@ -1,0 +1,54 @@
+<!--
+  模块职责：零号空洞·迷失之地（`%迷失之地`）—— 执照等级摘要、收集数据与三档挑战
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / foot
+  生命周期：静态模板
+  注意事项：三处判据。一是收集项的名称由视图按位置补（这一路有七项），模板只印不判。
+            二是接口没给的那一档挑战不出现 —— 印一排「0 次」看着像刚清过档。
+            三是执照等级那张图标是米游社给的绝对地址，一处根都不加（见 `template-img-two-roots`）。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'LOST VOID',
+  title: title,
+  sub: '执照等级 ' + level.cur + ' / ' + level.max,
+  who: {face: level.icon, fromMeta: false, name: nickname || '绳匠', uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<div class="p-stats" style="--n:3">
+  <div class="st hi"><b>{{level.cur}}</b><span>执照等级</span></div>
+  <div class="st"><b>{{duty.cur}} / {{duty.max}}</b><span>悬赏委托</span></div>
+  <div class="st"><b>{{task.cur}} / {{task.max}}</b><span>探索任务</span></div>
+</div>
+
+{{if collects.length}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '收集数据', note: '名称按官方页面的次序对应'}]) %>
+  <!-- 与枯萎苗圃同一种收集格：七项排两行（四 + 三），每项带进度 -->
+  <div class="zg-col" style="--n:4">
+    {{each collects one}}
+    <div class="zg-c {{one.full ? 'full' : ''}}">
+      <b>{{one.cur}}<s>/{{one.max}}</s></b>
+      <div class="bar-t"><i style="width:{{one.max ? one.cur * 100 / one.max : 0}}%"></i></div>
+      <span>{{one.name}}</span>
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/if}}
+
+{{each modes one}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: one.name}]) %>
+  <div class="tw-row">
+    <div class="tw-c"><em>已通关最高难度</em><b>{{one.difficulty || '暂无'}}</b></div>
+    {{if one.heat}}<div class="tw-c"><em>以太活性</em><b>{{one.heat}}</b></div>{{/if}}
+    <div class="tw-c"><em>通关次数</em><b>{{one.count}}</b></div>
+    {{if one.cost}}<div class="tw-c"><em>最短耗时</em><b>{{one.cost}}</b></div>{{/if}}
+  </div>
+</section>
+{{/each}}
+
+<% include(_tpl_path + '/skin/foot.html', [{note: '收集项名称按官方页面的次序对应'}]) %>
+{{/block}}

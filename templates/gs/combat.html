@@ -1,0 +1,169 @@
+<!--
+  模块职责：幻想真境剧诗（`#剧诗`）—— 演出回顾、战斗数据与逐幕的参演、讨伐、祝福
+  依赖方向：extend skinLayout，include common/skin 下的 head / foot 与 common/avatar-card；装饰见 gs.css 的剧诗一族
+  生命周期：静态模板
+  注意事项：三处判据。一是三个根不可混用：角色头像在元数据里要 `_meta_path`，敌人、祝福、诗筹
+            的 `icon` 是米游社给的绝对地址、一处根都不加（见 `template-img-two-roots`）。
+            二是星章串按视图给的 `stat.medals` 逐枚画，接口那份是逐幕的 0/1 而非幕号。
+            三是参演卡按 `avatar.id` 到 `avatars` 取：试用 / 助演那几位的卡由视图造、只带头像与标，不取面板库。
+            卡宽按人数取（`cardTypes`）；名单按卡宽、讨伐列表吃剩下的，均分两半时排不下一宽两小。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+{{set cardTypes = {1: ['wide wide2'], 2: ['wide', 'wide'], 3: ['wide', 'mini', 'mini'], 4: ['mini', 'mini', 'mini', 'mini']} }}
+{{set her = stat.heraldry == 3 || stat.heraldry == 4 ? stat.heraldry : 0}}
+<i class="cb-deco top"></i>
+<i class="cb-deco bottom"></i>
+<div class="cb">
+
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'IMAGINARIUM THEATER',
+  title: '幻想真境剧诗',
+  sub: (stat.difficultyName ? stat.difficultyName + '模式　' : '') + stat.start_time,
+  who: {
+    face: role.game_head_icon || role.AvatarUrl,
+    fromMeta: false,
+    name: role.nickname,
+    uid: uid,
+    level: role.level ? 'Lv.' + role.level : ''
+  }
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<!-- 演出回顾：panel-bg 那张整图做底，标题落在上沿深色带、六行落在浅色区 -->
+<section class="cb-review">
+  <h4>演出回顾</h4>
+  <dl>
+    <dt>最佳记录</dt>
+    <dd><i class="cb-her h{{her}}"></i>第{{stat.max_round_id}}幕{{if stat.tarot_finished_cnt}}　圣牌 {{stat.tarot_finished_cnt}}{{/if}}</dd>
+    <dt>明星挑战星章</dt>
+    <dd>
+      {{if stat.medals.length}}
+      <span class="cb-medals">{{each stat.medals m}}<i class="cb-medal {{m.on ? 'on' : ''}}"></i>{{if m.gap}}<s></s>{{/if}}{{/each}}</span>
+      {{else}}-{{/if}}
+    </dd>
+    <dt>消耗「幻剧之花」</dt>
+    <dd><i class="cb-flower"></i>{{stat.coin_num}}</dd>
+    <dt>触发场外观众声援</dt>
+    <dd>{{stat.avatar_bonus_num}} 次</dd>
+    <dt>助演角色支援其他玩家</dt>
+    <dd>{{stat.rent_cnt}} 次</dd>
+  </dl>
+</section>
+
+<!-- 模式一行：模式名 + 徽记 + 最佳幕数，下面一行演出总时长 -->
+<div class="cb-mode">
+  <p><b>{{stat.difficultyName ? stat.difficultyName + '模式' : '演出记录'}}</b><i class="cb-her h{{her}}"></i><span>第 {{stat.max_round_id}} 幕</span></p>
+  {{if stat.use_time}}<small>演出总时长：{{stat.use_time}}</small>{{/if}}
+</div>
+
+{{if fight.cells.length || fight.shortest.length}}
+<!-- 战斗数据：一张暗底面板，逐行「圆头像 + 名目 + 数值」，末行最快队伍 -->
+<section class="cb-stat">
+  {{each fight.cells c}}
+  <p>
+    {{set cf = '' + (c.face || '')}}{{if cf}}<i class="cb-av" style="background-image:url('{{cf.indexOf('meta-') === 0 ? _meta_path : ''}}{{cf}}')"></i>{{else}}<i class="cb-flower big"></i>{{/if}}
+    <span>{{c.title}}：</span><b>{{c.value}}</b>
+  </p>
+  {{/each}}
+  {{if fight.shortest.length}}
+  <p>
+    <span>最快完成演出队伍：</span>
+    <em>{{each fight.shortest a}}{{set af = '' + (a.face || '')}}<i class="cb-av" style="background-image:url('{{af.indexOf('meta-') === 0 ? _meta_path : ''}}{{af}}')"></i>{{/each}}</em>
+  </p>
+  {{/if}}
+</section>
+{{/if}}
+
+{{if detail.rounds_data.length}}
+<!-- 逐幕包在一块暗底里，每幕一张羊皮卡：幕名与时刻、参演（右侧讨伐）、演出详情三块 -->
+<section class="cb-rounds">
+  <h4>参演名单</h4>
+  {{each detail.rounds_data round}}
+  <div class="cb-card">
+    <div class="cb-h">
+      <i class="cb-medal {{round.is_get_medal ? 'on' : ''}}"></i>
+      <b>{{round.title}}</b>
+      <span>{{round.finish}}</span>
+    </div>
+    <div class="cb-duo">
+      {{if round.avatars.length}}
+      <div class="mcs">
+        {{each round.avatars avatar idx}}
+        <% include(_tpl_path + '/avatar-card.html', [avatars[avatar.id], {
+          _res_path, _meta_path,
+          cardType: (cardTypes[round.avatars.length] ? cardTypes[round.avatars.length][idx] : 'mini')
+        }]) %>
+        {{/each}}
+      </div>
+      {{else}}<em class="cb-none">无记录</em>{{/if}}
+      {{if round.enemies.length}}
+      <div class="cb-foes">
+        <small>讨伐列表</small>
+        {{each round.enemies e}}
+        <div class="cb-foe">
+          <img src="{{e.icon}}" onerror="whenError(this)" alt="">
+          <b>{{e.name}}</b>
+          {{if e.level}}<span>Lv.{{e.level}}</span>{{/if}}
+        </div>
+        {{/each}}
+      </div>
+      {{/if}}
+    </div>
+    {{if round.splendour > 0 || round.buffs.length || round.choice_cards.length}}
+    <h5 class="cb-dt">演出详情</h5>
+    {{if round.splendour > 0}}
+    {{set g = round.splendourGain}}
+    <div class="cb-bf">
+      <p class="cb-bf-t">辉彩祝福</p>
+      <div class="cb-bf-b">
+        <p class="cb-gain">祝福等级 <b>{{round.splendour}}</b>：演出挑战中，角色生命值上限提升 <b>{{g.hp}}</b> 点，攻击力提升 <b>{{g.atk}}</b> 点，防御力提升 <b>{{g.def}}</b> 点，元素精通提升 <b>{{g.em}}</b> 点。<b>特邀角色</b>获得的祝福等级效果提升 <b>100%</b>。</p>
+        <div class="cb-lvs">
+          {{each round.splendourBuffs b}}
+          <div class="{{b.level < 1 ? 'off' : ''}}"><img src="{{b.icon}}" onerror="whenError(this)" alt=""><span>Lv.{{b.level}}</span></div>
+          {{/each}}
+        </div>
+      </div>
+    </div>
+    {{/if}}
+    {{if round.buffs.length || round.choice_cards.length}}
+    <!-- 助益与收获通常各只几枚，并排两格 -->
+    <div class="cb-bf2">
+    {{if round.buffs.length}}
+    <div class="cb-bf">
+      <p class="cb-bf-t">奇妙助益 × {{round.buffs.length}}</p>
+      <div class="cb-bf-b cb-ics">
+        {{each round.buffs b}}
+        <div class="cb-ic"><i><img src="{{b.icon}}" onerror="whenError(this)" alt=""></i><span>{{b.name}}</span></div>
+        {{/each}}
+      </div>
+    </div>
+    {{/if}}
+    {{if round.choice_cards.length}}
+    <div class="cb-bf">
+      <p class="cb-bf-t">神秘收获 × {{round.choice_cards.length}}</p>
+      <div class="cb-bf-b cb-ics">
+        {{each round.choice_cards c}}
+        <div class="cb-ic"><i><img src="{{c.icon}}" onerror="whenError(this)" alt=""></i><span>{{c.name}}</span></div>
+        {{/each}}
+      </div>
+    </div>
+    {{/if}}
+    </div>
+    {{/if}}
+    {{/if}}
+  </div>
+  {{/each}}
+</section>
+{{/if}}
+
+<% include(_tpl_path + '/skin/foot.html', [{
+  tips: [
+    '逐幕按挑战时间排列，圣牌挑战只列已通过的',
+    '明星挑战星章不只是展示，也影响挑战奖励的领取',
+    '角色装备与圣遗物为当前最新状态，不是当时上场的配装'
+  ],
+  note: '数据来自米游社战绩'
+}]) %>
+</div>
+{{/block}}

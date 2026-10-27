@@ -1,0 +1,117 @@
+<!--
+  模块职责：异相仲裁（`*异相仲裁`）—— 奖牌总览、王棋一关与骑士若干关
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head，以及 common/sr-stat-avatar.html
+  生命周期：静态模板
+  注意事项：一是三个根不混用：奖牌与星星在插件资源（`_res_path`），角色卡由 `sr-stat-avatar` 按 `_meta_path`
+            取，首领、关卡与裁决象限图标是米游社绝对地址、不加根（见 `template-img-two-roots`）。
+            二是奖牌编号不按高低（1 铜、2 金、3 银、4 Ultra），是官方文件名的次序、逐张核过；第 0 档只画外框。
+            三是骑士关以 `mobs` 遍历，未打的照样列出并印「未通关」，否则看着像接口丢了数据。
+            四是星格有几颗画几颗：`starList` / `failList` 的长度即颗数（art-template 没有重复 N 次的原语）。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+{{set peak = _res_path + 'sr/challenge/peak/' }}
+<!-- 一队几人就配几种卡（同 gs/abyss）：四人四张小卡、三人一宽两小、两人两宽、一人一张双宽，总宽恒等 -->
+{{set cardTypes = {1: ['wide wide2'], 2: ['wide', 'wide'], 3: ['wide', 'mini', 'mini'], 4: ['mini', 'mini', 'mini', 'mini']} }}
+
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'DIVERGENT ARBITRATION',
+  title: '异相仲裁战绩',
+  sub: '统计周期：' + (gameVersion ? gameVersion + '版本更新后 ~ ' : '') + endText,
+  who: {name: nickname || '开拓者', uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<div class="pk">
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: season || '本期战绩'}]) %>
+  <div class="medal-blk pk-ov">
+    <div class="medal">
+      <img src="{{peak}}icon_type_{{iconType}}.png" onerror="whenError(this)" alt="">
+      {{if iconType !== 0}}
+      <img class="mid" src="{{peak}}icon_type_{{iconType}}_mid.png" onerror="whenError(this)" alt="">
+      {{/if}}
+    </div>
+    <div class="medal-t">
+      <b>王棋 ×{{bossStars || '-'}}　骑士 ×{{mobStars || '-'}}</b>
+      <span>挑战次数：{{battleNum || '-'}}</span>
+    </div>
+  </div>
+</section>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{
+    title: '王棋通关战绩',
+    note: boss.done ? (boss.hardMode ? '绝境' : '普通') : ''
+  }]) %>
+  <div class="stage pk-boss {{boss.done && boss.hardMode ? 'hell' : ''}}">
+    <div class="stage-h">
+      {{if bossIcon}}<img class="stage-ic" src="{{bossIcon}}" onerror="whenError(this)" alt="">{{/if}}
+      <b>{{boss.done ? '将杀王棋•' + (boss.hardMode ? '绝境' : '普通') : (bossName || '王棋')}}</b>
+      {{if boss.done}}
+      <span class="tag hi">已通关</span>
+      <div class="pk-stars">
+        {{each boss.starList i}}<img src="{{peak}}boss_star.png" onerror="whenError(this)" alt="">{{/each}}
+        {{each boss.failList i}}<img class="off" src="{{peak}}boss_star_fail.png" onerror="whenError(this)" alt="">{{/each}}
+      </div>
+      <span class="rt">使用轮次 {{boss.roundNum}}</span>
+      {{else}}
+      <span class="tag">暂无通关战绩</span>
+      {{/if}}
+    </div>
+
+    {{if boss.done}}
+    <!-- 与忘却之庭同一排法：时刻与裁决象限另起一条放在队伍上下 -->
+    {{if boss.timeText}}<div class="p-sub pk-time">{{boss.timeText}}</div>{{/if}}
+    <div class="mcs">
+      {{each boss.avatars a idx}}
+      <% include(_tpl_path + '/sr-stat-avatar.html', [a, {av: avatars[a.id], mysFailed, _meta_path, _tpl_path, cardType: (cardTypes[boss.avatars.length] || [])[idx]}]) %>
+      {{/each}}
+    </div>
+    {{if boss.buffName}}
+    <div class="buff row-buff">
+      {{if boss.buffIcon}}<img src="{{boss.buffIcon}}" onerror="whenError(this)" alt="">{{/if}}
+      <div class="buff-b">
+        <b>裁决象限 · {{boss.buffName}}</b>
+        <span>{{boss.buffDesc}}</span>
+      </div>
+    </div>
+    {{/if}}
+    {{/if}}
+  </div>
+</section>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '骑士关卡战绩', note: mobs.length + ' 关'}]) %>
+  {{each mobs mob}}
+  <div class="stage pk-mob">
+    <div class="stage-h">
+      {{if mob.icon}}<img class="stage-ic" src="{{mob.icon}}" onerror="whenError(this)" alt="">{{/if}}
+      <b>{{mob.name}}</b>
+      {{if mob.record.isFast}}
+      <span class="tag hi">快速通关</span>
+      {{else if mob.record.done}}
+      <span class="tag hi">已通关</span>
+      <div class="pk-stars">
+        {{each mob.record.starList i}}<img src="{{peak}}mob_star.png" onerror="whenError(this)" alt="">{{/each}}
+        {{each mob.record.failList i}}<img class="off" src="{{peak}}mob_star_fail.png" onerror="whenError(this)" alt="">{{/each}}
+      </div>
+      <span class="rt">使用轮次 {{mob.record.roundNum}}</span>
+      {{else}}
+      <span class="tag">未通关</span>
+      {{/if}}
+    </div>
+    {{if !mob.record.isFast && mob.record.done}}
+    {{if mob.record.timeText}}<div class="p-sub pk-time">{{mob.record.timeText}}</div>{{/if}}
+    <div class="mcs">
+      {{each mob.record.avatars a idx}}
+      <% include(_tpl_path + '/sr-stat-avatar.html', [a, {av: avatars[a.id], mysFailed, _meta_path, _tpl_path, cardType: (cardTypes[mob.record.avatars.length] || [])[idx]}]) %>
+      {{/each}}
+    </div>
+    {{/if}}
+  </div>
+  {{/each}}
+</section>
+</div>
+{{/block}}

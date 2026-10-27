@@ -1,0 +1,489 @@
+/*
+  模块职责：面板详情一族的皮肤层 —— 排版归 profile-detail.css，这里只套三套皮肤的风格
+  依赖方向：在 profile-detail.css 之后加载，按它的类名覆写；靠 body 上的 `_skin`（dress() 按 game 补）生效，
+            取值与 common/skin/{gs,sr,zzz}.css 同一套
+  生命周期：静态资源
+  注意事项：一是只许写颜色、底图、阴影、圆角、裁切、字体与滤镜，不写 width / margin / padding / position，
+            描边用 box-shadow —— border 会把每块撑宽一两像素、整排错位。二是选择器全挂在
+            `:is(.skin-gs, .skin-sr, .skin-zzz)` 下，`_skin` 缺失时整张图按 profile-detail.css 原样出。
+            三是属性与词条图标是白色精灵图，原神浅底上看不见，故原神给 `--pd-icon` 一道压暗滤镜。
+*/
+
+@font-face {
+  font-family: "YSBold";
+  src: url("../common/font/HYWJ-85W.woff") format("woff");
+}
+/* 三游戏的正文字体，与 common/skin/base.css 里同名的三条一致（这张图不加载那一份） */
+@font-face {
+  font-family: "mhy-gs";
+  src: url("../common/font/GS.woff2") format("woff2");
+  font-weight: 100 900;
+}
+@font-face {
+  font-family: "mhy-sr";
+  src: url("../common/font/SR.woff2") format("woff2");
+  font-weight: 100 900;
+}
+@font-face {
+  font-family: "mhy-zzz";
+  src: url("../common/font/ZZZ.woff2") format("woff2");
+  font-weight: 100 900;
+}
+
+/* ========== 三套皮肤的取值 ========== */
+.skin-gs {
+  /* 提瓦特手账：米白纸面、深蓝标题栏、金线 */
+  --pd-card: rgba(248, 243, 233, 0.95);
+  --pd-row: rgba(248, 243, 233, 0.92);
+  --pd-row2: rgba(239, 230, 211, 0.92);
+  --pd-head: linear-gradient(180deg, #3a4259, #272d3e);
+  --pd-head-ink: #ece5d8;
+  --pd-ink: #3a4152;
+  --pd-mute: #8a7d66;
+  --pd-line: #dccdac;
+  --pd-acc: #a8803f;
+  --pd-hi: #b0771f;
+  --pd-ok: #4d8a4a;
+  --pd-bad: #c0504a;
+  --pd-chip: #2f3649;
+  --pd-chip-ink: #ece5d8;
+  --pd-shadow: 0 2px 6px rgba(80, 60, 30, 0.18);
+  --pd-tshadow: none;
+  --pd-icon: brightness(0) opacity(0.62);
+  --pd-radius: 12px;
+  --pd-disp: "mhy-gs", "YS", "汉仪文黑-65W", "PingFang SC", sans-serif;
+  --pd-num: "Number", "YS", sans-serif;
+}
+
+.skin-sr {
+  /* 深空琥珀：近黑底、琥珀金细线、右上切角 */
+  --pd-card: rgba(22, 23, 30, 0.9);
+  --pd-row: rgba(22, 23, 30, 0.82);
+  --pd-row2: rgba(34, 35, 45, 0.82);
+  --pd-head: linear-gradient(90deg, rgba(230, 197, 138, 0.16), rgba(230, 197, 138, 0));
+  --pd-head-ink: #e6c58a;
+  --pd-ink: #eceae4;
+  --pd-mute: #8c8d96;
+  --pd-line: rgba(255, 255, 255, 0.13);
+  --pd-acc: #e6c58a;
+  --pd-hi: #f5ddaa;
+  --pd-ok: #86d4ab;
+  --pd-bad: #ff7d6e;
+  --pd-chip: transparent;
+  --pd-chip-ink: #e6c58a;
+  --pd-shadow: 0 0 0 1px rgba(230, 197, 138, 0.22);
+  --pd-tshadow: 0 0 2px rgba(0, 0, 0, 0.6);
+  --pd-icon: none;
+  --pd-radius: 0;
+  --pd-disp: "mhy-sr", "YS", "汉仪文黑-65W", "PingFang SC", sans-serif;
+  --pd-num: "Number", "YS", sans-serif;
+}
+
+.skin-zzz {
+  /* 绳网：纯黑底、荧光黄绿、大圆角 */
+  --pd-card: rgba(27, 27, 27, 0.94);
+  --pd-row: rgba(27, 27, 27, 0.88);
+  --pd-row2: rgba(38, 38, 38, 0.88);
+  --pd-head: #0e0e0e;
+  --pd-head-ink: #d4f53c;
+  --pd-ink: #f3f3f0;
+  --pd-mute: #9b9b95;
+  --pd-line: #2f2f2f;
+  --pd-acc: #d4f53c;
+  --pd-hi: #d4f53c;
+  --pd-ok: #d4f53c;
+  --pd-bad: #ff5a4f;
+  --pd-chip: #2a2a2a;
+  --pd-chip-ink: #f3f3f0;
+  --pd-shadow: 0 0 0 2px #2f2f2f;
+  --pd-tshadow: none;
+  --pd-icon: none;
+  --pd-radius: 16px;
+  --pd-disp: "mhy-zzz", "YSBold", "YS", "汉仪文黑-65W", "PingFang SC", sans-serif;
+  --pd-num: "NZBZ", "印品南征北战NZBZ体", "Number", sans-serif;
+}
+
+/* ========== 页底：不用逐元素底图，与其余各图同一张皮肤底 ==========
+   取值照抄 common/skin/{gs,sr,zzz}.css 的 `.pic.skin-xxx`；`body.` 前缀是为压过 common.css 的 `.elem-xxx .elem-bg`。 */
+body.skin-gs .elem-bg {
+  background: radial-gradient(110% 50% at 50% 0, #f5f0e6 0, rgba(245, 240, 230, 0) 70%), #e9e0ce;
+}
+body.skin-sr .elem-bg {
+  background:
+    radial-gradient(70% 40% at 100% 0, rgba(230, 197, 138, 0.17), rgba(230, 197, 138, 0) 70%),
+    radial-gradient(1.1px 1.1px at 14% 22%, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 38% 9%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0)),
+    radial-gradient(1.2px 1.2px at 72% 48%, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 88% 78%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 26% 66%, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0)),
+    radial-gradient(1.1px 1.1px at 55% 92%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0)),
+    #101116;
+}
+body.skin-zzz .elem-bg {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, rgba(255, 255, 255, 0) 1.6px) 0 0 / 7px 7px, #0e0e0e;
+}
+
+/* ========== 头图上的名字、等级与标签 ========== */
+:is(.skin-gs, .skin-sr, .skin-zzz) .char-name {
+  font-family: var(--pd-disp);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .basic:after {
+  box-shadow: 0 0 0 1px var(--pd-line);
+  border-radius: var(--pd-radius);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .char-tags span {
+  background: var(--pd-chip);
+  color: var(--pd-chip-ink);
+  box-shadow: inset 0 0 0 1px var(--pd-acc);
+  text-shadow: none;
+}
+
+/* ========== 卡片：皮肤的纸面 / 深面 ========== */
+:is(.skin-gs, .skin-sr, .skin-zzz) .cont,
+:is(.skin-gs, .skin-sr, .skin-zzz) .artis .item,
+:is(.skin-gs, .skin-sr, .skin-zzz) .sr-weapon,
+:is(.skin-gs, .skin-sr, .skin-zzz) .sr-talent,
+:is(.skin-gs, .skin-sr, .skin-zzz) .arti-stat {
+  background: var(--pd-card);
+  color: var(--pd-ink);
+  border-radius: var(--pd-radius);
+  box-shadow: var(--pd-shadow);
+}
+/* 原神：卡内一道内描线，同皮肤的 `.p-sec` */
+.skin-gs .cont,
+.skin-gs .artis .item,
+.skin-gs .sr-weapon,
+.skin-gs .sr-talent {
+  box-shadow: inset 0 0 0 4px var(--pd-card), inset 0 0 0 5px #ebe0c8, var(--pd-shadow);
+}
+/* 星铁：右上切角，同皮肤的 `.p-sec` */
+.skin-sr .cont,
+.skin-sr .artis .item,
+.skin-sr .sr-weapon,
+.skin-sr .sr-talent {
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .sr-weapon .weapon-img {
+  box-shadow: var(--pd-shadow);
+  border-radius: var(--pd-radius);
+}
+
+/* ========== 分节标题：皮肤的标题栏加各自的前缀记号 ========== */
+:is(.skin-gs, .skin-sr, .skin-zzz) .cont-title {
+  background: var(--pd-head);
+  color: var(--pd-head-ink);
+  box-shadow: none;
+  font-family: var(--pd-disp);
+  border-radius: var(--pd-radius) var(--pd-radius) 0 0;
+}
+.skin-gs .cont-title {
+  box-shadow: inset 0 -2px 0 #d3bc8e;
+}
+.skin-gs .cont-title::before {
+  content: "◆";
+  color: #d3bc8e;
+  font-size: 11px;
+  margin-right: 7px;
+  vertical-align: 2px;
+}
+.skin-sr .cont-title {
+  letter-spacing: 0.08em;
+  box-shadow: inset 0 -1px 0 rgba(230, 197, 138, 0.4);
+}
+.skin-sr .cont-title::before {
+  content: "◇";
+  color: #e6c58a;
+  font-size: 11px;
+  margin-right: 8px;
+  vertical-align: 1px;
+}
+.skin-zzz .cont-title {
+  font-weight: 700;
+  font-style: italic;
+}
+.skin-zzz .cont-title::before {
+  content: "//";
+  color: #d4f53c;
+  margin-right: 6px;
+  font-family: var(--pd-num);
+  font-style: normal;
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .cont-title span {
+  color: var(--pd-mute);
+}
+.skin-gs .cont-title span {
+  color: #c9bfa8;
+}
+
+/* 页脚、说明与提示 */
+:is(.skin-gs, .skin-sr, .skin-zzz) .cont-footer,
+:is(.skin-gs, .skin-sr, .skin-zzz) .arti-info .arti-notice {
+  background: transparent;
+  box-shadow: inset 0 1px 0 var(--pd-line);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .dmg-desc,
+:is(.skin-gs, .skin-sr, .skin-zzz) .dmg-desc ul li,
+:is(.skin-gs, .skin-sr, .skin-zzz) .dmg-calc span,
+:is(.skin-gs, .skin-sr, .skin-zzz) .arti-stat span,
+:is(.skin-gs, .skin-sr, .skin-zzz) .dmg-notice {
+  color: var(--pd-mute);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .dmg-desc strong {
+  color: var(--pd-acc);
+}
+
+/* ========== 斑马行：属性栏、词条表、伤害表 ========== */
+:is(.skin-gs, .skin-sr, .skin-zzz) .char-attr {
+  background: transparent;
+  border-radius: var(--pd-radius);
+  box-shadow: var(--pd-shadow);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .char-attr li,
+:is(.skin-gs, .skin-sr, .skin-zzz) .char-attr li .title,
+:is(.skin-gs, .skin-sr, .skin-zzz) .char-attr li .value {
+  color: var(--pd-ink);
+  text-shadow: var(--pd-tshadow);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .char-attr li .value {
+  font-family: var(--pd-num);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .char-attr li:nth-child(odd),
+:is(.skin-gs, .skin-sr, .skin-zzz) .detail.attr li:nth-child(odd),
+:is(.skin-gs, .skin-sr, .skin-zzz) .artis ul.detail li:nth-child(odd),
+:is(.skin-gs, .skin-sr, .skin-zzz) .dmg-cont .tr:nth-child(odd),
+:is(.skin-gs, .skin-sr, .skin-zzz) .cont-table .tr:nth-child(odd) {
+  background: var(--pd-row);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .char-attr li:nth-child(even),
+:is(.skin-gs, .skin-sr, .skin-zzz) .detail.attr li:nth-child(even),
+:is(.skin-gs, .skin-sr, .skin-zzz) .artis ul.detail li:nth-child(even),
+:is(.skin-gs, .skin-sr, .skin-zzz) .dmg-cont .tr:nth-child(even),
+:is(.skin-gs, .skin-sr, .skin-zzz) .cont-table .tr:nth-child(even) {
+  background: var(--pd-row2);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .char-attr li .value2 {
+  background: transparent;
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .char-attr li .value2 .base {
+  color: var(--pd-mute);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .char-attr li .value2 .plus,
+:is(.skin-gs, .skin-sr, .skin-zzz) .detail.attr li span {
+  color: var(--pd-ok);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .char-attr li .weight span {
+  background: var(--pd-chip);
+  color: var(--pd-chip-ink);
+  box-shadow: inset 0 0 0 1px var(--pd-line);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .char-attr li .weight span.gold {
+  background: var(--pd-acc);
+  color: var(--pd-card);
+}
+/* 白色精灵图在浅底上压暗，见文件头第三条 */
+:is(.skin-gs, .skin-sr, .skin-zzz) .char-attr li .icon i,
+:is(.skin-gs, .skin-sr, .skin-zzz) .up-num,
+:is(.skin-gs, .skin-sr, .skin-zzz) .sr-weapon .weapon-attr .attr:before {
+  filter: var(--pd-icon);
+}
+
+/* 表头与行首 */
+:is(.skin-gs, .skin-sr, .skin-zzz) .dmg-cont .tr > div,
+:is(.skin-gs, .skin-sr, .skin-zzz) .cont-table .tr > div {
+  box-shadow: 0 0 0 0.5px var(--pd-line);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .dmg-cont .tr.thead > div,
+:is(.skin-gs, .skin-sr, .skin-zzz) .dmg-cont .tr .title,
+:is(.skin-gs, .skin-sr, .skin-zzz) .dmg-cont .tr .th,
+:is(.skin-gs, .skin-sr, .skin-zzz) .cont-table .thead > div,
+:is(.skin-gs, .skin-sr, .skin-zzz) .cont-table .title,
+:is(.skin-gs, .skin-sr, .skin-zzz) .cont-table .th {
+  background: var(--pd-row2);
+  color: var(--pd-acc);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .dmg .value {
+  color: var(--pd-ink);
+  font-family: var(--pd-num);
+}
+/* 词条置换：涨跌两档沿用红绿语义，按皮肤取色 */
+:is(.skin-gs, .skin-sr, .skin-zzz) .dmg-calc .na,
+:is(.skin-gs, .skin-sr, .skin-zzz) .dmg-calc .eq {
+  background: var(--pd-row2);
+  color: var(--pd-mute);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .dmg-calc .gt {
+  background: color-mix(in srgb, var(--pd-ok) 28%, transparent);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .dmg-calc .lt {
+  background: color-mix(in srgb, var(--pd-bad) 28%, transparent);
+}
+
+/* ========== 天赋与命座格 ========== */
+:is(.skin-gs, .skin-sr, .skin-zzz) .traveler-elem {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 8px;
+  font-size: 16px;
+  line-height: 1.4;
+  vertical-align: middle;
+  color: var(--pd-ink);
+  background: var(--pd-card);
+  text-shadow: none;
+  border: 1px solid var(--pd-line);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .talent-icon strong {
+  background: var(--pd-card);
+  color: var(--pd-ink);
+  font-family: var(--pd-num);
+  box-shadow: 0 0 0 1px var(--pd-line);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .talent-icon.talent-plus strong {
+  background: var(--pd-chip);
+  color: var(--pd-hi);
+  box-shadow: 0 0 0 1px var(--pd-acc);
+}
+.skin-zzz .talent-icon.talent-plus strong {
+  background: #d4f53c;
+  color: #0e0e0e;
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .sr-talent .char-talents .talent-icon span {
+  color: var(--pd-ink);
+  text-shadow: var(--pd-tshadow);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .sr-talent .char-trees:before {
+  background: var(--pd-line);
+}
+
+/* ========== 圣遗物 / 遗器 / 驱动盘 ========== */
+:is(.skin-gs, .skin-sr, .skin-zzz) .artis .head,
+:is(.skin-gs, .skin-sr, .skin-zzz) .artis .item.arti .head,
+:is(.skin-gs, .skin-sr, .skin-zzz) .artis .weapon .head {
+  color: var(--pd-ink);
+  text-shadow: var(--pd-tshadow);
+  background: linear-gradient(to right, var(--pd-card), var(--pd-card) 55%, transparent);
+  border-radius: var(--pd-radius) var(--pd-radius) 0 0;
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .artis .head strong {
+  font-family: var(--pd-disp);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .artis .item .arti-icon span,
+:is(.skin-gs, .skin-sr, .skin-zzz) .artis .item.arti .arti-icon span {
+  background: var(--pd-chip);
+  color: var(--pd-chip-ink);
+  font-family: var(--pd-num);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .arti-main,
+:is(.skin-gs, .skin-sr, .skin-zzz) .artis ul.detail li span,
+:is(.skin-gs, .skin-sr, .skin-zzz) .arti-info ul.detail li span {
+  color: var(--pd-ink);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .artis ul.detail li.arti-main {
+  background: var(--pd-row2);
+  box-shadow: inset 0 -1px 0 var(--pd-line);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .artis ul.detail li.great span.title,
+:is(.skin-gs, .skin-sr, .skin-zzz) .arti-info ul.detail li.great span.title {
+  color: var(--pd-hi);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .artis ul.detail li.nouse span,
+:is(.skin-gs, .skin-sr, .skin-zzz) .arti-info ul.detail li.nouse span {
+  color: var(--pd-mute);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .artis ul.detail li span.title i.eff,
+:is(.skin-gs, .skin-sr, .skin-zzz) .arti-info ul.detail li span.title i.eff {
+  background: var(--pd-chip);
+  color: var(--pd-chip-ink);
+}
+/* 评级字色：浅底上旧的浅金看不见，改取皮肤强调色；ACE / MAX 仍是语义红 */
+:is(.skin-gs, .skin-sr, .skin-zzz) .mark-SSS,
+:is(.skin-gs, .skin-sr, .skin-zzz) .mark-SS {
+  color: var(--pd-hi);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .mark-ACE,
+:is(.skin-gs, .skin-sr, .skin-zzz) .mark-MAX {
+  color: var(--pd-bad);
+}
+.skin-gs .mark-S,
+.skin-gs .mark-A {
+  color: #8a5cc0;
+}
+/* 评级字母不走数字字体：那套字体里 S 与 5 几乎同形，「SS」紧挨着分数读成「55」。
+   圣遗物格里的 `.mark` 是「分数 - 评级」，分数那段（内层 span）仍取数字字体 */
+:is(.skin-gs, .skin-sr, .skin-zzz) :is(.mark-ACE, .mark-MAX, .mark-SSS, .mark-SS, .mark-S, .mark-A, .mark-B, .mark-C, .mark-D) {
+  font-family: "YSBold", var(--pd-disp);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .mark > span {
+  font-family: var(--pd-num);
+}
+
+/* 评分总览 */
+:is(.skin-gs, .skin-sr, .skin-zzz) .arti-stat-ret > div {
+  color: var(--pd-ink);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .arti-stat-ret strong {
+  font-family: var(--pd-num);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .arti-class-title {
+  background: var(--pd-head);
+  color: var(--pd-head-ink);
+  text-shadow: none;
+}
+
+/* ========== 武器 / 光锥 / 音擎 ========== */
+:is(.skin-gs, .skin-sr, .skin-zzz) .artis .weapon .weapon-attr {
+  background: var(--pd-row2);
+  color: var(--pd-ink);
+  text-shadow: var(--pd-tshadow);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .artis .weapon .weapon-attr div span,
+:is(.skin-gs, .skin-sr, .skin-zzz) .sr-weapon .weapon-title strong {
+  color: var(--pd-acc);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .artis .weapon .weapon-desc-cont {
+  background: var(--pd-row);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .weapon-desc,
+:is(.skin-gs, .skin-sr, .skin-zzz) .artis .weapon .weapon-desc {
+  color: var(--pd-mute);
+  text-shadow: none;
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .sr-weapon .weapon-title strong {
+  font-family: var(--pd-disp);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .sr-weapon .weapon-attr .attr {
+  background: var(--pd-row2);
+  color: var(--pd-hi);
+  box-shadow: inset 0 0 0 1px var(--pd-line);
+}
+.skin-zzz .sr-weapon .weapon-attr .attr span {
+  color: var(--pd-mute);
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .weapon-desc nobr {
+  background: var(--pd-chip);
+  color: var(--pd-hi);
+}
+/* 原神武器格的说明区是定高 100px（与圣遗物格同高、不可撑高），雾切一类一两百字的精炼说明
+   在 12px 下要十几行。这里只收字号与行高、改用行数截断：放不下时以
+   「…」收尾，而不是停在「在下列情况下，」。数值小块随之去掉定高，否则每行被它撑高一截 */
+:is(.skin-gs, .skin-sr, .skin-zzz) .artis .weapon .weapon-desc {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+  overflow: hidden;
+  font-size: 10.5px;
+  line-height: 14px;
+}
+:is(.skin-gs, .skin-sr, .skin-zzz) .artis .weapon .weapon-desc nobr {
+  height: auto;
+  line-height: inherit;
+  font-size: inherit;
+  margin: 0 1px;
+  padding: 0 2px;
+}
+
+/* ========== 页脚 ==========
+   旧署名是白字加黑影，原神浅底上看不清，改取皮肤的弱字色 */
+:is(.skin-gs, .skin-sr, .skin-zzz) .copyright {
+  color: var(--pd-mute);
+  text-shadow: none;
+}

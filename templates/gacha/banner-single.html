@@ -1,0 +1,55 @@
+<!--
+  模块职责：单个角色 / 武器的复刻明细（`#雷神复刻`）—— 逐个版本一块，列当期的角色与武器池
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head
+  生命周期：静态模板
+  注意事项：四处判据。一是头像与武器图都在元数据里，要 `_meta_path`（见 `template-img-two-roots`）。
+            二是止期以 `2099` 开头的那些是「后长期开放」而非一个具体日期，按这个前缀判、不可直接印。
+            三是星铁的光锥池名按 `weapon5` 的个数判（两个五星光锥时并列两个池名），无从更细地判。
+            `weapon5` 缺省时要垫空数组，否则 `.length` 抛错、整张图退回文字。
+            四是池名与标题记号逐游戏取，绝区零是「独家频段 / 音擎频段」与 `%`。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+{{set gameMap = {gs: '#', sr: '*', zzz: '%'} }}
+
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'BANNER HISTORY',
+  title: gameMap[game] + name + '复刻统计',
+  sub: '共记复刻' + count + '次，' + (daysDiff > 0 ? '已' + daysDiff + '天未复刻' : '当前UP')
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+{{each version_list data}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{
+    title: data.version + ' ' + data.half,
+    note: (data.diffDay ? '距上次复刻' + data.diffDay + '天　' : '首次UP　')
+      + data.from + (data.to.startsWith('2099') ? ' 后长期开放' : ' ~ ' + data.to)
+  }]) %>
+
+  <div class="gp-s">
+    <small>{{game == 'zzz' ? '独家频段' : game == 'gs' ? '角色活动祈愿' : '角色活动跃迁'}}：「{{data.title.join('」「')}}」</small>
+    <div class="grid">
+      {{each data.char char}}
+      <% include(_tpl_path + '/skin/avatar.html', [{
+        face: char.icon, star: char.star, name: char.name
+      }, {_res_path, _meta_path, size: 'sm'}]) %>
+      {{/each}}
+    </div>
+  </div>
+
+  <img class="gp-line" src="{{_res_path}}gacha/imgs/line.png" alt="">
+
+  <div class="gp-s">
+    <small>{{game == 'gs' ? '武器活动祈愿：「神铸赋形」' : game == 'zzz' ? '音擎频段' : (data.weapon5 || []).length == 2 ? '光锥活动跃迁：「流光定影」「溯回忆象」' : '光锥活动跃迁：「流光定影」'}}</small>
+    <div class="grid">
+      {{each data.weapon weapon}}
+      <% include(_tpl_path + '/skin/avatar.html', [{
+        face: weapon.icon, star: weapon.star, name: weapon.name
+      }, {_res_path, _meta_path, size: 'sm'}]) %>
+      {{/each}}
+    </div>
+  </div>
+</section>
+{{/each}}
+{{/block}}

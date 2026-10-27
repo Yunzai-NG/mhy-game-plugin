@@ -1,0 +1,54 @@
+/* 圣遗物列表（#圣遗物）：圣遗物格借 profile-detail.css 的那一套，这里只补页头与右上角的主人头像 */
+.al-cont {
+  padding-top: 14px;
+  padding-bottom: 6px;
+}
+.al-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin: 0 0 4px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: 0 0 1px 0 #ccc, 2px 2px 4px 0 rgba(50, 50, 50, 0.8);
+  color: #fff;
+}
+.al-head strong {
+  display: block;
+  font-family: "NZBZ", sans-serif;
+  font-size: 24px;
+  font-weight: normal;
+  color: #d3bc8e;
+}
+.al-head span {
+  font-size: 12px;
+  color: #ccc;
+}
+/* 主人头像：右上角一枚圆，压在评分那一行之上；名字留给 title，不另占一行 */
+.al-artis .item {
+  position: relative;
+}
+/* 圣遗物图本身占着格子右上角（90px，上探 12px），头像压在它的最上沿、往外探出一点，两者都看得见 */
+.al-who {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  z-index: 3;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1.5px solid rgba(211, 188, 142, 0.9);
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+}
+.al-who img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* 头像往外探，格子之间多留一点上下距 */
+.al-artis .item {
+  margin-top: 12px;
+}

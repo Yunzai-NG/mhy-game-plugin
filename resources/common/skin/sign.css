@@ -1,0 +1,123 @@
+/*
+  模块职责：页脚署名（common/sign.html）的样式 —— 一份结构，装饰按皮肤开关
+  依赖方向：被 layout/skin.html 与 layout/elem.html 加载；色取两套布局各自的皮肤变量（`--p-*` / `--pd-*`）
+  生命周期：静态资源
+  注意事项：三处判据。一是**这里不给署名设 color**：字色由外层 `.p-copyright` / `.copyright` 给，
+            原神深渊、剧诗那几张深底图在 gs.css 里单独改了外层的字色，这里一设就把它们压回浅底的弱字色。
+            二是装饰元素缺省全藏，各皮肤只放出自己那一份；新加皮肤不写规则时退回中性那一行。
+            三是绝区零标签的斜切要配 `transform-origin: left bottom`，不钉则文字与底块错开；那套皮肤的
+            数字字体（NZBZ）没有拉丁字形，署名不能用它，否则「POWERED BY」整串退回系统字体。
+*/
+
+.p-sign {
+  --sg-size: 10.5px;
+  --sg-acc: var(--p-acc, var(--pd-acc, #d3bc8e));
+  --sg-on-acc: var(--p-bg, var(--pd-bg, #1a1c21));
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  font-size: var(--sg-size);
+  line-height: 1.5;
+}
+/* 面板详情那族按 600px 排、字号整体大一号 */
+.copyright .p-sign {
+  --sg-size: 13px;
+  justify-content: center;
+}
+.p-sign .sg-ver {
+  color: var(--sg-acc);
+  font-variant-numeric: tabular-nums;
+}
+.p-sign .sg-line,
+.p-sign .sg-mark,
+.p-sign .sg-tag {
+  display: none;
+  font-style: normal;
+}
+.p-sign .sg-by {
+  opacity: 0.7;
+}
+.p-sign .sg-sep::before {
+  content: "·";
+}
+
+/* 原神：菱形加两侧渐隐细线，居中 */
+.skin-gs .p-sign {
+  justify-content: center;
+  gap: 2px 8px;
+}
+.skin-gs .p-sign .sg-by {
+  display: none;
+}
+.skin-gs .p-sign .sg-line {
+  display: block;
+  flex: 1;
+  max-width: 60px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--sg-acc));
+}
+.skin-gs .p-sign .sg-line:last-child {
+  background: linear-gradient(90deg, var(--sg-acc), transparent);
+}
+.skin-gs .p-sign .sg-mark {
+  display: inline;
+  color: var(--sg-acc);
+  font-size: 0.75em;
+}
+.skin-gs .p-sign .sg-mark::before {
+  content: "◇";
+}
+
+/* 星铁：一道自左渐隐的金线，大写加字距，打头一颗星 */
+.skin-sr .p-sign {
+  justify-content: flex-start;
+  gap: 2px 8px;
+  padding-top: 7px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: calc(var(--sg-size) * 0.92);
+  background: linear-gradient(90deg, var(--sg-acc), transparent 70%) top left / 100% 1px no-repeat;
+}
+.skin-sr .p-sign .sg-by {
+  display: none;
+}
+.skin-sr .p-sign .sg-lead {
+  display: inline;
+  color: var(--sg-acc);
+  letter-spacing: 0;
+}
+.skin-sr .p-sign .sg-lead::before {
+  content: "✦";
+}
+.skin-sr .p-sign .sg-ver {
+  letter-spacing: 0.06em;
+}
+.skin-sr .p-sign .sg-sep::before {
+  content: "/";
+}
+
+/* 绝区零：斜切的强调色标签，压缩字形 */
+.skin-zzz .p-sign {
+  gap: 4px 10px;
+  letter-spacing: 0.03em;
+}
+.skin-zzz .p-sign .sg-by,
+.skin-zzz .p-sign .sg-sep {
+  display: none;
+}
+.skin-zzz .p-sign .sg-tag {
+  display: inline-block;
+  font-weight: bold;
+  line-height: 1.6;
+  padding: 0 8px;
+  color: var(--sg-on-acc);
+  background: var(--sg-acc);
+  transform: skewX(-14deg);
+  transform-origin: left bottom;
+}
+.skin-zzz .p-sign .sg-tag span {
+  display: inline-block;
+  transform: skewX(14deg);
+}

@@ -1,0 +1,42 @@
+<!--
+  模块职责：统一页头 —— 英文眉标、标题、副标题，右侧玩家头像、昵称、UID 与等级
+  依赖方向：被各主模板 include，自己不引别的片段
+  生命周期：静态片段
+  注意事项：一是右上角**取 `who` 在前、`h.who` 在后**：前者出图时按「发起者 + 游戏 + uid」统一组装
+            （见 commands/_face.ts 的 whoOf），后者是各页自给的，只供帮助、图鉴这类不属某个玩家的图；颠倒则
+            页头退回各页五花八门的形态。二是头像四个根由三个标记择一：`fromFace` 加 `_face_path`（头像库，
+            见 store/face.ts）、`fromMeta` 加 `_meta_path`、`fromRes` 加 `_res_path`，都不给时是米游社完整地址、
+            不加根（见 `template-img-two-roots`）。三是两者都没有时右侧整块不画，否则留一个空头像圈。
+            四是 `h.bg` 只收米游社完整地址、不加根；图取不到时连同压暗层一起撤掉，退回皮肤自己的页头。
+-->
+{{set h = $data[0] || {} }}
+{{set {_meta_path, _res_path, _face_path, who} = $data[1] || {} }}
+{{set w = who || h.who}}
+
+<header class="p-head {{h.bg ? 'has-bg' : ''}}">
+  {{if h.bg}}<img class="p-head-bg" src="{{h.bg}}" onerror="this.parentNode.classList.remove('has-bg');this.remove()" alt="">{{/if}}
+  <div class="p-ttl">
+    {{if h.kick}}<small class="p-kick">{{h.kick}}</small>{{/if}}
+    <h3>{{h.title}}</h3>
+    {{if h.sub}}<span class="p-sub">{{h.sub}}</span>{{/if}}
+    {{if h.badge}}
+    <span class="p-badge" style="--t1:{{h.badge.main || 'transparent'}};--t2:{{h.badge.bottom || 'transparent'}}">{{h.badge.text}}</span>
+    {{/if}}
+  </div>
+  {{if w}}
+  <div class="p-who">
+    {{if w.face}}
+    <i class="p-face {{w.elem ? 'e-' + w.elem : 'e-none'}}">
+      <img src="{{w.fromFace ? _face_path : (w.fromMeta ? _meta_path : (w.fromRes ? _res_path : ''))}}{{w.face}}" onerror="whenError(this)" alt="">
+    </i>
+    {{/if}}
+    <div>
+      {{if w.name}}<b>{{w.name}}</b>{{/if}}
+      {{if w.uid}}<span>UID {{w.uid}}</span>{{/if}}
+      {{if w.level || w.world}}
+      <span>{{w.level}}{{w.level && w.world ? '　' : ''}}{{w.world}}</span>
+      {{/if}}
+    </div>
+  </div>
+  {{/if}}
+</header>

@@ -1,0 +1,54 @@
+<!--
+  模块职责：临界推演（`%临界推演`）—— 本期摘要、结局、首领关与其余各关
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head 与 common/zzz-stage.html
+  生命周期：静态模板
+  注意事项：三处判据。一是结局底图与首领图标**都是米游社给的绝对地址**，一处根都不加
+            （见 `template-img-two-roots`）。
+            二是 `zzz-stage.html` 要显式传 `_tpl_path`：它里层还要 include 队伍条，
+            漏传则拼出一个空路径而整队不画。
+            三是「本期未结束时接口不给止期」那一句由视图给成「超过 42 天」，与官方页面同一句，
+            模板只印不判。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'HOLLOW ZERO',
+  title: title,
+  sub: period + (begin ? '　' + begin + ' - ' + end : ''),
+  who: {name: nickname || '绳匠', uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<div class="p-stats" style="--n:3">
+  <div class="st hi"><b>{{score}}</b><span>{{full ? '总分（满分）' : '总分'}}</span></div>
+  <div class="st"><b>{{maxScore || '-'}}</b><span>满分</span></div>
+  <div class="st"><b>{{rank ? '前 ' + rank : '-'}}</b><span>排名</span></div>
+</div>
+
+{{if ending.name}}
+<div class="ending">
+  <span>本期结局</span>
+  <b>{{ending.name}}</b>
+</div>
+{{/if}}
+
+{{if boss}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: boss.name || '首领关'}]) %>
+  <% include(_tpl_path + '/zzz-stage.html', [boss.stage, {_res_path, _meta_path, _tpl_path}]) %>
+</section>
+{{/if}}
+
+{{if stages.length}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '关卡记录', note: '新的在前'}]) %>
+  {{each stages one}}
+  <div class="row">
+    <% include(_tpl_path + '/zzz-stage.html', [one, {_res_path, _meta_path, _tpl_path}]) %>
+  </div>
+  {{/each}}
+</section>
+{{/if}}
+
+<% include(_tpl_path + '/skin/foot.html', [{note: '得分倍率与结局取自米游社返回'}]) %>
+{{/block}}

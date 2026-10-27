@@ -1,0 +1,53 @@
+<!--
+  模块职责：迷宫诡域逐场战绩（`%迷宫诡域战绩`）—— 一场一卡，带难度、用时与带出的物资
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / foot
+  生命周期：静态模板
+  注意事项：三处判据。一是难度是英文枚举（Hell / Hard），**已由视图译成中文**，此处只印。
+            二是物资稀有度缺失时不上色，而非按最低档处理 —— 接口偶有不给这一项，一律按最低档
+            会把金色物资画成灰的。三是物资图标是米游社给的绝对地址，一处根都不加（见
+            `template-img-two-roots`）。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'ZENKOV RECORDS',
+  title: title,
+  sub: records.length + ' 场记录',
+  who: {uid: uid, name: nickname || '绳匠'}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+{{if rank}}
+<div class="bigline">
+  <b>{{records.length}}</b>
+  <span class="p-sub">场</span>
+  <span class="tag hi">{{rank}}</span>
+</div>
+{{/if}}
+
+{{each records one}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{
+    title: one.map || '未知地图',
+    note: one.difficulty
+  }]) %>
+  <div class="tw-row">
+    {{if one.begin}}<div class="tw-c"><em>开始时间</em><b class="sm">{{one.begin}}</b></div>{{/if}}
+    {{if one.cost}}<div class="tw-c"><em>用时</em><b class="sm">{{one.cost}}</b></div>{{/if}}
+    <div class="tw-c"><em>物资价值</em><b class="sm">{{one.value}}</b></div>
+  </div>
+  {{if one.items.length}}
+  <div class="ics">
+    {{each one.items it}}
+    <div class="ic {{it.rarity ? 'q' + it.rarity : ''}}">
+      {{if it.icon}}<img src="{{it.icon}}" onerror="whenError(this)" alt="">{{/if}}
+      {{if it.num > 1}}<i>{{it.num}}</i>{{/if}}
+    </div>
+    {{/each}}
+  </div>
+  {{/if}}
+</section>
+{{/each}}
+
+<% include(_tpl_path + '/skin/foot.html', [{note: '物资与用时取自米游社返回'}]) %>
+{{/block}}

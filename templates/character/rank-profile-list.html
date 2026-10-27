@@ -1,0 +1,102 @@
+<!--
+  模块职责：角色排行（`#雷神排行`）—— 一行一名：名次、玩家、天赋圈、武器、套装、分值，说明在下
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head
+  生命周期：静态模板
+  注意事项：一是天赋圈、套装字与玩家头像都由视图排好（`tals` / `artisSet.name` / `who`），模板不按游戏查表。
+            二是图有四个根：玩家头像按 `who.root` 取 `_face_path` / `_meta_path`，天赋图标按 `meta-` 前缀，
+            天赋框在插件资源（`frame` 空串即绝区零，不垫框），武器与套装在元数据（见 `template-img-two-roots`）。
+            三是四种排行维度的说明字句不改，「期望伤害不代表实际伤害值」这句是对使用者的交代，不可删；
+            `rankCfg.limitTxt` 为「无限制」时后两条不印。四是副标题由视图拼好（`headSub`）。
+            五是满级冠图绝区零取元数据里的「仓鼠笼」访问器（`crownIcon`），取不到时不画冠。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+{{set artis = game === 'zzz' ? '驱动盘' : (game === 'sr' ? '遗器' : '圣遗物')}}
+{{set affix = game === 'gs' ? '精' : (game === 'sr' ? '叠影' : '精炼')}}
+
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'GROUP RANKING',
+  title: title,
+  sub: headSub
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '排行', note: list.length + ' 名'}]) %>
+  <div class="rk-list" {{if crownIcon}}style="--crown:url('{{_meta_path}}{{crownIcon}}')"{{/if}}>
+    {{each list ds idx}}
+    {{set w = ds.who || {} }}
+    <div class="rk {{ds.self ? 'self' : ''}} {{ds.tals.length > 4 ? 'many' : (ds.tals.length === 4 ? 't4' : '')}}">
+      <!-- 名次徽章：mark-icon.png 精灵图垫底，伤害 / 评分两种排行的第一名换宽版 mark-icon2.png（那张图自带「最强」，故数字隐去） -->
+      <span class="cr-idx idx-{{idx+1}} mode-{{mode}}">{{idx+1}}</span>
+
+      <div class="rk-who">
+        <span class="rk-face r{{ds.star == 4 ? 4 : 5}}">
+          <img src="{{w.root === 'face' ? _face_path : _meta_path}}{{w.face}}" onerror="whenError(this)" alt="">
+        </span>
+        <div class="cr-txt">
+          <b><i class="rk-cons cons-{{ds.cons}}">{{ds.cons}}</i>{{w.name || ds.sName}}</b>
+          <span>{{ds.uid}}</span>
+        </div>
+      </div>
+
+      <div class="rk-tals">
+        {{each ds.tals t}}
+        {{set ico = '' + (t.icon || '')}}
+        <div class="rk-tal {{t.plus ? 'plus' : ''}} {{t.crown ? 'crown' : ''}}" {{if frame}}style="background-image:url('{{_res_path}}common/bg/talent-{{frame}}.webp')"{{/if}}>
+          {{if ico}}<img src="{{ico.indexOf('meta-') === 0 ? _meta_path : _res_path}}{{ico}}" onerror="whenError(this)" alt="">{{/if}}
+          <span>{{t.level}}</span>
+        </div>
+        {{/each}}
+      </div>
+
+      <div class="rk-blk">
+        {{if ds.weapon}}
+        <span class="cr-ic rk-wp r{{ds.weapon.star == 4 ? 4 : (ds.weapon.star == 3 ? 3 : 5)}}" style="--av-fg:url('{{_meta_path}}{{ds.weapon.img}}')"></span>
+        <div class="cr-txt">
+          <b>{{ds.weapon.name.length > 4 ? (ds.weapon.abbr || ds.weapon.name) : ds.weapon.name}}</b>
+          <span><i class="rk-pill aff">{{affix}}{{ds.weapon.affix}}</i>Lv.{{ds.weapon.level}}</span>
+        </div>
+        {{/if}}
+      </div>
+
+      <div class="rk-blk">
+        <!-- 两套套装叠在同一格（对角排，见 base.css 的 `.cr-ic.duo`）；一套都没有时垫圣遗物剪影 -->
+        {{set rImgs = (ds.artisSet && ds.artisSet.imgs) || [] }}
+        {{if rImgs.length}}
+        <span class="cr-ic r5 {{rImgs.length > 1 ? 'duo' : ''}}">
+          {{each rImgs img}}<img src="{{_meta_path}}{{img}}" onerror="whenError(this)" alt="">{{/each}}
+        </span>
+        {{else}}
+        <span class="cr-ic none"></span>
+        {{/if}}
+        <div class="cr-txt">
+          <b>{{ds.artisSet.name}}</b>
+          {{if ds.artisMark}}<span><i class="rk-pill mk-{{ds.artisMark.markClass}}">{{ds.artisMark.markClass}}</i>{{ds.artisMark.mark}}</span>{{/if}}
+        </div>
+      </div>
+
+      <div class="rk-val">
+        <span>{{valLabel}}</span>
+        <b>{{ds._formatmark}}</b>
+      </div>
+    </div>
+    {{/each}}
+  </div>
+</section>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '群排名说明'}]) %>
+  <ul class="rk-notes">
+    <li class="{{mode === 'dmg' ? 'on' : ''}}"><i class="dmg"></i><b>综合练度排名</b>以期望伤害（计算暴击率的平均伤害，不代表实际伤害值）为排序的群内排名</li>
+    <li class="{{mode === 'mark' ? 'on' : ''}}"><i></i><b>{{artis}}评分排名</b>基于角色评分规则进行{{artis}}评分。评分规则为线性规则，无法体现词条平衡等实际因素，评分仅供娱乐</li>
+    <li class="{{mode === 'crit' ? 'on' : ''}}"><i class="crit"></i><b>双爆排名</b>以{{artis}}的双爆（包括头）为排序的群内排名</li>
+    <li class="{{mode === 'valid' ? 'on' : ''}}"><i class="valid"></i><b>加权有效词条排名</b>以{{artis}}的加权有效词条（按角色评分权重加权）为排序的群内排名</li>
+    <li><b>排名范围</b>本群内 / 时间点：{{rankCfg.time}} 后 / 在群内主动通过 {{_hash}}面板 命令查看过的面板数据</li>
+    {{if rankCfg.limitTxt !== '无限制'}}
+    <li><b>排名参与条件</b>{{rankCfg.limitTxt}}</li>
+    <li><b>排名人数</b>{{rankCfg.number}}（由主人在插件配置面板的「面板」一组中调整，范围 5~30）</li>
+    {{/if}}
+  </ul>
+</section>
+{{/block}}

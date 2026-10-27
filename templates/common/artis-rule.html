@@ -1,0 +1,111 @@
+<!--
+  模块职责：面板图 `artis` 模式（`#胡桃圣遗物`）里的评分拆解 —— 逐件得分计算与这位角色的评分规则两张表
+  依赖方向：被 character/profile-detail.html include；样式在 character/profile-detail.css 的「评分拆解」一节；
+            绝区零那一支读视图层给的 `zzzRule`（算法与 panel/score/zzz.ts 的 discBreakdown 同一套）
+  生命周期：静态片段
+  注意事项：`46.6` 是权重 100 的单词条理论最高分、`66` 是单件满分，两个数与表下说明互相印证，改一处就自相矛盾。
+            逐件按**位置号**取（原神五件、星铁六件），位置号决定主词条怎么折算，故用原生 for 而非 each。
+            权重为 0 的词条整行不印；数组字面量要先 `set`（见 `art-template-each-needs-set`）。
+-->
+{{set {ad, cfg, attrMap, artisKeyTitle, game, name, elem, gameHash, zzzRule} = $data[0] || {} }}
+{{if game === 'zzz'}}
+{{set zr = zzzRule || {} }}
+<div class="dmg-cont cont ar-cont">
+  <div class="cont-title">逐件得分<span>(主词条分 + 副词条分) × 等级倍率 × 稀有度倍率 = 最终得分</span></div>
+  <div class="cont-table">
+    <div class="tr thead">
+      <div>位置</div><div>主词条</div><div>副词条</div><div>等级 × 稀有度</div><div>最终得分</div>
+    </div>
+    {{each zr.discs ds}}
+    <div class="tr">
+      <div class="title">{{ds.pos}} 号位</div>
+      <div class="value">{{ds.main}}</div>
+      <div class="value">{{ds.sub}}</div>
+      <div class="value">{{ds.mul}}</div>
+      <div class="value ar-sum mark-{{ds.markClass}}">{{ds.total}} <small>{{ds.markClass}}</small></div>
+    </div>
+    {{/each}}
+  </div>
+  <div class="cont-footer dmg-desc">
+    1~3 号位主词条固定，整件 55 分全看副词条，一条有效词条都没有时仍给起评分；4~6 号位主词条 12 分、副词条 43 分，主词条不是这个位置最优的那一条时按权重比例折算。副词条分按「实际强化 × 权重」比「最优四条的满强化」。+0 的盘按 0.25 倍、每升一级加 0.05；A 级盘 2/3、B 级 1/3。
+  </div>
+</div>
+
+<div class="dmg-cont cont ar-cont">
+  <div class="cont-title">{{name}}的评分规则<span>{{zr.rule}}</span></div>
+  <div class="cont-table">
+    <div class="tr thead">
+      <div>词条</div><div>权重</div>
+    </div>
+    {{each zr.weights w}}
+    <div class="tr">
+      <div class="title">{{w.title}}</div>
+      <div class="value ar-w"><i style="--w:{{w.weight > 100 ? 100 : w.weight}}%"></i>{{w.weight}}</div>
+    </div>
+    {{/each}}
+  </div>
+  <div class="cont-footer dmg-desc">
+    权重先按职业给几套候选、再按当前面板挑命中的那套；数值生命 / 攻击 / 防御的权重由百分比那一项按白值折算。评分仅供参考，想看词条实际收益用 <strong>{{gameHash}}{{name}}伤害</strong>。
+  </div>
+</div>
+{{else}}
+{{set ad = ad || {} }}
+{{set cfg = cfg || {} }}
+{{set attrMap = attrMap || {} }}
+{{set gear = game === 'sr' ? '遗器' : '圣遗物'}}
+{{set pos = cfg.posMaxMark || {} }}
+{{set posNames = game === 'gs' ? ['生之花', '死之羽', '时之沙', '空之杯', '理之冠'] : ['头部', '手部', '躯干', '脚部', '位面球', '连结绳']}}
+{{set noMainPos = ['元素伤害', '物伤加成', '治疗加成']}}
+{{set elemMapSr = {火: 'fire', 冰: 'ice', 风: 'wind', 雷: 'elec', 量子: 'quantum', 虚数: 'imaginary', 物理: 'phy'} }}
+{{set elemKey = game === 'sr' ? elemMapSr[elem] : elem}}
+{{set mark = function (w) { return w > 0 ? (46.6 * w / 100).toFixed(1) : '-' } }}
+
+<div class="dmg-cont cont ar-cont">
+  <div class="cont-title">逐件得分<span>原始分 × 总分对齐 × 最优主词缀 = 最终得分</span></div>
+  <div class="cont-table">
+    <div class="tr thead">
+      <div>位置</div><div>原始分</div><div>总分对齐</div><div>最优主词缀</div><div>最终得分</div>
+    </div>
+    <% for (let idx = 1; idx <= (game === 'gs' ? 5 : 6); idx++) { let ds = (ad.artis || {})[idx] %>
+    {{if ds && ds.main && ds.main.key}}
+    {{set mainKey = ds.main.key === elemKey ? 'dmg' : ds.main.key}}
+    {{set mainWeight = ((cfg.attrs || {})[mainKey] || {}).weight || 0}}
+    <div class="tr">
+      <div class="title">{{posNames[idx - 1]}}</div>
+      <div class="value">{{(ds.rawMark || 0).toFixed(1)}}</div>
+      <div class="value">{{pos[idx] > 0 ? (66 / (46.6 / 6 / 100 * pos[idx]) * 100).toFixed(1) + '%' : '-'}}</div>
+      <div class="value">{{if idx <= 2 || ds.main.key === 'recharge' || !pos['m' + idx]}}100%{{else}}{{(50 + 50 * mainWeight / pos['m' + idx]).toFixed(0)}}%{{/if}}</div>
+      <div class="value ar-sum mark-{{ds.markClass}}">{{ds.mark}} <small>{{ds.markClass}}</small></div>
+    </div>
+    {{/if}}
+    <% } %>
+  </div>
+  <div class="cont-footer dmg-desc">
+    单件满分对齐到 66 分。沙杯头三个位置另加 25% 的主词条分；主词条不是这个位置最优的那一条时按权重差扣分，最多扣一半，充能沙不扣。
+  </div>
+</div>
+
+<div class="dmg-cont cont ar-cont">
+  <div class="cont-title">{{name}}的评分规则<span>{{cfg.classTitle}}</span></div>
+  <div class="cont-table">
+    <div class="tr thead">
+      <div>词条</div><div>权重</div><div>每点得分</div><div>副词条最高</div><div>主词条最高</div>
+    </div>
+    {{each attrMap ds key}}
+    {{set keyCfg = (cfg.attrs || {})[key] || {} }}
+    {{if ds.type !== 'plus' && keyCfg.weight > 0}}
+    <div class="tr">
+      <div class="title">{{ds.title}}</div>
+      <div class="value ar-w"><i style="--w:{{keyCfg.weight}}%"></i>{{keyCfg.weight}}</div>
+      <div class="value">{{keyCfg.mark > 0 ? (46.6 / 6 / 100 * keyCfg.mark).toFixed(2) : '-'}}</div>
+      <div class="value">{{noMainPos.indexOf(ds.title) >= 0 ? '-' : mark(keyCfg.weight)}}</div>
+      <div class="value">{{mark(keyCfg.weight / 3)}}</div>
+    </div>
+    {{/if}}
+    {{/each}}
+  </div>
+  <div class="cont-footer dmg-desc">
+    以权重 100 的单词条理论最高分 46.6 为基准。小攻击、小生命、小防御折算成对应百分比计分。评分仅供参考，想看词条实际收益用 <strong>{{gameHash}}{{name}}伤害</strong>。
+  </div>
+</div>
+{{/if}}

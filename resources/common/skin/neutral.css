@@ -1,0 +1,106 @@
+/*
+  模块职责：中性皮肤 —— 不属任一游戏的图（管理、扫码、uid 总表外框）与认不出游戏时用它
+  依赖方向：在 base.css 之后加载；靠 body 上的 `skin-neutral` 根 class 生效
+  生命周期：静态资源
+  注意事项：一张图里并列三个游戏时（uid 列表），外层是本皮肤、每段再各自加 `skin-gs` 一类。
+            皮肤变量定义在 `.skin-*` 选择器上而非 `:root`，故内层那几段能把它们逐个盖掉 ——
+            若改成写在 `:root`，内层段落取到的仍是中性色，表现是三段一个样。
+*/
+
+.skin-neutral {
+  --p-bg: #1a1c21;
+  --p-ink: #e8e8ea;
+  --p-mute: #9a9ca3;
+  --p-card: #22242a;
+  --p-line: #32353c;
+  --p-acc: #9db7dc;
+  --p-on-e: #fff;
+  --ok: #86d4ab;
+  --bad: #ff7d6e;
+  --p-disp: "YS", "汉仪文黑-65W", "PingFang SC", sans-serif;
+  --p-body: "YS", "汉仪文黑-65W", "PingFang SC", sans-serif;
+  --p-num: "Number", "YS", sans-serif;
+}
+
+.skin-neutral .p-head {
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--p-line);
+}
+.skin-neutral .p-head h3 {
+  font-weight: 700;
+}
+.skin-neutral .p-face {
+  box-shadow: 0 0 0 1px var(--p-line);
+}
+.skin-neutral .st {
+  border-radius: 8px;
+}
+.skin-neutral .st b {
+  color: var(--p-acc);
+}
+.skin-neutral .st.hi {
+  background: rgba(157, 183, 220, 0.12);
+  border-color: rgba(157, 183, 220, 0.4);
+}
+.skin-neutral .p-sec {
+  border-radius: 10px;
+}
+.skin-neutral .p-sec-h h4 {
+  font-weight: 700;
+}
+.skin-neutral .p-sec-h h4::before {
+  content: "";
+  display: inline-block;
+  width: 3px;
+  height: 11px;
+  background: var(--p-acc);
+  margin-right: 7px;
+  vertical-align: -1px;
+}
+.skin-neutral .tag {
+  background: #2d3039;
+  color: var(--p-ink);
+  border-radius: 999px;
+  padding: 0 9px;
+}
+.skin-neutral .tag.hi {
+  background: var(--p-acc);
+  color: #16181c;
+}
+.skin-neutral .av-img {
+  border-radius: 8px;
+}
+.skin-neutral .r5 {
+  --rar-bg: linear-gradient(160deg, #4a4030, #241f17);
+}
+.skin-neutral .r4 {
+  --rar-bg: linear-gradient(160deg, #3a3048, #1f1a26);
+}
+.skin-neutral .r3 {
+  --rar-bg: linear-gradient(160deg, #2a3540, #181d23);
+}
+.skin-neutral .av-img em,
+.skin-neutral .av-img u {
+  background: rgba(0, 0, 0, 0.65);
+  color: var(--p-ink);
+  border-radius: 4px;
+}
+.skin-neutral .p-foot {
+  border-top: 1px solid var(--p-line);
+  padding-top: 8px;
+}
+.skin-neutral .u-row {
+  border-radius: 10px;
+}
+.skin-neutral .u-row.on {
+  border-color: rgba(157, 183, 220, 0.55);
+}
+.skin-neutral .flag {
+  border-radius: 4px;
+}
+.skin-neutral .u-empty {
+  border-radius: 10px;
+}
+.skin-neutral .boss-ic {
+  border-radius: 8px;
+}

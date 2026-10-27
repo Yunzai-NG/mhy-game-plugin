@@ -1,0 +1,100 @@
+<!--
+  模块职责：一个天赋 / 命座 / 技能的详情 —— 图标、名目、效果正文与逐级倍率表
+  依赖方向：静态片段，被 wiki/character-talent.html include（天赋、命座、行迹三处各一次）
+  生命周期：静态片段
+  注意事项：一是**入参不动**（`$data[0]` 是那一项，`$data[1]` 带两个根与 `icon`/`lvs`/`type`/`game`/
+            `minLv`/`maxLv`/`frame`），调用点有六处；`frame` 为空（绝区零）时不垫元素框。二是图标按 `meta-`
+            前缀选根（见 `template-img-two-roots`），取不到图标时用无图标版式而不留空框。三是正文原样输出：
+            段落里嵌着 `<img class="skill-key">`、`<nobr>` 与元素色类，转义会印成文字；转义那一支只兜没经过视图的数据。
+            四是 `isSame` 为真的恒定项不进表格、单独一行印，全部恒定时整张表不画（`hasValues`）。
+            五是表格只印 `minLv`~`maxLv` 一段，包里给的满级整串全印会宽出一倍。
+-->
+{{set ds = $data[0] || false }}
+{{set {_meta_path, _res_path, icon, lvs, type, game, minLv, maxLv, frame} = $data[1] || {} }}
+
+{{set iconRoot = ('' + (icon || '')).indexOf('meta-') === 0 ? _meta_path : _res_path}}
+
+<div class="wk-tal {{icon ? '' : 'no-icon'}} {{icon && frame ? 'is-framed' : ''}}">
+  {{if icon}}
+  <!-- 元素框垫底、图标居中缩小；框图在插件资源里，图标在元数据里 -->
+  <div class="wk-tal-ic" {{if frame}}style="background-image:url('{{_res_path}}common/bg/talent-{{frame}}.webp')"{{/if}}>
+    <img src="{{iconRoot}}{{icon}}" onerror="whenError(this)" alt="">
+  </div>
+  {{/if}}
+
+  <div class="wk-tal-b">
+    {{if type && game === 'sr'}}
+    <b>{{ds.name}}<small>　{{ds.type}}{{if ds.tag}} | {{ds.tag}}{{/if}}</small></b>
+    {{else}}
+    <b>{{ds.name}}</b>
+    {{/if}}
+
+    <div class="wk-desc">
+      {{each ds.desc d}}
+      {{if d[0] === '<' || game === 'sr'}}
+      {{@d}}
+      {{else if d != ''}}
+      {{if game === 'zzz'}}<p>{{@d}}</p>{{else}}<p>{{d}}</p>{{/if}}
+      {{/if}}
+      {{/each}}
+    </div>
+
+    {{if ds.story && ds.story.length}}
+    <div class="wk-story">
+      {{each ds.story d}}
+      {{if d[0] === '<'}}
+      {{@d}}
+      {{else if d != ''}}
+      {{if game === 'zzz'}}<p>{{@d}}</p>{{else}}<p>{{d}}</p>{{/if}}
+      {{/if}}
+      {{/each}}
+    </div>
+    {{/if}}
+
+    {{if ds.tables && ds.tables.length > 0}}
+    {{set hasValues = false}}
+    {{each ds.tables tr}}
+    {{if !tr.isSame}}<% hasValues = true %>{{/if}}
+    {{/each}}
+
+    {{set fixed = false}}
+    {{each ds.tables tr}}
+    {{if tr.isSame}}<% fixed = true %>{{/if}}
+    {{/each}}
+    {{if fixed}}
+    <div class="wk-fix">
+      {{each ds.tables tr}}
+      {{if tr.isSame}}
+      <span>{{tr.name}}{{if tr.unit}}（{{tr.unit}}）{{/if}}<b>{{tr.values[0]}}</b></span>
+      {{/if}}
+      {{/each}}
+    </div>
+    {{/if}}
+
+    {{if hasValues}}
+    <div class="wk-tbl">
+      <div class="tr th">
+        <span></span>
+        {{each lvs lv idx}}
+        {{if idx + 1 >= minLv && idx + 1 <= maxLv}}
+        <b>{{lv}}</b>
+        {{/if}}
+        {{/each}}
+      </div>
+      {{each ds.tables tr}}
+      {{if !tr.isSame}}
+      <div class="tr">
+        <span>{{tr.name}}{{if tr.unit}}（{{tr.unit}}）{{/if}}</span>
+        {{each tr.values v idx}}
+        {{if idx + 1 >= minLv && idx + 1 <= maxLv}}
+        <b>{{v}}</b>
+        {{/if}}
+        {{/each}}
+      </div>
+      {{/if}}
+      {{/each}}
+    </div>
+    {{/if}}
+    {{/if}}
+  </div>
+</div>

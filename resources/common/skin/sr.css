@@ -1,0 +1,595 @@
+/*
+  模块职责：星铁皮肤「深空琥珀」—— 覆写 base.css 的设计变量，外加切角与金线几处伪元素
+  依赖方向：在 base.css 之后加载；靠 body 上的 `skin-sr` 根 class 生效，四份皮肤恒全部加载
+  生命周期：静态资源
+  注意事项：两处判据。一是每条选择器都须以 `.skin-sr` 开头，漏掉只会让别家配色不对、不报错。
+            二是切角一律用 `clip-path` 而非 `border-radius`：前者裁掉的那一块连边框一起裁，
+            改用后者则边角露出直角边框，表现是卡片像没切。
+*/
+
+.skin-sr {
+  --p-bg: #101116;
+  --p-ink: #eceae4;
+  --p-mute: #8c8d96;
+  --p-card: rgba(255, 255, 255, 0.045);
+  --p-line: rgba(255, 255, 255, 0.13);
+  --p-acc: #e6c58a;
+  --p-on-e: #fff;
+  --ok: #86d4ab;
+  --bad: #ff7d6e;
+  --p-disp: "mhy-sr", "YS", "汉仪文黑-65W", "PingFang SC", sans-serif;
+  --p-body: "mhy-sr", "YS", "汉仪文黑-65W", "PingFang SC", sans-serif;
+  --p-num: "Number", "YS", sans-serif;
+}
+
+/* 近黑星空，右上角一层琥珀光晕 */
+body.skin-sr,
+.skin-sr .pic,
+.pic.skin-sr {
+  background:
+    radial-gradient(70% 40% at 100% 0, rgba(230, 197, 138, 0.17), rgba(230, 197, 138, 0) 70%),
+    radial-gradient(1.1px 1.1px at 14% 22%, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 38% 9%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0)),
+    radial-gradient(1.2px 1.2px at 72% 48%, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 88% 78%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0)),
+    radial-gradient(1px 1px at 26% 66%, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0)),
+    radial-gradient(1.1px 1.1px at 55% 92%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0)),
+    #101116;
+}
+
+.skin-sr .p-head {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--p-line);
+}
+.skin-sr .p-head::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 64px;
+  height: 2px;
+  background: var(--p-acc);
+}
+.skin-sr .p-kick {
+  letter-spacing: 0.32em;
+}
+.skin-sr .p-head h3 {
+  letter-spacing: 0.08em;
+}
+/* 账号头像一律圆形（三个皮肤同）：外圈一道琥珀细环、内圈头像缩进 3px 坐在琥珀暗底上 */
+.skin-sr .p-face {
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--p-acc);
+  background: linear-gradient(135deg, #4a3b22, #221d15);
+}
+.skin-sr .p-face img {
+  inset: 3px;
+  width: calc(100% - 6px);
+  height: calc(100% - 6px);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(230, 197, 138, 0.7);
+  background: #1a1712;
+}
+
+.skin-sr .st {
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+}
+.skin-sr .st b {
+  color: var(--p-acc);
+  font-size: 18px;
+}
+.skin-sr .st.hi {
+  background: rgba(230, 197, 138, 0.12);
+  border-color: rgba(230, 197, 138, 0.45);
+}
+.skin-sr .p-sec {
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+}
+.skin-sr .p-sec-h h4 {
+  letter-spacing: 0.08em;
+}
+.skin-sr .p-sec-h h4::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border: 1px solid var(--p-acc);
+  transform: rotate(45deg);
+  margin-right: 9px;
+  vertical-align: 2px;
+}
+
+/* 头像：切角方框，底边一条稀有度色线 */
+.skin-sr .r5 {
+  --rar: #e6c58a;
+  --rar-bg: linear-gradient(180deg, #3d3527, #1c1913);
+}
+.skin-sr .r4 {
+  --rar: #b48ae6;
+  --rar-bg: linear-gradient(180deg, #30283f, #17141f);
+}
+.skin-sr .r3 {
+  --rar: #6f8ca8;
+  --rar-bg: linear-gradient(180deg, #243039, #141a1f);
+}
+.skin-sr .av-img {
+  box-shadow: inset 0 -3px 0 var(--rar, var(--p-line));
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%);
+}
+.skin-sr .av-img em {
+  background: rgba(0, 0, 0, 0.65);
+  color: var(--p-acc);
+  font-family: var(--p-num);
+}
+.skin-sr .av-img u {
+  background: var(--p-acc);
+  color: #14120d;
+}
+.skin-sr .stars s {
+  color: #3a3b44;
+}
+
+.skin-sr .tag {
+  border: 1px solid rgba(230, 197, 138, 0.55);
+  color: var(--p-acc);
+  padding: 0 8px;
+  letter-spacing: 0.06em;
+}
+.skin-sr .tag.hi {
+  background: var(--p-acc);
+  color: #14120d;
+}
+.skin-sr .p-foot {
+  letter-spacing: 0.06em;
+  border-top: 1px solid var(--p-line);
+  padding-top: 8px;
+}
+.skin-sr .boss-ic {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+  background: linear-gradient(150deg, #5b4a2c, #1d1a14);
+}
+
+.skin-sr .u-row.on {
+  border-color: rgba(230, 197, 138, 0.6);
+}
+/* 带名片的行不写 background 简写，理由见 gs.css 同处 */
+.skin-sr .u-row.on:not(.u-bn) {
+  background: linear-gradient(90deg, rgba(230, 197, 138, 0.12), rgba(255, 255, 255, 0.03));
+}
+/* 卡片色是半透明的，当渐隐色会让名片透上来；取它叠在底色上的实色 */
+.skin-sr .u-row.u-bn {
+  --u-fade: #17181d;
+}
+.skin-sr .u-row.on.u-bn {
+  --u-fade: #232119;
+}
+.skin-sr .u-id {
+  font-size: 16px;
+}
+
+/* 异相仲裁的奖牌块 */
+.skin-sr .medal-blk {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+}
+.skin-sr .medal {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+.skin-sr .medal img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.skin-sr .medal img.mid {
+  padding: 16px;
+}
+.skin-sr .medal-t {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.skin-sr .medal-t b {
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+.skin-sr .medal-t span {
+  font-size: 11px;
+  color: var(--p-mute);
+}
+
+/* ========== 异相仲裁的底板与星星 ==========
+   图在 `sr/challenge/peak/`：整页、王棋、骑士三处都是
+   「上 + 中（平铺）+ 下」三段底图，奖牌总览垫 `hard_bg`，绝境王棋换 `hell_boss_bg_*`。
+   底图之下仍留皮肤底色作末层，取不到图时不至于露白。 */
+.skin-sr .pk {
+  display: flex;
+  flex-direction: column;
+  gap: var(--p-gap);
+  padding: 12px;
+  background:
+    url("../../sr/challenge/peak/block_bg_top.png") left top / 100% auto no-repeat,
+    url("../../sr/challenge/peak/block_bg_bottom.png") left bottom / 100% auto no-repeat,
+    url("../../sr/challenge/peak/block_bg_mid.png") left center / 100% auto repeat-y,
+    var(--p-bg);
+}
+.skin-sr .pk-ov {
+  padding: 10px 12px;
+  background: url("../../sr/challenge/peak/hard_bg.png") center / cover no-repeat;
+}
+.skin-sr .pk-boss,
+.skin-sr .pk-mob {
+  padding: 10px 12px;
+  border-top-right-radius: 18px;
+}
+.skin-sr .pk-boss {
+  background:
+    url("../../sr/challenge/peak/boss_bg_top.png") left top / 100% auto no-repeat,
+    url("../../sr/challenge/peak/boss_bg_bottom.png") left bottom / 100% auto no-repeat,
+    url("../../sr/challenge/peak/boss_bg_mid.png") left center / 100% auto repeat-y,
+    var(--p-card);
+}
+.skin-sr .pk-boss.hell {
+  background:
+    url("../../sr/challenge/peak/hell_boss_bg_top.png") left top / 100% auto no-repeat,
+    url("../../sr/challenge/peak/hell_boss_bg_bottom.png") left bottom / 100% auto no-repeat,
+    url("../../sr/challenge/peak/hell_boss_bg_mid.png") left center / 100% auto repeat-y,
+    var(--p-card);
+}
+.skin-sr .pk-mob {
+  background:
+    url("../../sr/challenge/peak/mob_bg_top.png") left top / 100% auto no-repeat,
+    url("../../sr/challenge/peak/mob_bg_bottom.png") left bottom / 100% auto no-repeat,
+    url("../../sr/challenge/peak/mob_bg_mid.png") left center / 100% auto repeat-y,
+    var(--p-card);
+}
+/* 首领 / 关卡图是右上角的半透明衬底，不进排版：接口给的是整幅立绘，按流排会把整块撑到几百像素高 */
+.skin-sr .pk-boss,
+.skin-sr .pk-mob {
+  position: relative;
+  overflow: hidden;
+}
+.skin-sr .stage-ic {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  width: 112px;
+  height: 112px;
+  object-fit: contain;
+  opacity: 0.85;
+  pointer-events: none;
+}
+.skin-sr .pk-boss > :not(.stage-h),
+.skin-sr .pk-mob > :not(.stage-h),
+.skin-sr .stage-h > :not(.stage-ic) {
+  position: relative;
+  z-index: 1;
+}
+.skin-sr .stage-h {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 24px;
+  margin-bottom: 8px;
+}
+.skin-sr .stage-h .rt {
+  font-size: 11px;
+  color: var(--p-mute);
+}
+.skin-sr .buff-b {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+/* 星星用官方那几张图：王棋 / 骑士各一套，未得的那颗换 `_fail` 图并压暗 */
+.skin-sr .pk-stars {
+  display: inline-flex;
+  gap: 2px;
+  align-items: center;
+}
+.skin-sr .pk-stars img {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+.skin-sr .pk-stars img.off {
+  opacity: 0.45;
+}
+
+/* ========== 星铁便笺与开拓月历的装饰 ==========
+   uid 那一格的底 `uidbg.png`；月历正文走 base.css 的 `lb-*`。
+   页底不垫图：非玩法类的图一律只用皮肤底色。 */
+.skin-sr .sr-uid {
+  align-self: flex-start;
+  display: inline-flex;
+  gap: 6px;
+  align-items: baseline;
+  padding: 3px 18px 3px 12px;
+  background: url("../../sr/note/uidbg.png") center / 100% 100% no-repeat;
+  font-size: 10px;
+}
+.skin-sr .sr-uid b {
+  font-family: var(--p-num);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--p-acc);
+}
+/* 便笺那一卡：左两栏开拓力、右一列每日事项，中间一道虚线 */
+.skin-sr .sr-note {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 14px;
+}
+.skin-sr .sr-note-l {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 14px;
+  border-right: 1px dashed var(--p-line);
+}
+.skin-sr .sr-note-l .nt {
+  border-bottom: 0;
+  grid-template-columns: 36px minmax(0, 1fr);
+}
+.skin-sr .sr-note-n {
+  font-family: var(--p-num);
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--p-ink);
+}
+.skin-sr .sr-note-l .nt.hot .sr-note-n {
+  color: var(--bad);
+}
+.skin-sr .sr-note-l .bar-t {
+  margin: 0 0 8px 44px;
+}
+/* 右列照官方：没做完的那项取强调色，做完的回到正文色；不用告警红 */
+.skin-sr .sr-note-r .nt-v {
+  color: var(--p-ink);
+}
+.skin-sr .sr-note-r .nt.hot .nt-v {
+  color: var(--p-acc);
+  font-weight: 400;
+}
+/* ========== 忘却之庭三类（混沌回忆 / 虚构叙事 / 末日幻影）的装饰 ==========
+   页底 story_bg 平铺、
+   页顶 bg1、页脚 footer；摘要卡按 kind 取 top_bg（虚构）/ boss_bg（末日）/ bg2（混沌），
+   关卡卡取 floor（虚构）/ boss_bg（末日），混沌回忆的关卡卡不加底图。
+   页底装饰只给体现玩法的这三张，其余各图一律只用皮肤底；`.sc-deco` 垫在最底层，其后正文抬到它之上。 */
+.skin-sr .sc-deco {
+  position: absolute;
+  inset: 0;
+  background:
+    url("../../sr/challenge/footer.png") left bottom / 100% auto no-repeat,
+    url("../../sr/challenge/bg1.png") left top / 100% auto no-repeat,
+    url("../../sr/challenge/story/story_bg.png") center top / 100% auto repeat-y;
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 0;
+}
+.skin-sr .sc-deco ~ * {
+  position: relative;
+  z-index: 1;
+}
+.skin-sr .sc-top.k-story {
+  background: url("../../sr/challenge/story/top_bg.png") center / 100% 100% no-repeat, var(--p-card);
+}
+.skin-sr .sc-top.k-boss {
+  background: url("../../sr/challenge/boss/boss_bg.png") center / 100% 100% no-repeat, var(--p-card);
+}
+.skin-sr .sc-top.k-memory {
+  background: url("../../sr/challenge/bg2.png") center top / 100% auto no-repeat, var(--p-card);
+}
+.skin-sr .sc-floor.k-story {
+  background: url("../../sr/challenge/story/floor.png") center -30px / 100% auto repeat-y, var(--p-card);
+}
+.skin-sr .sc-floor.k-boss {
+  background: url("../../sr/challenge/boss/boss_bg.png") center top / 100% auto no-repeat, var(--p-card);
+}
+.skin-sr .sc-bosses {
+  display: flex;
+  gap: 18px;
+  margin-top: 4px;
+}
+/* 星格：普通星 32px、额外星 207px 的原图，不定尺寸则额外星把整行撑开 */
+.skin-sr .sc-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.skin-sr .sc-stars img {
+  width: 13px;
+  height: 13px;
+}
+.skin-sr .sc-stars img.ex {
+  width: 17px;
+  height: 17px;
+}
+.skin-sr .sc-stars .sep {
+  width: 1px;
+  height: 12px;
+  margin: 0 4px;
+  background: var(--p-line);
+}
+.skin-sr .sc-stars.lg {
+  gap: 4px;
+}
+.skin-sr .sc-stars.lg img {
+  width: 24px;
+  height: 24px;
+}
+.skin-sr .sc-stars.lg img.ex {
+  width: 30px;
+  height: 30px;
+}
+.skin-sr .sc-stars.lg b {
+  font-family: var(--p-num);
+  font-size: 32px;
+  line-height: 1;
+  font-weight: 400;
+  color: var(--p-acc);
+  margin: 0 4px 0 2px;
+}
+.skin-sr .sc-stars.lg .sep {
+  height: 24px;
+}
+.skin-sr .sc-mode {
+  border: 1px solid var(--p-line);
+  padding: 0 6px;
+  color: var(--p-mute);
+}
+.skin-sr .sc-mode.hard {
+  border-color: rgba(170, 140, 255, 0.7);
+  background: rgba(130, 100, 230, 0.22);
+  color: #d9ccff;
+}
+
+/* 活动日历：类型图是黑色 svg，深底上反白 */
+.skin-sr .ec-type {
+  filter: brightness(0) invert(1);
+  opacity: 0.85;
+}
+.skin-sr .p-head.has-bg {
+  min-height: 170px;
+}
+.skin-sr .p-head-bg {
+  object-position: center 6%;
+}
+
+/* ========== 货币战争单场（sr/currency-war）：评级徽章 + 段位，前后台两栏，伤害条带头像 ========== */
+.skin-sr .gw-h {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.skin-sr .gw-rank {
+  display: grid;
+  place-items: center;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 6px;
+  border-radius: 6px;
+  font-family: var(--p-num);
+  font-size: 20px;
+  font-weight: 700;
+  color: #1c1912;
+  background: linear-gradient(160deg, #e9d3a1, #b48a4c);
+}
+.skin-sr .gw-rank.r-SSS,
+.skin-sr .gw-rank.r-SS {
+  background: linear-gradient(160deg, #ffe08a, #e07a3a);
+}
+.skin-sr .gw-rank.r-A,
+.skin-sr .gw-rank.r-B,
+.skin-sr .gw-rank.r-C {
+  color: #e8e4dc;
+  background: linear-gradient(160deg, #5b6476, #343a47);
+}
+.skin-sr .gw-rank.sm {
+  min-width: 22px;
+  height: 18px;
+  font-size: 11px;
+  border-radius: 4px;
+}
+.skin-sr .gw-t {
+  display: flex;
+  flex-direction: column;
+}
+.skin-sr .gw-t b {
+  font-size: 16px;
+}
+.skin-sr .gw-t span {
+  font-size: 10px;
+  color: var(--p-mute);
+}
+.skin-sr .gw-team,
+.skin-sr .gw-inv {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.skin-sr .gw-side {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.skin-sr .gw-side + .gw-side {
+  padding-left: 10px;
+  border-left: 1px solid var(--p-line);
+}
+.skin-sr .gw-side > small {
+  font-size: 10px;
+  color: var(--p-mute);
+}
+.skin-sr .gw-dmgs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.skin-sr .gw-dmg {
+  display: grid;
+  grid-template-columns: 20px 76px minmax(0, 1fr) 64px;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+}
+.skin-sr .gw-dmg-ic {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: center / cover no-repeat, var(--p-line);
+}
+.skin-sr .gw-dmg-nm {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.skin-sr .gw-dmg b {
+  font-family: var(--p-num);
+  font-weight: 400;
+  text-align: right;
+}
+.skin-sr .gw-recent {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 10px;
+}
+.skin-sr .gw-rc {
+  display: grid;
+  grid-template-columns: 16px 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.03);
+}
+.skin-sr .gw-rc.on {
+  box-shadow: inset 0 0 0 1px var(--p-acc);
+}
+.skin-sr .gw-rc em {
+  font-style: normal;
+  font-family: var(--p-num);
+  color: var(--p-mute);
+}
+.skin-sr .gw-rc b {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.skin-sr .gw-rc small {
+  color: var(--p-mute);
+  font-family: var(--p-num);
+}

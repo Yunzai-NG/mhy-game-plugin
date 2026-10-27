@@ -1,0 +1,60 @@
+<!--
+  模块职责：深渊单层详情（`#深渊12层`）—— 逐间的星数、时刻与上下半两队，与总览同一套深色版式
+  依赖方向：extend skinLayout，include common/skin 下的 head / foot 与 common/avatar-card.html；装饰见 gs.css 的深渊一节
+  生命周期：静态模板
+  注意事项：上场角色存的是 id，要过 `avatars` 那张表取卡（与 gs/abyss.html 同口径）；试用角色的卡退回
+            接口给的头像，故卡里的图一律按 `meta-` 前缀判根（见 `template-img-two-roots`）。
+            数组字面量要先 `set` 再遍历（见 `art-template-each-needs-set`）。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<i class="ab-deco"></i>
+<div class="ab">
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'SPIRAL ABYSS',
+  title: '深境第' + floorIndex + '层' + (msg ? ' · ' + msg : ''),
+  sub: '共 ' + rooms.length + ' 间',
+  who: {uid: uid, name: name}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+{{set sides = ['up', 'down']}}
+<!-- 一队几人就配几种卡（四人四张小卡、三人一宽两小、两人两宽、一人一张双宽），总宽恒等，竖线两侧对得齐 -->
+{{set cardTypes = {1: ['wide wide2'], 2: ['wide', 'wide'], 3: ['wide', 'mini', 'mini'], 4: ['mini', 'mini', 'mini', 'mini']} }}
+{{set three = [1, 2, 3]}}
+<section class="ab-floor">
+  <div class="ab-fh" style="background-image:url('{{_res_path}}gs/abyss/floor{{floorIndex}}.png')">
+    <b>第 {{floorIndex}} 层</b>
+    <span><img class="ab-star" src="{{_res_path}}gs/abyss/star.png" alt="">{{floor.star}} / {{floor.maxStar}}</span>
+  </div>
+  {{each rooms room}}
+  <div class="ab-fl-room">
+    {{set up = room.up || {} }}
+    <div class="ab-room-h">
+      <b>第 {{room.index}} 间</b>
+      {{if up.time}}<span class="ab-fl-time">{{up.time}}</span>{{/if}}
+      <span class="ab-stars">{{each three n}}<img class="{{room.star < n ? 'off' : ''}}" src="{{_res_path}}gs/abyss/star.png" alt="">{{/each}}</span>
+    </div>
+    <div class="halves">
+      {{each sides k}}
+      {{set half = room[k] || {} }}
+      <div class="half">
+        <small>{{k === 'up' ? '上半' : '下半'}}</small>
+        <div class="mcs">
+          {{each half.avatars id idx}}
+          <% include(_tpl_path + '/avatar-card.html', [avatars[id], {_res_path, _meta_path, _tpl_path, cardType: (cardTypes[half.avatars.length] || [])[idx] || 'mini'}]) %>
+          {{/each}}
+        </div>
+      </div>
+      {{/each}}
+    </div>
+  </div>
+  {{/each}}
+</section>
+
+<% include(_tpl_path + '/skin/foot.html', [{
+  tips: [_hash + '深渊 看九到十二层总览', '角色装备与圣遗物为当前最新状态，不是当时上场的配装'],
+  note: '数据来自米游社战绩'
+}]) %>
+</div>
+{{/block}}

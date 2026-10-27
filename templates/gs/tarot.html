@@ -1,0 +1,42 @@
+<!--
+  模块职责：月谕圣牌（`#圣牌`）—— 收集进度与逐张牌面
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head
+  生命周期：静态模板
+  注意事项：两处判据。一是牌面图与顶栏头像**都是米游社接口给的绝对地址**，一处根都不加
+            （见 `template-img-two-roots`）。二是未解锁的牌官方画的是一张统一背面图，本插件
+            不带那张素材，故用压暗加牌名 —— 不可拿插件里别的图充当背面。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<!-- 与剧诗同一族：页眉页脚花饰取 page-top / page-bottom，正文包在 .cb 里抬到装饰之上 -->
+<i class="cb-deco top"></i>
+<i class="cb-deco bottom"></i>
+<div class="cb">
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'MOON TAROT',
+  title: '月谕圣牌',
+  sub: current + ' / ' + total,
+  who: {
+    face: role.game_head_icon,
+    fromMeta: false,
+    name: role.nickname,
+    uid: uid,
+    level: role.level ? 'Lv.' + role.level : ''
+  }
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '月谕圣牌', note: current + ' / ' + total}]) %>
+  <div class="cards">
+    {{each cards one}}
+    <div class="cd {{one.unlock ? '' : 'off'}}">
+      <img src="{{one.icon}}" onerror="whenError(this)" alt="">
+      {{if one.count}}<b>{{one.count}}</b>{{/if}}
+      <span class="cd-nm">{{one.name}}</span>
+    </div>
+    {{/each}}
+  </div>
+</section>
+</div>
+{{/block}}

@@ -1,0 +1,88 @@
+<!--
+  模块职责：角色列表（`#角色`）—— 玩家摘要、探索度、宝箱与整卡网格
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / foot、common/gs-area-cards（与 `#信息` 同一套地区卡）
+            与 common/avatar-card（与战绩图同一张卡）
+  生命周期：静态模板
+  注意事项：三处判据。一是探索度与宝箱**只原神有**（星铁的 index 接口不给这两段、视图层随之
+            不产出 `areas` 与 `chestMap`），故两块各自判存在；星铁走到那里会整块留空。
+            二是玩家头像可能是米游社给的绝对地址，按 `meta-` 前缀判根；横幅恒在元数据里。
+            三是「未绑定CK或CK失效」那句原文出现在两处（顶部与页脚），文案不可改义。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+{{set ut = updateTime || {} }}
+
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'TRAVELER RECORD',
+  title: '角色列表',
+  sub: info.activeDay ? '活跃 ' + info.activeDay : '',
+  who: {
+    face: face.qFace || face.face,
+    name: face.name,
+    uid: uid,
+    level: face.level && face.level > 1 ? 'Lv.' + face.level : ''
+  }
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+{{if info && info.stats}}
+<div class="kv">
+  {{each info.statMap title key}}
+  {{if info.stats[key]}}
+  <div class="kv-i">
+    <b>{{info.stats[key]}}</b>
+    <span>{{title}}</span>
+  </div>
+  {{/if}}
+  {{/each}}
+</div>
+{{/if}}
+
+{{if !isSelfCookie}}
+<div class="p-sub">未绑定CK或CK失效，信息可能不完全。发送 {{_hash}}CK帮助 查看CK绑定方法，发送 {{_hash}}更新面板 更新游戏内角色展柜信息</div>
+{{/if}}
+
+{{if info && info.areas && info.areas.length}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '世界探索', note: '各地区详情用 ' + _hash + '探索'}]) %>
+  <% include(_tpl_path + '/gs-area-cards.html', [info.areas, {_res_path}]) %>
+</section>
+{{/if}}
+
+{{if info && info.stats && info.stats.commonChest}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '宝箱'}]) %>
+  <!-- 宝箱图标是精灵图 `character/imgs/chest.webp`，偏移按 idx 乘 20%；上限取「上限与实数」的较大者 -->
+  <div class="kv">
+    {{each info.chestMap cfg idx}}
+    <div class="kv-i">
+      <i class="al-chest" style="background-position:{{idx * 20}}% 0"></i>
+      <b>{{info.stats[cfg.key]}}<s>/{{cfg.max > info.stats[cfg.key] ? cfg.max : info.stats[cfg.key]}}</s></b>
+      <span>{{cfg.title}}</span>
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/if}}
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '角色列表', note: avatars.length + ' 位'}]) %>
+  <div class="mcs is-list">
+    {{each avatars avatar}}
+    <% include(_tpl_path + '/avatar-card.html', [avatar, {_res_path, _meta_path, cardType: 'mini'}]) %>
+    {{/each}}
+  </div>
+</section>
+
+{{if ut.profile || ut.mys}}
+<% include(_tpl_path + '/skin/foot.html', [{
+  tips: [(ut.profile ? _hash + '更新面板：' + ut.profile : ''), (ut.mys ? '米游社：' + ut.mys : '')],
+  note: '数据更新时间'
+}]) %>
+{{else}}
+<% include(_tpl_path + '/skin/foot.html', [{
+  tips: [_hash + 'CK帮助 查看CK绑定方法', _hash + '更新面板 更新角色展柜信息'],
+  note: '未绑定CK或CK失效，信息可能不完全'
+}]) %>
+{{/if}}
+{{/block}}

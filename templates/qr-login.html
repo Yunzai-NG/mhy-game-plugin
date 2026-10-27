@@ -1,0 +1,38 @@
+<!--
+  模块职责：扫码登录卡片（`#扫码登录`）—— 二维码、标识码、有效期与几条提示
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head
+  生命周期：静态模板
+  注意事项：一是二维码是视图层用 core/qr 画好的 SVG 文本，须原样输出，转义只印出尖括号。
+            二是**说明画在图里、不另发文字**：分两条时群里插一句话就把两者隔开，有人会扫上一张过期的码。
+            三是**标识码印在二维码下方**：群里可能同时挂着几张一模一样的码，扫的人靠它核对是不是自己的。
+            四是登录与游戏无关，不带 `game`、落到中性皮肤；警示那两条（`one.warn`）讲「扫错会怎样」，标红。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'QR LOGIN',
+  title: title,
+  sub: subtitle
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<section class="p-sec">
+  <div class="qr">
+    {{@svg}}
+    <div class="qr-c">
+      <span>标识码</span>
+      <b>{{code}}</b>
+    </div>
+    <span class="p-sub">{{expire}}</span>
+  </div>
+</section>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '怎么扫'}]) %>
+  <div class="notes">
+    {{each tips one}}
+    <p class="{{one.warn ? 'warn' : ''}}">{{one.text}}</p>
+    {{/each}}
+  </div>
+</section>
+{{/block}}

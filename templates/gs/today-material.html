@@ -1,0 +1,110 @@
+<!--
+  模块职责：今日材料（`#今日材料` / `#明日材料` / `#周三材料`）—— 按地区分段，天赋书一段、武器材料一段
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / avatar / foot
+  生命周期：静态模板
+  注意事项：四处判据。一是地区图标由视图给的是**已带子目录的相对路径**（`cityData.cityIcon`），
+            故只补 `_res_path`、不再自己拼目录；角色头像与材料图在元数据里，走 `_meta_path`
+            （见 `template-img-two-roots`）。
+            二是两段的次序固定「先天赋书后武器」—— 由外层那趟 `kinds` 定，颠倒了与页脚那句
+            「武器只列已装备的」对不上。
+            三是 `isMax` 的那些压暗但仍列出（已满级的角色/武器），删掉会让人以为漏数据。
+            四是数组字面量要先经 `set` 再用（见 `art-template-each-needs-set`）。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+{{set kinds = ['talent', 'weapon']}}
+
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'TODAY MATERIALS',
+  title: day + '材料',
+  who: {uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+{{each kinds kind}}
+{{each data cityData}}
+{{set curr = cityData[kind] || {} }}
+{{if curr.data && curr.data.length > 0}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{
+    title: cityData.city + (kind === 'talent' ? ' · 天赋书' : ' · 武器材料'),
+    note: curr.material.name
+  }]) %>
+
+  <!-- 材料格垫 wiki/imgs/item-bg.png（`.ics.tm`，见 base.css） -->
+  <div class="ics tm">
+    {{each curr.material.icons icon}}
+    <div class="ic"><img src="{{_meta_path}}{{icon}}" onerror="whenError(this)" alt=""></div>
+    {{/each}}
+  </div>
+
+  {{if kind === 'talent'}}
+  {{set cardMap = cards || {} }}
+  <!-- 有整卡的那几位与角色列表 / 深渊同一张卡（天赋、武器、套装都在卡上），练满的压暗；面板库没有的退回下面那排头像格 -->
+  <div class="mcs is-list tm-cards">
+    {{each curr.data char}}
+    {{if cardMap[char.id]}}
+    <div class="tm-card {{char.isMax ? 'off' : ''}}">
+      <% include(_tpl_path + '/avatar-card.html', [cardMap[char.id], {_res_path, _meta_path, cardType: 'mini'}]) %>
+    </div>
+    {{/if}}
+    {{/each}}
+  </div>
+  <div class="acs">
+    {{each curr.data char}}
+    {{if !cardMap[char.id]}}
+    <div class="ac {{char.isMax ? 'off' : ''}}">
+      <div class="ac-top">
+        <% include(_tpl_path + '/skin/avatar.html', [{
+          face: char.face, star: char.star, level: char.level,
+          cons: char.cons > 0 ? char.cons : ''
+        }, {_res_path, _meta_path, size: 'sm'}]) %>
+        <div class="ac-txt">
+          <b>{{char.abbr || char.name}}</b>
+          <span>Lv{{char.level}}</span>
+        </div>
+      </div>
+      <div class="ac-tal">
+        {{each char.talent talent}}
+        <span class="tl {{talent.original >= 10 ? 'crown' : ''}} {{talent.level > talent.original ? 'plus' : ''}}">{{talent.level}}</span>
+        {{/each}}
+      </div>
+    </div>
+    {{/if}}
+    {{/each}}
+  </div>
+  {{/if}}
+
+  {{if kind === 'weapon'}}
+  <div class="acs">
+    {{each curr.data weapon}}
+    <div class="ac {{weapon.isMax ? 'off' : ''}}">
+      <div class="ac-top">
+        <div class="cr-ic r{{weapon.star == 4 ? 4 : (weapon.star == 3 ? 3 : 5)}}" style="--av-fg:url('{{_meta_path}}{{weapon.icon}}')">
+          {{if weapon.affix > 1}}<span>{{weapon.affix}}</span>{{/if}}
+        </div>
+        <div class="ac-txt">
+          <b>{{weapon.abbr}}</b>
+          <span>Lv{{weapon.level}}</span>
+        </div>
+      </div>
+      <div class="ac-gear">
+        <div class="pd-arti-who"><img src="{{_meta_path}}{{weapon.face}}" onerror="whenError(this)" alt=""></div>
+      </div>
+    </div>
+    {{/each}}
+  </div>
+  {{/if}}
+</section>
+{{/if}}
+{{/each}}
+{{/each}}
+
+<% include(_tpl_path + '/skin/foot.html', [{
+  tips: [
+    '按你已拥有的角色列出今天可升天赋的角色，武器只列已装备的',
+    '角色与等级来自米游社，需绑定 CK；天赋等级来自本地缓存，可用 ' + _hash + '更新面板 补上',
+    '想看别的日子：' + _hash + '明日材料　' + _hash + '周三材料'
+  ]
+}]) %>
+{{/block}}

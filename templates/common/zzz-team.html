@@ -1,0 +1,35 @@
+<!--
+  模块职责：绝区零战绩图上的一队 —— 三格代理人加一只邦布，三张战绩图共用一份
+  依赖方向：include common/zzz-avatar-card.html 与 common/skin/avatar.html；被三张战绩图 include
+  生命周期：静态片段
+  注意事项：四处判据。一是**入参不动**（`$data[0]` 是那一场记录、`$data[1]` 带两个根与 `_tpl_path`）。
+            二是两种渲染按 `a.card` 分：命令层接了面板库时每格带一张整卡、走 zzz-avatar-card；
+            没接时 `a.card` 缺，退回紧凑小卡。两条路并存，故战绩页可逐个接入、不互相牵动。
+            三是头像与邦布图按视图给的 `fromMeta` 判根：为真时是元数据里的相对路径要加
+            `_meta_path`，为假时是米游社的完整地址、一处根都不能加。
+            四是空位也占一格（`a.empty`）：丢掉会让同一行其余卡片向左错位。
+-->
+{{set one = $data[0] || {} }}
+{{set {_res_path, _meta_path, _tpl_path} = $data[1] || {} }}
+{{set isCard = one.avatars && one.avatars[0] && one.avatars[0].card}}
+
+<div class="zt {{isCard ? 'is-card' : ''}}">
+  {{each one.avatars a}}
+  {{if a.card}}
+  <% include(_tpl_path + '/zzz-avatar-card.html', [a.card, {_res_path, _meta_path, _tpl_path, cardType: 'mini'}]) %>
+  {{else if a.empty}}
+  <div class="av sm"><div class="av-img"></div></div>
+  {{else}}
+  <% include(_tpl_path + '/skin/avatar.html', [{
+    face: a.icon, fromMeta: a.fromMeta, star: a.rarity == 'A' ? 4 : 5,
+    cons: a.rank ? a.rank : '', name: a.name, level: a.name ? '' : a.level
+  }, {_res_path, _meta_path, size: 'sm'}]) %>
+  {{/if}}
+  {{/each}}
+  {{if one.buddy}}
+  <% include(_tpl_path + '/skin/avatar.html', [{
+    face: one.buddy.icon, fromMeta: one.buddy.fromMeta,
+    star: one.buddy.rarity == 'A' ? 4 : 5
+  }, {_res_path, _meta_path, size: 'sm'}]) %>
+  {{/if}}
+</div>

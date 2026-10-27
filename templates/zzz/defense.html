@@ -1,0 +1,60 @@
+<!--
+  模块职责：式舆防卫战（`%式舆防卫战`）—— 防线由高到低排，第五层另有总分那一块
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / foot 与 common/zzz-team.html
+  生命周期：静态模板
+  注意事项：四处判据。一是评级样式名里那个加号已在视图层换成 P（css 类名不能带加号），
+            故此处取 `ratingClass` 而非 `rating`，取错只是配色不对、不报错。
+            二是官方只给第五层总分、评级、排名与总用时，另四层只有评级与通关时刻，故那几项
+            各自判存在。三是首领立绘与增益图标都是米游社的绝对地址，一处根都不加
+            （见 `template-img-two-roots`）。四是「总分与排名同挑战详情并非同时刷新，详情约有
+            两小时延迟」这句是对使用者的交代，不可删。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'SHIYU DEFENSE',
+  title: title,
+  sub: period + (begin ? '　' + begin + ' - ' + end : ''),
+  who: {uid: uid, name: nickname || '绳匠'}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<div class="bigline">
+  <b>{{score}}</b>
+  {{if full}}<span class="tag hi">满分</span>{{/if}}
+  {{if rating}}<span class="rate {{ratingClass}}">{{rating}}</span>{{/if}}
+  {{if rank}}<span class="tag">前 {{rank}}</span>{{/if}}
+  {{if cost}}<span class="tag">总用时 {{cost}}</span>{{/if}}
+  {{if time}}<span class="tag">{{time}}</span>{{/if}}
+</div>
+
+{{each layers layer}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{
+    title: layer.name,
+    note: (layer.rating ? layer.rating : '') + (layer.time ? '　' + layer.time : '')
+  }]) %>
+  {{each layer.rooms room i}}
+  <!-- 与危局 / 拟境同一种三行：第几间｜评级与分数、增益｜时间、队伍；首领图作右上角弱透明背景（.zb2） -->
+  <div class="zb2">
+    {{if room.monster}}<div class="zb2-bg" style="background-image:url('{{room.monster}}')"></div>{{/if}}
+    <div class="zb2-r">
+      <b class="zb2-boss">第 {{i + 1}} 间</b>
+      <span class="zb2-rt">
+        {{if room.score}}<span class="zb-score">{{room.score}}</span>{{/if}}
+        {{if room.full}}<span class="tag hi">满</span>{{/if}}
+        {{if room.rating}}<span class="rate {{room.ratingClass}}">{{room.rating}}</span>{{/if}}
+      </span>
+    </div>
+    <div class="zb2-r sub">
+      {{if room.buff}}<span class="zb2-buff"><b>增益</b>{{room.buff}}</span>{{/if}}
+      <span class="zb2-rt">{{room.time}}</span>
+    </div>
+    <% include(_tpl_path + '/zzz-team.html', [room, {_res_path, _meta_path, _tpl_path}]) %>
+  </div>
+  {{/each}}
+</section>
+{{/each}}
+
+<% include(_tpl_path + '/skin/foot.html', [{note: '总分与排名同挑战详情并非同时刷新，详情约有两小时延迟'}]) %>
+{{/block}}

@@ -1,0 +1,89 @@
+<!--
+  模块职责：角色卡（`#雷神卡片`）—— 一张窄卡，立绘作底，上面压武器、天赋与圣遗物三块
+  依赖方向：extend skinLayout，自己不引片段（这张窄，页头那套太宽）
+  生命周期：静态模板
+  注意事项：四处判据。一是立绘两个根：使用者上传的在 `_panel_path` 下、元数据里的 `gacha` 在
+            `_meta_path` 下，两者择一而非都画。二是 `widthStyle` 由视图层给整段 style 文本，
+            走原样输出而非转义输出，后者会把引号转掉而整条样式失效。
+            三是没有面板数据时只印 `tip` 那一句，不画三块 —— 画出来是满卡的空格子。
+            四是天赋图标有两个根，按 `meta-` 前缀判（见 `template-img-two-roots`）。
+-->
+{{extend skinLayout}}
+
+{{block 'css'}}
+{{@widthStyle}}
+{{/block}}
+
+{{block 'main'}}
+{{if splash}}
+<div class="cc-bg"><img src="{{_panel_path}}{{splash}}" onerror="whenError(this)" alt="{{name}}"></div>
+{{else if gacha}}
+<div class="cc-bg"><img src="{{_meta_path}}{{gacha}}" onerror="whenError(this)" alt="{{name}}"></div>
+{{/if}}
+
+<header class="p-head">
+  <div class="p-ttl">
+    <!-- 好感徽章：common/item/fetter.png 十格精灵图（css 见 base.css 的 `.cc-fetter`） -->
+    <h3>{{abbr || name}}{{if fetter}}<i class="cc-fetter f{{fetter}}"></i>{{/if}}</h3>
+    <span class="p-sub">UID {{uid}}{{if level}}　Lv.{{level}}{{/if}}</span>
+  </div>
+  {{if hasData}}
+  <div class="row-h">
+    <span class="tag">{{cons}}{{game === 'zzz' ? '影画' : game === 'sr' ? '魂' : '命'}}</span>
+    {{if markClass}}<span class="tag hi">{{markClass}}</span>{{/if}}
+  </div>
+  {{/if}}
+</header>
+
+{{if hasData}}
+<div class="cc-body">
+  {{if weapon}}
+  <div class="cr-blk">
+    <div class="cr-ic r{{weapon.star == 4 ? 4 : (weapon.star == 3 ? 3 : 5)}}" style="--av-fg:url('{{_meta_path}}{{weapon.img}}')">
+      <span>{{weapon.affix}}</span>
+    </div>
+    <div class="cr-txt">
+      <b>{{weapon.name}}</b>
+      <span>Lv.{{weapon.level}}</span>
+    </div>
+  </div>
+  {{/if}}
+
+  {{if talents.length}}
+  <!-- 天赋圈与群排行同一套样式（base.css 的 `.rk-tal`）：元素框垫底、图标居中、等级是圈下的小牌 -->
+  <div class="rk-tals cc-tals {{elem ? 'e-' + elem : 'e-none'}}">
+    {{each talents one}}
+    {{set ico = '' + (one.img || imgs[one.key] || '')}}
+    <div class="rk-tal {{one.crown ? 'crown' : ''}} {{one.plus ? 'plus' : ''}}" {{if frame}}style="background-image:url('{{_res_path}}common/bg/talent-{{frame}}.webp')"{{/if}}>
+      {{if ico}}<img src="{{ico.indexOf('meta-') === 0 ? _meta_path : _res_path}}{{ico}}" onerror="whenError(this)" alt="">{{/if}}
+      <span>{{one.level}}</span>
+    </div>
+    {{/each}}
+  </div>
+  {{else}}
+  <div class="ac-none">请绑定CK以获取天赋信息</div>
+  {{/if}}
+
+  <div class="cc-artis">
+    {{each artis one}}
+    {{if one.level === undefined}}
+    <div class="cc-arti none"></div>
+    {{else}}
+    <div class="cc-arti">
+      <img src="{{_meta_path}}{{one.img}}" onerror="whenError(this)" alt="">
+      <span>{{one.level}}</span>
+    </div>
+    {{/if}}
+    {{/each}}
+  </div>
+  <div class="p-sub">{{artisSet || (game === 'zzz' ? '驱动盘' : game === 'sr' ? '遗器' : '圣遗物')}}{{if markClass}} · {{markClass}}{{/if}}</div>
+</div>
+
+<footer class="p-foot">
+  <span>数据源：{{source}}</span>
+  <span>{{updateTime}}</span>
+</footer>
+{{else}}
+<div class="u-empty"><b>{{tip}}</b></div>
+{{/if}}
+{{/block}}

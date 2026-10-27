@@ -1,0 +1,20 @@
+node_modules/
+dist/
+*.tsbuildinfo
+
+# 本地自用：开发脚本与协作约定
+scripts/
+CLAUDE.md
+
+# 构建脚本的落点（拉取的元数据包等），不随仓库提交
+.cache/
+
+# 文档站是独立仓库（远端同一仓库的 docs 分支），只是检出在这里
+docs/
+
+# 编辑器 / 系统
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

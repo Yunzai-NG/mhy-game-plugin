@@ -1,0 +1,110 @@
+<!--
+  模块职责：原神实时便笺（`#体力`）—— 魔神任务、树脂、宝钱、委托与历练点、砺行修远、周本、参量质变仪、探索派遣
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head
+  生命周期：静态模板
+  注意事项：各块出不出现、印哪句都由视图定（views/gs/note.ts），模板只画。图标是相对 `resources/` 的路径，
+            一律加 `_res_path`；派遣头像是米游社给的完整地址，一处根都不加（见 `template-img-two-roots`）。
+            `journey` 可缺，整块按它判；历练点那排（`task.points`）空数组即不画。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+{{set stores = [resin, coin]}}
+{{set tails = [boss, transformer]}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'DAILY NOTE',
+  title: '实时便笺',
+  sub: day,
+  who: {uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<section class="p-sec">
+  <div class="nts">
+    {{each archon one}}
+    <div class="nt lg">
+      <div class="nt-ic lg"><img src="{{_res_path}}{{one.icon}}" alt=""></div>
+      <div class="nt-t"><b>{{one.label}}</b>{{if one.desc}}<span>{{one.desc}}</span>{{/if}}</div>
+      <div class="nt-v {{one.text ? 'txt' : ''}}">{{one.value}}</div>
+    </div>
+    {{/each}}
+  </div>
+</section>
+
+<section class="p-sec">
+  <div class="nts">
+    {{each stores one}}
+    <div class="nt lg {{one.hot ? 'hot' : ''}}">
+      <div class="nt-ic lg"><img src="{{_res_path}}{{one.icon}}" alt=""></div>
+      <div class="nt-t"><b>{{one.label}}</b>{{if one.desc}}<span>{{one.desc}}</span>{{/if}}</div>
+      <div class="nt-v {{one.text ? 'txt' : ''}}">{{one.value}}</div>
+    </div>
+    {{/each}}
+
+    <div class="nt lg {{task.hot ? 'hot' : ''}}">
+      <div class="nt-ic lg"><img src="{{_res_path}}{{task.icon}}" alt=""></div>
+      <div class="nt-t">
+        <b>{{task.label}}</b>
+        {{if task.tasks.length}}
+        <div class="nt-marks"><em>委托任务</em>{{each task.tasks m}}<i class="nt-mark"><img src="{{_res_path}}{{m.icon}}" alt=""></i>{{/each}}</div>
+        {{/if}}
+        {{if task.points.length}}
+        <div class="nt-marks"><em>历练点</em>{{each task.points m}}<i class="nt-mark {{m.ringed ? 'ring' : ''}}" style="--r:{{m.ring || 0}}"><img src="{{_res_path}}{{m.icon}}" alt=""></i>{{/each}}</div>
+        {{/if}}
+      </div>
+      <div class="nt-v {{task.text ? 'txt' : ''}}">{{task.value}}</div>
+    </div>
+    {{if task.stored}}
+    <div class="nt-sub">
+      <span>长效历练点 <b><img src="{{_res_path}}gs/note/长效历练点.png" alt="">{{task.stored}}</b></span>
+      {{if task.storedLeft}}<span>重置倒计时：{{task.storedLeft}}</span>{{/if}}
+    </div>
+    {{/if}}
+
+    {{if journey}}
+    <div class="nt lg">
+      <div class="nt-ic lg"><img src="{{_res_path}}{{journey.icon}}" alt=""></div>
+      <div class="nt-t">
+        <b>{{journey.label}}</b>
+        {{if journey.locked}}
+        <span>{{journey.desc}}</span>
+        {{else}}
+        <div class="nt-week"><span>{{journey.desc}}</span><b>{{journey.week}}</b></div>
+        <div class="nt-dots">
+          {{each journey.dots d}}
+          <i class="nt-dot">{{if d.done}}<img src="{{_res_path}}gs/note/本周-已完成.png" alt="">{{else if d.today}}<img src="{{_res_path}}gs/note/本周-今天.png" alt="">{{/if}}</i>
+          {{/each}}
+        </div>
+        {{/if}}
+      </div>
+      <div class="nt-v {{journey.text ? 'txt' : ''}}">{{journey.value}}</div>
+    </div>
+    {{/if}}
+
+    {{each tails one}}
+    <div class="nt lg {{one.hot ? 'hot' : ''}}">
+      <div class="nt-ic lg"><img src="{{_res_path}}{{one.icon}}" alt=""></div>
+      <div class="nt-t"><b>{{one.label}}</b>{{if one.desc}}<span>{{one.desc}}</span>{{/if}}</div>
+      <div class="nt-v {{one.text ? 'txt' : ''}}">{{one.value}}</div>
+    </div>
+    {{/each}}
+  </div>
+</section>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '探索派遣限制（' + expeditionCount + '）'}]) %>
+  {{if expeditions.length}}
+  <div class="nt-exps">
+    {{each expeditions ex}}
+    <div class="nt-exp {{ex.done ? 'done' : ''}}">
+      <img src="{{ex.icon}}" onerror="whenError(this)" alt="">
+      <span>{{ex.text}}</span>
+    </div>
+    {{/each}}
+  </div>
+  {{else}}
+  <div class="p-sub">尚未进行探索派遣</div>
+  {{/if}}
+</section>
+
+<div class="p-sub">*数据刷新可能存在一定延迟，请以当前游戏实际数据为准</div>
+{{/block}}

@@ -1,0 +1,77 @@
+<!--
+  模块职责：七圣召唤卡牌收集度（`#七圣卡牌`）—— 等级、收集数与逐张角色牌、行动牌
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head
+  生命周期：静态模板
+  注意事项：四处判据。一是卡面 `one.image` 是米游社给的绝对地址，**一处根都不加**；底框与
+            数字图在插件资源里走 `_res_path`（见 `template-img-two-roots`）。
+            二是数字图只有 0 到 8 与 10、**没有 9**，照录未补。
+            三是「只画已拥有的卡」那个判断已在视图层做掉（`num` 大于零），此处不再逐张判。
+            四是两句说明（左下角为胜利场数/使用次数、仅展示已有卡）字句不改：数字的含义
+            不印出来没人看得懂，而「仅展示已有」少了会让人以为收集度算错。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'GENIUS INVOKATION',
+  title: '七圣召唤',
+  sub: level > 0 ? '等级 ' + level : '',
+  who: {name: nickname, uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+<img class="game-logo" src="{{_res_path}}gs/other/原神.png" alt="">
+
+{{if level > 0}}
+<div class="p-stats" style="--n:3">
+  <!-- 等级垫 `gs/deck/七圣召唤.png` 徽章（`.gcg-lv`，见 gs.css） -->
+  <div class="st hi"><b><span class="gcg-lv">{{level}}</span></b><span>等级</span></div>
+  <div class="st"><b>{{avatarGained}}</b><span>已收集角色牌</span></div>
+  <div class="st"><b>{{actionGained}}</b><span>已收集行动牌</span></div>
+</div>
+{{if avatars.length === 0 && actions.length === 0}}
+<div class="notes"><p>卡牌明细获取失败，请稍后再试</p></div>
+{{/if}}
+{{/if}}
+
+{{if avatars.length > 0}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '角色牌详情', note: '左下角为胜利场数/使用次数，仅展示已有角色牌'}]) %>
+  <div class="cards">
+    {{each avatars one}}
+    <div class="cd">
+      <img src="{{one.image}}" onerror="whenError(this)" alt="">
+      <img class="cd-frame" src="{{_res_path}}gs/deck/边框.png" alt="">
+      <div class="cd-hp">
+        <img src="{{_res_path}}gs/deck/容器.png" alt="">
+        <img src="{{_res_path}}gs/deck/{{one.hp}}.png" onerror="whenError(this)" alt="">
+      </div>
+      <b>{{one.proficiency}}/{{one.useCount}}</b>
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/if}}
+
+{{if actions.length > 0}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '行动牌详情', note: '左下角为使用次数，仅展示已有行动牌'}]) %>
+  <div class="cards">
+    {{each actions one}}
+    <div class="cd">
+      <img src="{{one.image}}" onerror="whenError(this)" alt="">
+      <img class="cd-frame" src="{{_res_path}}gs/deck/边框.png" alt="">
+      <div class="cd-cost">
+        {{each one.cost c}}
+        <span>
+          <img src="{{_res_path}}gs/deck/{{c.type}}.png" onerror="whenError(this)" alt="">
+          <img src="{{_res_path}}gs/deck/{{c.value}}.png" onerror="whenError(this)" alt="">
+        </span>
+        {{/each}}
+      </div>
+      <b>{{one.useCount}}</b>
+      <em>{{one.num}}</em>
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/if}}
+{{/block}}

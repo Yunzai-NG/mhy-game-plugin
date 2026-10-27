@@ -1,0 +1,22 @@
+<!--
+  模块职责：原神地区小卡片（`#信息`、`#角色列表` 的世界探索一块）—— 徽记、地区名与探索度、特殊区域、声望几行
+  依赖方向：被 profile.html 与 character/avatar-list.html include；数据由 views/gs/player.ts 的 exploreCards 给
+  生命周期：静态片段
+  注意事项：底图、徽记与配色都按 `key` 取（`雪山`、`至冬` 是插件内的叫法，接口名逐版本改过），按 `name` 取则一格空白。
+            底的四层与 `#探索` 同一套，见 gs.css 的 `.pf-area`。
+-->
+{{set list = $data[0] || [] }}
+{{set {_res_path} = $data[1] || {} }}
+<div class="pf-area-g">
+  {{each list val}}
+  <div class="pf-area" data-area="{{val.key}}" style="background-image:url('{{_res_path}}gs/area/{{val.key}}.png')">
+    <img class="pf-area-ic" src="{{_res_path}}gs/area-icon/{{val.key}}.png" onerror="this.onerror=null;this.className+=' miss';this.src='data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='" alt="">
+    <div class="pf-area-t">
+      <b>{{val.name}}</b>
+      {{each val.line line}}
+      <span>{{line.name}}<em>{{line.text}}</em></span>
+      {{/each}}
+    </div>
+  </div>
+  {{/each}}
+</div>

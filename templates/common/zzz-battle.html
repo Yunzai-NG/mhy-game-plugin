@@ -1,0 +1,49 @@
+<!--
+  模块职责：一场首领战 —— 危局强袭战与拟境湮灭战共用一份
+  依赖方向：include common/zzz-team.html；被 zzz/deadly.html 与 zzz/holo.html 一类 include
+  生命周期：静态片段
+  注意事项：一是排成三行：首领名 | 分数星级、增益 | 时间、队伍；首领图作右上角的弱透明背景（边缘渐隐，css 在 base.css 的 .zb2）。
+            没有邦布时一队只有三张卡，用时 / 无伤 / 排名移到卡右侧一栏，否则那一侧空出一格（页宽见 `.pic-team`）。
+            首领图、奖牌与增益图标都是米游社绝对地址，一处根都不加（见 `template-img-two-roots`）。
+            二是 `_tpl_path` 与 `_meta_path` 须从 $data[1] 解构：带第二参 include 时拿不到外层数据，漏了则里层 include 拼出空路径、整队不画。
+            三是两类差别由视图判好（危局给 `time`/`score`、拟境给 `cost`/`medal`），此处只判给没给；拟境的接口不给邦布。
+            四是 `boss` 可缺、兜空对象，否则取 `one.boss.icon` 抛错、整条命令退回文字。
+-->
+{{set one = $data[0] || {} }}
+{{set {_res_path, _meta_path, _tpl_path} = $data[1]}}
+{{set boss = one.boss || {} }}
+{{set medal = one.medal || {} }}
+{{set buff = one.buff || {} }}
+
+<div class="zb2">
+  {{if boss.icon}}<div class="zb2-bg" style="background-image:url('{{boss.icon}}')"></div>{{/if}}
+  <div class="zb2-r">
+    <b class="zb2-boss">{{boss.name || '首领'}}</b>
+    {{if one.buddy && medal.noInjured}}<span class="tag hi">无伤</span>{{/if}}
+    {{if one.buddy && one.rank}}<span class="tag">前 {{one.rank}}</span>{{/if}}
+    <span class="zb2-rt">
+      {{if one.score}}<span class="zb-score">{{one.score}}</span>{{/if}}
+      {{if one.full}}<span class="tag hi">满</span>{{/if}}
+      <span class="zs">{{each one.stars on}}<i class="{{on ? '' : 'off'}}"></i>{{/each}}</span>
+    </span>
+  </div>
+  <div class="zb2-r sub">
+    {{if buff.name}}
+    <span class="zb2-buff">{{if buff.icon}}<img src="{{buff.icon}}" onerror="whenError(this)" alt="">{{/if}}<b>增益</b>{{buff.name}}</span>
+    {{/if}}
+    <span class="zb2-rt">{{if one.time}}{{one.time}}{{else if one.buddy && one.cost}}用时 {{one.cost}}{{/if}}</span>
+  </div>
+  {{if one.buddy || !(one.cost || medal.noInjured || one.rank)}}
+  <% include(_tpl_path + '/zzz-team.html', [one, {_res_path, _meta_path, _tpl_path}]) %>
+  {{else}}
+  <!-- 不带邦布（拟境）只有三张卡，用时、无伤与排名竖排在右侧那一栏，与拟真鏖战试炼同一排法 -->
+  <div class="tw-team">
+    <% include(_tpl_path + '/zzz-team.html', [one, {_res_path, _meta_path, _tpl_path}]) %>
+    <div class="tw-side">
+      {{if one.cost}}<span class="tw-kv hi"><b>{{one.cost}}</b><small>用时</small></span>{{/if}}
+      {{if one.rank}}<span class="tw-kv"><b>{{one.rank}}</b><small>排名前</small></span>{{/if}}
+      {{if medal.noInjured}}<span class="tag hi">无伤</span>{{/if}}
+    </div>
+  </div>
+  {{/if}}
+</div>

@@ -1,0 +1,15 @@
+<!--
+  模块职责：图取不到时换成占位图的 `whenError`，各模板 `onerror` 调的就是它
+  依赖方向：静态片段，被 common/head.html、各布局与自带 head 的模板各引一次
+  生命周期：静态片段
+  注意事项：占位图文件不在，或某张模板没引这个片段，表现都是那一格留着浏览器的碎图标记，不报错
+            （templates.test.ts 钉住文件存在）。`_res_path` 须原样输出，转义会弄坏 file URL；
+            换过一次即打标记，否则占位图也取不到时 onerror 会自我递归。
+-->
+<script>
+  function whenError(img) {
+    if (!img || img.dataset.fallback) return
+    img.dataset.fallback = "1"
+    img.src = "{{@_res_path}}common/face/what.svg"
+  }
+</script>

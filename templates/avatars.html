@@ -1,0 +1,40 @@
+<!--
+  模块职责：绝区零的角色列表（`%角色列表`）—— 每位代理人一张整卡，按稀有度与等级排
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / foot 与 common/zzz-avatar-card
+  生命周期：静态模板
+  注意事项：原神星铁走 `character/avatar-list`（多探索与宝箱两块），三者的角色格是同一张 `common/avatar-card`。
+            卡由命令层逐位造好放在 `cards`：面板库里有的是整卡，没有的是占位卡、模板印「暂无面板数据」。
+            头像是元数据里的相对路径（按 `meta-` 前缀挑根）；**不要回落到接口的 `group_icon_path`**，那是阵营徽记。
+            本模板不自行分页：角色多时由 `#container` 自行增高、交渲染器按盒子高度截图。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'CHARACTERS',
+  title: '角色列表',
+  sub: '按稀有度 · 等级排',
+  who: {face: icon, name: nickname || name, uid: uid, level: level ? 'Lv.' + level : ''}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '代理人', note: cards.length + ' 位'}]) %>
+  {{if cards.length}}
+  <div class="mcs is-list">
+    {{each cards c}}
+    <% include(_tpl_path + '/zzz-avatar-card.html', [c, {_res_path, _meta_path, _tpl_path, cardType: 'mini'}]) %>
+    {{/each}}
+  </div>
+  {{else}}
+  <div class="u-empty">
+    <b>米游社没有公开代理人数据</b>
+    <span>去 App 里打开「实时角色」再查</span>
+  </div>
+  {{/if}}
+</section>
+
+<% include(_tpl_path + '/skin/foot.html', [{
+  tips: [noPanel ? _hash + '更新面板 补全技能、音擎与驱动盘' : ''],
+  note: '数据来自米游社'
+}]) %>
+{{/block}}

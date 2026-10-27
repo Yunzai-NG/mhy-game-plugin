@@ -1,0 +1,63 @@
+<!--
+  模块职责：战利品开启（`*宝箱`）—— 总开启率，加逐星球逐区域的进度
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head
+  生命周期：静态模板
+  注意事项：三处判据。一是星球与区域的图标都是米游社接口给的绝对地址，**一处根都不加**
+            （见 `template-img-two-roots`）。二是合计由视图层按各星球相加 —— 接口没有「总数」
+            这一栏，模板不要自己再加一遍。三是「数字与游戏内一致；区域未列全时以米游社返回
+            为准」这句字句不改，它是对使用者的交代。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'TREASURE CHESTS',
+  title: title,
+  sub: '已开启 ' + cur + ' / ' + max + '（' + pct + '%）',
+  who: {uid: uid, name: nickname || '开拓者'}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<div class="bigline">
+  <b>{{pct}}</b>
+  <span class="p-sub">%</span>
+</div>
+
+<div class="kv">
+  <div class="kv-i"><b>{{cur}}</b><span>已开启</span></div>
+  <div class="kv-i"><b>{{max}}</b><span>总数</span></div>
+  <div class="kv-i"><b>{{worlds.length}}</b><span>星球</span></div>
+</div>
+
+<!-- 照官方「战利品开启详情」：先一排星球总览（名字 + 已开/总数），再逐星球列各区域，两列；开满的那格高亮 -->
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '星球总览', note: worlds.length + ' 个'}]) %>
+  <div class="ch-worlds">
+    {{each worlds world}}
+    <div class="ch-w {{world.cur >= world.max ? 'full' : ''}}">
+      <b>{{world.name}}</b>
+      <span><em>{{world.cur}}</em>/{{world.max}}</span>
+      <div class="bar-t"><i style="width:{{world.pct}}%"></i></div>
+    </div>
+    {{/each}}
+  </div>
+</section>
+
+{{each worlds world}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{
+    title: world.name,
+    note: world.cur + '/' + world.max + '（' + world.pct + '%）'
+  }]) %>
+  <div class="ch-areas">
+    {{each world.areas area}}
+    <div class="ch-a {{area.cur >= area.max ? 'full' : ''}}">
+      <span>{{area.name}}</span>
+      <b><em>{{area.cur}}</em>/{{area.max}}</b>
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/each}}
+
+<div class="notes"><p>数字与游戏内一致；区域未列全时以米游社返回为准</p></div>
+{{/block}}

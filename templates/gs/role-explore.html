@@ -1,0 +1,155 @@
+<!--
+  模块职责：世界探索（`#探索`）—— 账号摘要、七圣召唤收集、尘歌壶与逐地区探险进度
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head
+  生命周期：静态模板
+  注意事项：四处判据。一是地区底图、徽记、等级与供奉图标都在插件资源里要 `_res_path`，按 `key` 与视图给的
+            相对路径取；玩家头像是米游社给的绝对地址、一处根都不加（见 `template-img-two-roots`）。
+            二是 `line` 与 `data.head` 都是**二维或成组数组**（视图已分好组），此处摊平成
+            名目格、列数交给 css 折行。
+            三是七圣召唤与尘歌壶两块各自判存在：没玩过的账号接口不给，补 0 看着像「玩了但没收集」。
+            四是 `item.extra` 是分母（如「52/60」），没有时只印分子、不补斜杠。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'WORLD EXPLORATION',
+  title: '世界探索',
+  sub: data.region,
+  who: {
+    face: data.game_head_icon,
+    fromMeta: false,
+    name: data.nickname,
+    uid: uid,
+    level: data.level ? 'Lv.' + data.level : ''
+  }
+}, {_res_path, _meta_path, _face_path, who}]) %>
+<div class="kv">
+  {{each data.head item}}
+  <div class="kv-i">
+    <b>{{item.num || '-'}}{{if item.extra}}<s>/{{item.extra}}</s>{{/if}}</b>
+    <span>{{item.lable}}</span>
+  </div>
+  {{/each}}
+</div>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '账号数据'}]) %>
+  <div class="kv">
+    {{each line val}}
+    {{each val item}}
+    <div class="kv-i">
+      <b>{{item.num}}{{if item.extra}}<s>/{{item.extra}}</s>{{/if}}</b>
+      <span>{{item.lable}}</span>
+    </div>
+    {{/each}}
+    {{/each}}
+  </div>
+</section>
+
+{{if basicInfo && basicInfo.level > 0}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '七圣召唤', note: '对局等级 ' + basicInfo.level}]) %>
+  <div class="kv">
+    <div class="kv-i"><span class="gcg-lv">{{basicInfo.level}}</span><span>等级</span></div>
+    <div class="kv-i">
+      <b>{{basicInfo.avatar_card_num_gained}}<s>/{{basicInfo.avatar_card_num_total}}</s></b>
+      <span>已收集角色牌</span>
+    </div>
+    <div class="kv-i">
+      <b>{{basicInfo.action_card_num_gained}}<s>/{{basicInfo.action_card_num_total}}</s></b>
+      <span>已收集行动牌</span>
+    </div>
+  </div>
+</section>
+{{/if}}
+
+{{if data && data.homes}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{
+    title: '尘歌壶',
+    note: data.homes.name + (data.homes.comfort_name ? '　' + data.homes.comfort_name : '')
+  }]) %>
+  <div class="kv">
+    {{each data.homes.line item}}
+    <div class="kv-i">
+      <b>{{item.num || '-'}}</b>
+      <span>{{item.lable}}</span>
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/if}}
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '地图探险'}]) %>
+  <div class="we-list">
+    {{each explor val}}
+    <!-- 照官方「世界探索」页：徽记 + 地区名与等级、探索度块（主要区域与挂在下面的特殊区域）、其后几张两列小表。
+         底图是逐地区的值，只能留在内联 style 里 -->
+    <div class="re-area" data-area="{{val.key}}" style="background-image:url('{{_res_path}}gs/area/{{val.key}}.png')">
+      <div class="we-head">
+        <img class="we-logo" src="{{_res_path}}gs/area-icon/{{val.key}}.png" onerror="this.style.visibility='hidden'" alt="">
+        <div class="we-hd">
+          <b>{{val.name}}</b>
+          {{each val.levels lv}}
+          <p class="we-lv"><img src="{{_res_path}}{{lv.icon}}" onerror="this.style.visibility='hidden'" alt="">{{lv.name}}<em>{{lv.value}}</em></p>
+          {{/each}}
+        </div>
+      </div>
+      <div class="we-blk">
+        <div class="we-pct">
+          <p>{{val.main.name}}<em class="{{val.main.full ? 'full' : ''}}">{{val.main.pct}}</em></p>
+          <i><b style="width:{{val.main.num}}%"></b></i>
+        </div>
+        {{each val.kids k}}
+        <div class="we-pct">
+          <p>{{k.name}}<em class="{{k.full ? 'full' : ''}}">{{k.pct}}</em></p>
+          <i><b style="width:{{k.num}}%"></b></i>
+          {{each k.levels lv}}
+          <p class="we-lv"><img src="{{_res_path}}{{lv.icon}}" onerror="this.style.visibility='hidden'" alt="">{{lv.name}}<em>{{lv.value}}</em></p>
+          {{/each}}
+        </div>
+        {{/each}}
+      </div>
+      {{if val.tribes.length}}
+      <div class="we-blk">
+        <h5>部族声望等级</h5>
+        <div class="we-tiles">
+          {{each val.tribes t}}
+          <div class="we-tile"><img src="{{_res_path}}gs/area-tribe/{{t.id}}.png" onerror="this.style.visibility='hidden'" alt=""><p><span>{{t.name}}</span>{{t.level}} 级</p></div>
+          {{/each}}
+        </div>
+      </div>
+      {{/if}}
+      {{if val.gathers.length}}
+      <div class="we-blk">
+        <h5>聚所/特殊供奉</h5>
+        <div class="we-tiles">
+          {{each val.gathers o}}
+          <div class="we-tile {{o.locked ? 'locked' : ''}}"><img src="{{_res_path}}{{o.icon}}" onerror="this.style.visibility='hidden'" alt=""><p><span>{{o.name}}</span>{{o.text}}</p></div>
+          {{/each}}
+        </div>
+      </div>
+      {{/if}}
+      {{if val.areas.length}}
+      <div class="we-blk">
+        <h5>详细区域探索度</h5>
+        <div class="we-2col">
+          {{each val.areas a}}<p><span>{{a.name}}</span><em>{{a.pct}}</em></p>{{/each}}
+        </div>
+      </div>
+      {{/if}}
+      {{if val.bosses.length}}
+      <div class="we-blk">
+        <h5>区域首领图鉴</h5>
+        <div class="we-2col">
+          {{each val.bosses b}}<p><span>{{b.name}}</span><em>{{b.num}}</em></p>{{/each}}
+        </div>
+      </div>
+      {{/if}}
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/block}}

@@ -1,0 +1,40 @@
+<!--
+  模块职责：邦布列表（`%邦布`）—— 逐只已拥有的邦布，带星级与等级
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / avatar / foot
+  生命周期：静态模板
+  注意事项：两处判据。一是图有两个根，判据是视图给的 `fromMeta`：装了元数据取那份 webp、
+            否则回落到随插件提交的 PNG（见 `template-img-two-roots`），取错是满页空白。
+            二是「仅显示已拥有的邦布」这句不可删：没拥有的接口压根不返回，少了这句看着像丢数据。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'BANGBOO',
+  title: '邦布列表',
+  sub: '共 ' + list.length + ' 只',
+  who: {uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '已拥有', note: list.length + ' 只'}]) %>
+  <!-- 稀有度丝带（zzz/other/S.png / A.png）与右下角那枚 fill.png 都压在头像上，
+       故此处不走公共头像片段而逐格画；css 见 zzz.css 的 `.bb-*` -->
+  <div class="grid">
+    {{each list val}}
+    <div class="av {{val.rarity === 'S' ? 'r5' : 'r4'}}">
+      <div class="av-img">
+        <img src="{{val.fromMeta ? _meta_path : _res_path}}{{val.img}}" onerror="whenError(this)" alt="">
+        <i class="bb-rib bb-{{val.rarity === 'S' ? 'S' : 'A'}}"></i>
+        <img class="bb-fill" src="{{_res_path}}common/item/fill.png" alt="">
+        {{if val.star > 1}}<em>{{val.star}}</em>{{/if}}
+      </div>
+      <b>{{val.name}}</b>
+      <i>Lv{{val.level}}</i>
+    </div>
+    {{/each}}
+  </div>
+</section>
+
+<% include(_tpl_path + '/skin/foot.html', [{note: '仅显示已拥有的邦布'}]) %>
+{{/block}}

@@ -1,0 +1,107 @@
+<!--
+  模块职责：深境螺旋总览（`#深渊`）—— 摘要、五项战斗排行、逐层上下半队伍与逐间明细
+  依赖方向：extend skinLayout，include common/skin 下的 head / avatar / foot；
+            逐层队伍走 common/avatar-card.html；装饰见 gs.css 的深渊一节
+  生命周期：静态模板
+  注意事项：四处判据。一是头像与立绘可能退回米游社给的绝对地址（试用角色无本地元数据），
+            故一律按 `meta-` 前缀判根（见 `template-img-two-roots`）。
+            二是 `stat` 里缺项给的是空对象（视图层刻意保位），逐项判 `title` 再画，不判则印出空壳。
+            三是只列 9 层及以上（视图层已筛），顶部队伍取打到的最后一间（`display`）。
+            四是 `avatars` 是 id → 头像卡的表，队伍与逐间里存的都是 id，要过这张表取。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<i class="ab-deco"></i>
+<div class="ab">
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'SPIRAL ABYSS',
+  title: '深境螺旋' + (msg ? ' · ' + msg : ''),
+  sub: abyss.schedule,
+  who: {uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<div class="p-stats" style="--n:3">
+  <div class="st hi"><b>{{abyss.maxFloor}}</b><span>最深抵达</span></div>
+  <div class="st"><b><img class="ab-star" src="{{_res_path}}gs/abyss/star.png" alt="">{{abyss.totalStar}} / {{abyss.maxStar}}</b><span>9~12 层星数</span></div>
+  <div class="st"><b>{{abyss.total}}</b><span>战斗次数</span></div>
+</div>
+
+{{set sides = ['up', 'down']}}
+<!-- 一队几人就配几种卡（四人四张小卡、三人一宽两小、两人两宽、一人一张双宽），总宽恒等，竖线两侧对得齐 -->
+{{set cardTypes = {1: ['wide wide2'], 2: ['wide', 'wide'], 3: ['wide', 'mini', 'mini'], 4: ['mini', 'mini', 'mini', 'mini']} }}
+{{set three = [1, 2, 3]}}
+{{if stat && stat.length}}
+<div class="ab-ranks">
+  {{each stat one}}
+  {{if one.title}}
+  {{set card = avatars[one.id] || {} }}
+  {{set pic = '' + (one.banner || '')}}
+  <div class="ab-rank r{{card.star == 4 ? 4 : 5}}">
+    <img src="{{pic.indexOf('meta-') === 0 ? _meta_path : ''}}{{pic}}" onerror="whenError(this)" alt="">
+    <div class="ab-rank-t"><span>{{one.title}}</span><b>{{one.value}}</b></div>
+    {{if card.abbr || card.name}}<em>{{card.abbr || card.name}}</em>{{/if}}
+  </div>
+  {{/if}}
+  {{/each}}
+</div>
+{{/if}}
+
+{{each abyss.floors floor}}
+{{set d = floor.display || {} }}
+<section class="ab-floor">
+  <div class="ab-fh" style="background-image:url('{{_res_path}}gs/abyss/floor{{floor.index}}.png')">
+    <b>第 {{floor.index}} 层</b>
+    <span><img class="ab-star" src="{{_res_path}}gs/abyss/star.png" alt="">{{floor.star}} / {{floor.maxStar}}</span>
+  </div>
+  <div class="halves">
+    {{each sides k}}
+    {{set half = d[k] || {} }}
+    {{if half.avatars && half.avatars.length}}
+    <div class="half">
+      <small>{{k === 'up' ? '上半' : '下半'}}{{if half.time}}　{{half.time}}{{/if}}</small>
+      <div class="mcs">
+        {{each half.avatars id idx}}
+        <% include(_tpl_path + '/avatar-card.html', [avatars[id], {_res_path, _meta_path, _tpl_path, cardType: (cardTypes[half.avatars.length] || [])[idx] || 'mini'}]) %>
+        {{/each}}
+      </div>
+    </div>
+    {{/if}}
+    {{/each}}
+  </div>
+  {{if floor.levelList.length}}
+  <div class="ab-rooms">
+    {{each floor.levelList lv}}
+    <div class="ab-room">
+      <div class="ab-room-h">
+        <b>第 {{lv.index}} 间</b>
+        <span class="ab-stars">{{each three n}}<img class="{{lv.star < n ? 'off' : ''}}" src="{{_res_path}}gs/abyss/star.png" alt="">{{/each}}</span>
+      </div>
+      <div class="ab-room-t">
+        {{each sides k}}
+        {{set ids = (lv[k] && lv[k].avatars) || [] }}
+        <div class="ab-mini">
+          {{each ids id}}
+          {{set a = avatars[id] || {} }}
+          {{set f = '' + (a.face || '')}}
+          <i class="r{{a.star == 4 ? 4 : 5}}"><img src="{{f.indexOf('meta-') === 0 ? _meta_path : ''}}{{f}}" onerror="whenError(this)" alt=""></i>
+          {{/each}}
+        </div>
+        {{/each}}
+      </div>
+    </div>
+    {{/each}}
+  </div>
+  {{/if}}
+</section>
+{{/each}}
+
+<% include(_tpl_path + '/skin/foot.html', [{
+  tips: [
+    _hash + '深渊12层 看单层详情',
+    noPanel ? _hash + '更新面板 补全天赋与武器' : '角色装备与圣遗物为当前最新状态，不是当时上场的配装'
+  ],
+  note: '数据来自米游社战绩'
+}]) %>
+</div>
+{{/block}}

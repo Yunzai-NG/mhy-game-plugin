@@ -1,0 +1,48 @@
+<!--
+  模块职责：临界推演的一关 —— 主关与子关同形，故这一份既画主关也画它下面那几个子关
+  依赖方向：include common/zzz-team.html；被 zzz/void.html include
+  生命周期：静态片段
+  注意事项：四处判据。一是**入参不动**（`$data[0]` 是视图给的那一关，`$data[1]` 带两个根）。
+            二是 `_tpl_path` 与 `_meta_path` 都须从 `$data[1]` 里解构：带第二参 include 时
+            子模板不继承父数据，漏解构则里层那两次 include 拼出空路径、整队不画。
+            三是这一族接口的 `star` 是**评级字母**而不是星数，视图已折成 `rating` 与
+            `ratingClass`（加号在样式名里写作 P），故此处只印不判。
+            四是子关不给分数与时刻，那两处整块不画 —— 补 0 会看着像「打了但没得分」。
+-->
+{{set one = $data[0] || {} }}
+{{set {_res_path, _meta_path, _tpl_path} = $data[1] || {} }}
+{{set buff = one.buff || {} }}
+
+<!-- 与 zzz-battle 同一种框（.zb2）：一关一框，页宽按框内一队定（见 base.css 的 `.pic-team`） -->
+<div class="vs zb2">
+  <div class="row-h">
+    <b>{{one.name || '关卡'}}</b>
+    {{if one.rating}}<span class="rate {{one.ratingClass}}">{{one.rating}}</span>{{/if}}
+    {{if one.score}}<span class="zb-score">{{one.score}}</span>{{/if}}
+    {{if one.full}}<span class="tag hi">满</span>{{/if}}
+    {{if one.ratio}}<span class="tag">倍率 {{one.ratio}}</span>{{/if}}
+  </div>
+  {{if buff.name}}
+  <div class="buff">
+    {{if buff.icon}}<img src="{{buff.icon}}" onerror="whenError(this)" alt="">{{/if}}
+    <b>增益</b>{{buff.name}}
+  </div>
+  {{/if}}
+  <% include(_tpl_path + '/zzz-team.html', [one, {_res_path, _meta_path, _tpl_path}]) %>
+  {{if one.time}}<div class="p-sub">通关 {{one.time}}</div>{{/if}}
+
+  {{if one.subs.length}}
+  <div class="vs-subs">
+    {{each one.subs sub}}
+    <div class="vs-sub">
+      <div class="row-h">
+        <b>{{sub.name || '子关卡'}}</b>
+        {{if sub.rating}}<span class="rate {{sub.ratingClass}}">{{sub.rating}}</span>{{/if}}
+      </div>
+      {{if sub.buff.name}}<div class="buff"><b>增益</b>{{sub.buff.name}}</div>{{/if}}
+      <% include(_tpl_path + '/zzz-team.html', [sub, {_res_path, _meta_path, _tpl_path}]) %>
+    </div>
+    {{/each}}
+  </div>
+  {{/if}}
+</div>

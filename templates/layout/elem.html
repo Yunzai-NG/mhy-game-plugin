@@ -1,0 +1,30 @@
+<!--
+  模块职责：面板详情一族的布局 —— 自带字体与 common.css，主体留给 `main` 块
+  依赖方向：被 character/profile-detail、artis-list 以 extend elemLayout 继承；别名由 core/render.ts 的 dress() 注入
+  生命周期：静态模板
+  注意事项：皮肤靠 body 上的 `_skin` 类由 profile-detail-skin.css 套上，这里不加载 common/skin 下的皮肤 css。
+-->
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <link rel="shortcut icon" href="#"/>
+  <link rel="preload" href="{{_res_path}}common/font/HYWH-65W.woff" as="font" type="font/woff">
+  <link rel="preload" href="{{_res_path}}common/font/NZBZ.woff" as="font" type="font/woff">
+  <link rel="preload" href="{{_res_path}}common/font/tttgbnumber.woff" as="font" type="font/woff">
+  <link rel="stylesheet" type="text/css" href="{{_res_path}}common/common.css"/>
+  <link rel="stylesheet" type="text/css" href="{{_res_path}}common/skin/sign.css"/>
+  <title>mhy-game</title>
+  {{block 'css'}}
+  {{/block}}
+  <% include(_tpl_path + '/img-fallback.html') %>
+</head>
+{{set elemCls = {火:'pyro',冰:'cryo',风:'anemo',雷:'electro',量子:'quantum',虚数:'geo',物理:'sr',电:'electro',以太:'quantum',流明:'geo', }[element||elem] || element || elem || 'hydro' }}
+<body class="elem-{{elemCls}} {{_skin}} {{displayMode || mode || `default`}}-mode {{bodyClass}}" {{sys.scale}}>
+<div class="container elem-bg" id="container">
+  {{block 'main'}}{{/block}}
+  <div class="copyright"><% include(_tpl_path + '/sign.html', [_sign]) %></div>
+</div>
+</body>
+</html>

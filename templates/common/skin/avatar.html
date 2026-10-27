@@ -1,0 +1,33 @@
+<!--
+  模块职责：统一头像格 —— 稀有度底、元素色、命座角标、新/变标，大小两档
+  依赖方向：被各主模板 include，自己不引别的片段
+  生命周期：静态片段
+  注意事项：三处判据。一是取图的根按既有口径判：`face` 以 `meta-` 开头的是元数据里的相对路径、
+            要加 `_meta_path`，否则那是米游社的完整地址、一处根都不能加（见
+            `template-img-two-roots`）；视图另给 `fromMeta` 时以它为准。
+            二是稀有度 class 写成 `r5` / `r4` / `r3`，皮肤 css 按它取底色 —— `star` 缺省按 5 星
+            算，缺省成 4 星会让一整页五星角色都配紫底、不报错。
+            三是元素 class 写成 `e-xxx`（旧布局那套是 body 上的 `elem-xxx`），改回去只会丢颜色。
+-->
+{{set a = $data[0] || {} }}
+{{set {_res_path, _meta_path, size} = $data[1] || {} }}
+{{set viaMeta = a.fromMeta === undefined ? ('' + (a.face || '')).indexOf('meta-') === 0 : a.fromMeta}}
+
+<div class="av r{{a.star == 4 ? 4 : (a.star == 3 ? 3 : 5)}} {{a.elem ? 'e-' + a.elem : 'e-none'}} {{size || ''}}">
+  <div class="av-img">
+    {{if a.face}}
+    <img src="{{viaMeta ? _meta_path : ''}}{{a.face}}" onerror="whenError(this)" alt="">
+    {{else}}
+    <span>{{a.abbr ? a.abbr.slice(0, 1) : (a.name ? a.name.slice(0, 1) : '?')}}</span>
+    {{/if}}
+    {{if a.cons || a.cons === 0}}<em>{{a.cons}}</em>{{/if}}
+    {{if a.mark}}<u>{{a.mark}}</u>{{/if}}
+    {{if a.rate}}<s class="av-rate rate-{{a.rate}}">{{a.rate}}</s>{{/if}}
+    {{if a.elemIcon}}<img class="el" src="{{_res_path}}gs/element/{{a.elem}}.png" alt="">{{/if}}
+  </div>
+  <!-- 群内排名框：dmg-rank-bg / mark-rank-bg 精灵图。
+       `rank` 为 1~3 取前三那几格，4 为第四名起（印名次），10 为垫底那格 -->
+  {{if a.rank}}<i class="av-rank rank-{{a.rank}} rank-type-{{a.rankType || 'dmg'}}"><span>{{a.rankNum}}</span></i>{{/if}}
+  {{if a.abbr || a.name}}<b>{{a.abbr || a.name}}</b>{{/if}}
+  {{if a.level}}<i>Lv{{a.level}}</i>{{/if}}
+</div>

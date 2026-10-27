@@ -1,0 +1,36 @@
+<!--
+  模块职责：拟境湮灭战（`%拟境`）—— 总星数摘要与逐场首领战
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / foot、common/zzz-battle.html
+  生命周期：静态模板
+  注意事项：三处判据。一是这一条接口**不给昵称与头像**，故页头只有会话上的名字与 uid。
+            二是总星数、总用时与无伤场数都由视图逐场加出来 —— 接口没有这三栏。
+            三是逐场那个「用时」是 `challenge_time` 里的分秒、不是通关时刻，已由视图分开，
+            此处只印它给的串；按时刻排版会印出「0026-00-00 00:03:41」这种东西。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'HOLLOW ZERO',
+  title: title,
+  sub: period + (begin ? '　' + begin + ' - ' + end : ''),
+  who: {name: nickname || '绳匠', uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<div class="p-stats" style="--n:3">
+  <div class="st hi"><b>{{star}}</b><span>总星数</span></div>
+  <div class="st"><b>{{cost || '-'}}</b><span>总用时</span></div>
+  <div class="st"><b>{{noInjured || 0}}</b><span>无伤场数</span></div>
+</div>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '逐场战绩', note: '共 ' + battles.length + ' 场'}]) %>
+  {{each battles one}}
+  <div class="row">
+    <% include(_tpl_path + '/zzz-battle.html', [one, {_res_path, _meta_path, _tpl_path}]) %>
+  </div>
+  {{/each}}
+</section>
+
+<% include(_tpl_path + '/skin/foot.html', [{note: '用时取自米游社返回的分秒，与游戏内计时一致'}]) %>
+{{/block}}

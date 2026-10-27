@@ -1,0 +1,44 @@
+<!--
+  模块职责：分步指引图（`#导入导出帮助` / `#面板帮助`）—— 逐节一卡、卡内三步横排
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head
+  生命周期：静态模板
+  注意事项：三处判据。一是**布局是纵向分步**而非命令网格 —— 导入导出讲的是先后顺序，
+            摊成多列会读不出次序；故每节一卡、卡内三步按左到右排。
+            二是吉祥物图与节图标都在插件资源里，要 `_res_path`（见 `template-img-two-roots`）。
+            三是末尾要点逐条印，「只合并不覆盖」那条是最要紧的一句，字句不改。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'GUIDE',
+  title: title,
+  sub: subtitle,
+  who: {face: hero, fromRes: true, name: hash}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+{{each sections sec}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: sec.name, note: sec.intro}]) %>
+  <div class="sp">
+    {{each sec.steps st}}
+    <div class="sp-i">
+      <span class="sp-n">{{st.no}}</span>
+      <b>{{st.title}}</b>
+      <span>{{st.desc}}</span>
+      {{if st.cmd}}<em>{{st.cmd}}</em>{{/if}}
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/each}}
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '要点'}]) %>
+  <div class="notes">
+    {{each notes one}}
+    <p>{{one}}</p>
+    {{/each}}
+  </div>
+</section>
+{{/block}}

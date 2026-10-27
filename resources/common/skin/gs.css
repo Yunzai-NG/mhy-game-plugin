@@ -1,0 +1,1509 @@
+/*
+  模块职责：原神皮肤「提瓦特手账」—— 覆写 base.css 的设计变量，外加标题栏与内描线几处伪元素
+  依赖方向：在 base.css 之后加载；靠 body 上的 `skin-gs` 根 class 生效，四份皮肤恒全部加载
+  生命周期：静态资源
+  注意事项：两处判据。一是本文件每条选择器都须以 `.skin-gs` 开头，漏掉就会污染另外三套皮肤，
+            而表现只是别家的图配色不对、不报错。二是 `--p-on-e` 是压在元素色上的字色，
+            三套皮肤各给一份，缺了则 `.av-img span` 取不到色、名字首字与底色同色而看不见。
+*/
+
+.skin-gs {
+  --p-bg: #e9e0ce;
+  --p-ink: #3a4152;
+  --p-mute: #8a7d66;
+  --p-card: #f8f3e9;
+  --p-line: #dccdac;
+  --p-acc: #a8803f;
+  --p-gold: #d3bc8e;
+  --p-navy: #2f3649;
+  --p-on-e: #fff;
+  --ok: #4d8a4a;
+  --bad: #c0504a;
+  --p-disp: "mhy-gs", "YS", "汉仪文黑-65W", "PingFang SC", sans-serif;
+  --p-body: "mhy-gs", "YS", "汉仪文黑-65W", "PingFang SC", sans-serif;
+  --p-num: "Number", "YS", sans-serif;
+}
+
+body.skin-gs,
+.skin-gs .pic,
+.pic.skin-gs {
+  background: radial-gradient(110% 50% at 50% 0, #f5f0e6 0, rgba(245, 240, 230, 0) 70%), #e9e0ce;
+}
+
+/* 深蓝标题栏：出血到卡片边缘，下沿一道金线加菱形饰 */
+.skin-gs .p-head {
+  margin: calc(-1 * var(--p-pad)) calc(-1 * var(--p-pad)) 4px;
+  padding: 16px var(--p-pad) 18px;
+  background: linear-gradient(180deg, #3a4259, #272d3e);
+  color: #ece5d8;
+  border-bottom: 2px solid var(--p-gold);
+}
+.skin-gs .p-head::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  width: 10px;
+  height: 10px;
+  background: var(--p-gold);
+  transform: translateX(-50%) rotate(45deg);
+  box-shadow: 0 0 0 3px #e9e0ce;
+}
+.skin-gs .p-kick {
+  color: var(--p-gold);
+  letter-spacing: 0.24em;
+}
+.skin-gs .p-head h3 {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.skin-gs .p-head .p-sub,
+.skin-gs .p-head .p-who span {
+  color: #b9b2a3;
+}
+.skin-gs .p-head .p-who b {
+  color: #ece5d8;
+}
+.skin-gs .p-face {
+  box-shadow: 0 0 0 2px var(--p-gold);
+}
+
+/* 摘要格与分节卡：游戏内物品框那一圈内描线 */
+.skin-gs .st {
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 3px var(--p-card), inset 0 0 0 4px #e8dcc1;
+}
+.skin-gs .st b {
+  font-weight: 700;
+}
+.skin-gs .st.hi b {
+  color: #b5652f;
+}
+.skin-gs .p-sec {
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 4px var(--p-card), inset 0 0 0 5px #ebe0c8;
+}
+.skin-gs .p-sec-h {
+  border-bottom: 1px dashed var(--p-line);
+  padding-bottom: 6px;
+}
+.skin-gs .p-sec-h h4 {
+  font-weight: 700;
+}
+.skin-gs .p-sec-h h4::before {
+  content: "◆";
+  color: var(--p-gold);
+  font-size: 9px;
+  margin-right: 6px;
+  vertical-align: 2px;
+}
+
+/* 头像：五星橙棕底、四星紫底，右下大圆角 */
+.skin-gs .av-img {
+  border-radius: 6px 6px 16px 6px;
+}
+.skin-gs .r5 {
+  --rar-bg: linear-gradient(160deg, #c98d4e, #8f5a35);
+}
+.skin-gs .r4 {
+  --rar-bg: linear-gradient(160deg, #9d81c4, #5f548b);
+}
+.skin-gs .r3 {
+  --rar-bg: linear-gradient(160deg, #5680a5, #3c5a74);
+}
+.skin-gs .av-img em {
+  background: rgba(44, 51, 70, 0.85);
+  color: #ece5d8;
+  border-radius: 999px;
+}
+.skin-gs .av-img u {
+  background: #e8b54a;
+  color: #3a2a10;
+  border-radius: 3px;
+}
+.skin-gs .stars {
+  color: #e3a93b;
+}
+.skin-gs .stars s {
+  color: #d6cbb2;
+}
+
+.skin-gs .tag {
+  background: var(--p-navy);
+  color: #ece5d8;
+  border-radius: 999px;
+  padding: 0 9px;
+}
+.skin-gs .tag.hi {
+  background: #c58a3e;
+  color: #fff8ea;
+}
+.skin-gs .p-foot {
+  border-top: 1px solid var(--p-line);
+  padding-top: 8px;
+}
+.skin-gs .boss-ic {
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--p-gold);
+}
+
+/* uid 行 */
+.skin-gs .u-row {
+  border-radius: 10px;
+}
+.skin-gs .u-row.on {
+  border-color: #c9a86a;
+}
+/* 带名片的行不能写 background 简写：它会把名片的位置与尺寸重置回 0 0 / auto，名片铺满整行 */
+.skin-gs .u-row.on:not(.u-bn) {
+  background: linear-gradient(90deg, #fbf2dc, var(--p-card) 70%);
+}
+.skin-gs .u-row.on.u-bn {
+  --u-fade: #fbf2dc;
+}
+.skin-gs .flag {
+  border-radius: 999px;
+}
+.skin-gs .u-empty {
+  border-radius: 10px;
+}
+
+/* 幻想真境剧诗的幕次格 */
+.skin-gs .acts {
+  display: grid;
+  grid-template-columns: repeat(var(--n, 10), 1fr);
+  gap: 6px;
+}
+.skin-gs .act {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 5px 0;
+  border: 1px solid var(--p-line);
+  border-radius: 8px;
+  background: #fffaf0;
+}
+.skin-gs .act small {
+  font-size: 9.5px;
+  color: var(--p-mute);
+}
+.skin-gs .act b {
+  color: var(--ok);
+  font-size: 13px;
+  line-height: 1.2;
+}
+.skin-gs .act.star {
+  background: linear-gradient(#f5e2b4, #e8c987);
+  border-color: #d3a956;
+}
+.skin-gs .act.star b {
+  color: #8a5a1c;
+}
+
+/* 七圣召唤牌组 */
+.skin-gs .deck {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding-top: 9px;
+  border-top: 1px solid var(--p-line);
+}
+.skin-gs .deck:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+.skin-gs .deck-cards {
+  display: flex;
+  gap: 5px;
+}
+.skin-gs .gcg {
+  width: 40px;
+  aspect-ratio: 3 / 5;
+  border-radius: 5px;
+  border: 2px solid var(--p-gold);
+  overflow: hidden;
+  background: linear-gradient(170deg, var(--e, #6a6f7c), #262830);
+  display: grid;
+  place-items: center;
+  color: var(--p-on-e);
+  font-family: var(--p-disp);
+  font-weight: 700;
+  font-size: 14px;
+}
+.skin-gs .gcg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.skin-gs .deck-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.skin-gs .deck-info b {
+  font-family: var(--p-disp);
+  font-size: 13px;
+  font-weight: 700;
+}
+.skin-gs .deck-info span {
+  font-size: 10.5px;
+  color: var(--p-mute);
+}
+
+/* ========== 剧诗一族（剧诗 / 圣牌 / 绘想游迹）的页面装饰 ==========
+   图在 `gs/combat/`。整页压成剧场暗底，页头去掉皮肤的深蓝栏、直接落在 page-top
+   那张剧场图上；分节一律换成 round-top / round-bottom 那张羊皮卡。`.cb-deco` 垫在 `.pic` 最底层，
+   正文包在 `.cb` 里抬到其上 —— 不包则装饰盖住文字。两张页图与暗底同为 #151214，接缝处不显。 */
+.skin-gs .pic:has(> .cb) {
+  background: #151214;
+  color: #e8e0d4;
+}
+.skin-gs .cb-deco {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  aspect-ratio: 1125 / 582;
+  background-size: 100% auto;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  z-index: 0;
+}
+/* 页短于两图之和时两图相叠：头图压在上面，它的下沿本就渐隐成暗底，盖住尾图的上半不留硬边 */
+.skin-gs .cb-deco.top {
+  top: 0;
+  z-index: 1;
+  -webkit-mask-image: linear-gradient(#000 70%, transparent);
+  mask-image: linear-gradient(#000 70%, transparent);
+  background-image: url("../../gs/combat/page-top.png");
+  background-position: center top;
+}
+.skin-gs .cb-deco.bottom {
+  bottom: 0;
+  background-image: url("../../gs/combat/page-bottom.png");
+  background-position: center bottom;
+}
+.skin-gs .cb {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--p-gap);
+}
+.skin-gs .pic:has(> .cb) > .p-copyright {
+  position: relative;
+  z-index: 2;
+  color: #bfb5a6;
+}
+/* 页头：盖掉皮肤那条深蓝栏与菱形饰，让剧场图透出来 */
+.skin-gs .cb .p-head {
+  margin: 0;
+  padding: 26px 4px 30px;
+  background: none;
+  border-bottom: 0;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+}
+.skin-gs .cb .p-head::after {
+  display: none;
+}
+.skin-gs .cb .p-head h3 {
+  font-family: "NZBZ", var(--p-disp);
+  font-weight: 400;
+  font-size: 27px;
+  color: #f3e7cf;
+}
+.skin-gs .cb .p-sub,
+.skin-gs .cb .p-who span {
+  color: #d9cdb8;
+}
+.skin-gs .cb .p-foot {
+  color: #bfb5a6;
+  border-top-color: rgba(211, 188, 142, 0.35);
+}
+.skin-gs .cb-her {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #e4be90;
+  background: center / cover no-repeat;
+  vertical-align: middle;
+}
+.skin-gs .cb-her.h0 {
+  background-image: url("../../gs/combat/heraldry-0.png");
+}
+.skin-gs .cb-her.h3 {
+  background-image: url("../../gs/combat/heraldry-3.png");
+}
+.skin-gs .cb-her.h4 {
+  background-image: url("../../gs/combat/heraldry-4.png");
+}
+.skin-gs .cb-medal {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  background: url("../../gs/combat/medal-default.png") center / cover no-repeat;
+  vertical-align: middle;
+}
+.skin-gs .cb-medal.on {
+  background-image: url("../../gs/combat/medal-active.png");
+}
+.skin-gs .cb-flower {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 2px;
+  background: url("../../gs/combat/flower.png") center / cover no-repeat;
+  vertical-align: -2px;
+}
+/* 演出回顾：panel.png 整图做底，按图的比例定高；padding 全取百分数（相对宽度），
+   标题落进上沿那对花饰之间、六行落进浅色区 —— 改成定值则换宽度时字压到花边上 */
+.skin-gs .cb-review {
+  aspect-ratio: 1125 / 867;
+  padding: 6.4% 11% 6%;
+  display: flex;
+  flex-direction: column;
+  background: url("../../gs/combat/panel.png") center / 100% 100% no-repeat;
+}
+.skin-gs .cb-review h4 {
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  font-family: "NZBZ", var(--p-disp);
+  font-weight: 400;
+  font-size: 19px;
+  color: var(--p-gold);
+}
+.skin-gs .cb-review dl {
+  flex: 1;
+  margin-top: 10.3%;
+  padding-bottom: 10px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: space-evenly;
+  column-gap: 12px;
+  color: #6a5443;
+  font-size: 13px;
+}
+.skin-gs .cb-review dt,
+.skin-gs .cb-review dd {
+  line-height: 26px;
+}
+.skin-gs .cb-review dd {
+  text-align: right;
+  font-family: var(--p-num);
+}
+.skin-gs .cb-medals {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(207, 190, 174, 0.5);
+  vertical-align: middle;
+}
+.skin-gs .cb-medals s {
+  width: 1px;
+  height: 14px;
+  margin: 0 3px;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+/* 模式一行：模式名、徽记圈与幕数胶囊，下面演出总时长 */
+.skin-gs .cb-mode > p {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 17px;
+  font-weight: 600;
+  color: #f4efe8;
+}
+.skin-gs .cb-mode > p > span {
+  padding: 0 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.04);
+  font-family: var(--p-num);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 24px;
+  color: #ece5d8;
+}
+.skin-gs .cb-mode > small {
+  display: block;
+  margin-top: 4px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.65);
+}
+/* 战斗数据：stat.png 整图做底，逐行一道 12% 的分隔线 */
+.skin-gs .cb-stat {
+  padding: 8px 20px;
+  background: url("../../gs/combat/stat.png") center / 100% 100% no-repeat;
+}
+.skin-gs .cb-stat > p {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  font-size: 14px;
+  color: #ece5d8;
+}
+.skin-gs .cb-stat > p + p {
+  border-top: 1px solid rgba(106, 84, 67, 0.3);
+}
+.skin-gs .cb-stat > p > span {
+  flex: 1;
+}
+.skin-gs .cb-stat > p > b {
+  font-family: var(--p-num);
+  font-weight: 400;
+  color: #d3bc8e;
+}
+.skin-gs .cb-stat > p > em {
+  display: flex;
+  gap: 5px;
+}
+/* 圆头像：深底细金圈，头像略放大并上提，头顶出圈 */
+.skin-gs .cb-av {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid #5d4e3f;
+  background: #221e23 center 30% / 130% auto no-repeat;
+}
+/* 逐幕外框：rounds.png 垫顶的暗底，0.5px 13% 白边 */
+.skin-gs .cb-rounds {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  background: #211d1f url("../../gs/combat/rounds.png") left top / 100% auto no-repeat;
+}
+.skin-gs .cb-rounds > h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f4efe8;
+}
+/* 一幕一张羊皮卡：round-top / round-bottom 两张头尾，中段取两图交界处的底色 */
+.skin-gs .cb-card,
+.skin-gs .cb .p-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  color: #4a3d33;
+  background:
+    url("../../gs/combat/round-top.png") center top / 100% auto no-repeat,
+    url("../../gs/combat/round-bottom.png") center bottom / 100% auto no-repeat,
+    #ede8e5;
+}
+.skin-gs .cb-h {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.skin-gs .cb-h b {
+  font-family: var(--p-disp);
+  font-weight: 600;
+  font-size: 15px;
+  color: #6a5443;
+}
+.skin-gs .cb-h span {
+  margin-left: auto;
+  font-size: 12px;
+  font-family: var(--p-num);
+  color: #6a5443;
+}
+/* 参演按卡宽，讨伐列表吃剩下的；讨伐缺时参演独占一行 */
+.skin-gs .cb-duo {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.skin-gs .cb-duo > .mcs {
+  flex: none;
+}
+.skin-gs .cb-none {
+  font-style: normal;
+  font-size: 12px;
+  color: #8d7c6a;
+}
+.skin-gs .cb-foes {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.skin-gs .cb-foes > small {
+  font-size: 11px;
+  font-weight: 600;
+  color: #b28659;
+}
+/* 敌人图是接口给的方图，盒子定尺寸并 contain，大图不撑开格子 */
+.skin-gs .cb-foe {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 6px;
+  align-items: center;
+  padding: 3px;
+  border-radius: 4px;
+  background: rgba(230, 218, 197, 0.7);
+}
+.skin-gs .cb-foe img {
+  grid-row: span 2;
+  display: block;
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+.skin-gs .cb-foe b {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6a5443;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.skin-gs .cb-foe span {
+  font-size: 10px;
+  font-family: var(--p-num);
+  color: #8d7c6a;
+}
+.skin-gs .cb-dt {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6a5443;
+}
+/* 演出详情一块：米色标题条 + 浅灰正文，正文右下角垫一枚剧场纹 */
+.skin-gs .cb-bf-t {
+  height: 30px;
+  padding-left: 9px;
+  border: 1px solid #d8cfc1;
+  background: #e6dac5;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 28px;
+  color: #6a5443;
+}
+.skin-gs .cb-bf-b {
+  padding: 10px 12px;
+  border: 1px solid #e0dcd5;
+  border-top: 0;
+  background: #f2f2f2 url("../../gs/combat/buff-mark.png") right 4px bottom 3px / 34px auto no-repeat;
+}
+.skin-gs .cb-bf2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 8px;
+}
+.skin-gs .cb-bf2 .cb-bf-b {
+  height: calc(100% - 30px);
+}
+.skin-gs .cb-gain {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.6;
+  color: rgba(0, 0, 0, 0.65);
+}
+.skin-gs .cb-gain b {
+  font-weight: 600;
+  color: #b28659;
+}
+.skin-gs .cb-lvs {
+  display: flex;
+  margin-top: 10px;
+}
+.skin-gs .cb-lvs > div {
+  width: 68px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.skin-gs .cb-lvs > div + div {
+  border-left: 1px solid rgba(0, 0, 0, 0.04);
+}
+.skin-gs .cb-lvs > div.off > * {
+  opacity: 0.5;
+}
+.skin-gs .cb-lvs img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+.skin-gs .cb-lvs span {
+  min-width: 44px;
+  border-radius: 10px;
+  background: rgba(230, 223, 210, 0.6);
+  font-family: var(--p-num);
+  font-size: 11px;
+  line-height: 17px;
+  text-align: center;
+  color: #685139;
+}
+.skin-gs .cb-ics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.skin-gs .cb-ic {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 52px;
+}
+/* 助益 / 收获图标：64% 黑的圆底、1px 白圈 */
+.skin-gs .cb-ic > i {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #fff;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.64);
+}
+.skin-gs .cb-ic img {
+  display: block;
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+.skin-gs .cb-ic span {
+  max-width: 100%;
+  padding: 0 3px;
+  border-radius: 2px;
+  border: 1px solid #c3aa80;
+  background: #d3bc8e;
+  font-size: 9px;
+  line-height: 1.3;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.9);
+  overflow-wrap: anywhere;
+}
+.skin-gs .cb-flower.big {
+  width: 26px;
+  height: 26px;
+  margin: 0;
+}
+
+/* ========== 深境螺旋总览的装饰 ==========
+   整页压成深渊的靛青暗底：页顶垫 gs/abyss/bg.png（下沿 #2b4f69），往下渐入 #1b2638；页头去掉皮肤的
+   深蓝栏直接落在图上；层卡头部垫 floor9~12.png。卡片改成半透明暗卡，故此处把卡内的设计变量就地
+   改成浅字 —— 头像卡、天赋块都读这几个变量，不改则暗底上一片深字看不见。 */
+.skin-gs .pic:has(> .ab) {
+  background: #1b2638;
+  color: #e6edf5;
+}
+.skin-gs .ab-deco {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  aspect-ratio: 690 / 524;
+  background: linear-gradient(rgba(27, 38, 56, 0) 55%, #1b2638), url("../../gs/abyss/bg.png") center top / 100% auto no-repeat;
+  pointer-events: none;
+  z-index: 0;
+}
+.skin-gs .ab,
+.skin-gs .pic:has(> .ab) > .p-copyright {
+  position: relative;
+  z-index: 1;
+}
+.skin-gs .pic:has(> .ab) > .p-copyright {
+  color: #9fb0c4;
+}
+.skin-gs .ab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--p-gap);
+  --p-card: rgba(14, 22, 36, 0.62);
+  --p-bg: rgba(255, 255, 255, 0.08);
+  --p-line: rgba(160, 190, 220, 0.25);
+  --p-ink: #e6edf5;
+  --p-mute: #9fb0c4;
+  --p-acc: #e3c78b;
+  --ok: #8fd18a;
+}
+.skin-gs .ab .p-head {
+  margin: 0;
+  padding: 30px 4px 26px;
+  background: none;
+  border-bottom: 0;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+.skin-gs .ab .p-head::after {
+  display: none;
+}
+.skin-gs .ab .p-head h3 {
+  font-family: "NZBZ", var(--p-disp);
+  font-weight: 400;
+  font-size: 27px;
+  color: #f0f5fb;
+}
+.skin-gs .ab .p-sub,
+.skin-gs .ab .p-who span {
+  color: #c7d4e2;
+}
+.skin-gs .ab .st,
+.skin-gs .ab .ac {
+  color: var(--p-ink);
+  box-shadow: none;
+  border-radius: 8px;
+  backdrop-filter: blur(2px);
+}
+.skin-gs .ab .st.hi b {
+  color: var(--p-acc);
+}
+.skin-gs .ab .p-foot {
+  color: var(--p-mute);
+  border-top-color: var(--p-line);
+}
+.skin-gs .ab-star {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 3px;
+  vertical-align: -1px;
+}
+/* 排行卡：抽卡立绘是竖长条，取上部；试用角色退回方头像时同样铺满 */
+.skin-gs .ab-ranks {
+  display: flex;
+  gap: 6px;
+}
+.skin-gs .ab-rank {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 150px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--rar-bg);
+  box-shadow: 0 0 0 1px rgba(227, 199, 139, 0.45);
+}
+.skin-gs .ab-rank > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 12%;
+}
+.skin-gs .ab-rank-t {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  padding: 4px 7px 10px;
+  background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0));
+  text-shadow: 0 0 3px #000;
+}
+.skin-gs .ab-rank-t span {
+  display: block;
+  font-size: 10.5px;
+  font-family: "NZBZ", var(--p-disp);
+}
+.skin-gs .ab-rank-t b {
+  display: block;
+  font-family: var(--p-num);
+  font-weight: 400;
+  font-size: 15px;
+  color: var(--p-gold);
+}
+.skin-gs .ab-rank em {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 8px 7px 4px;
+  font-style: normal;
+  font-size: 10.5px;
+  text-align: center;
+  background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.7));
+}
+/* 层卡：floor 图做头，正文半透明暗底。上下半并排后每半扣去竖线与内边距只剩 289px＝四张 70px 小卡加三道 3px 缝，
+   内边距、竖线两侧与卡缝放宽任何一处，第四张就掉到下一行；宽卡（三人以下）也按 3px 缝定宽，否则那半比四人那半宽 */
+.skin-gs .ab-floor {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 0 8px 12px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+}
+/* 上下半之间一道竖线：两半等宽两列，线压在第二列左缘 */
+.skin-gs .ab-floor .halves {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+}
+.skin-gs .ab-floor .half:first-child {
+  padding-right: 4px;
+}
+.skin-gs .ab-floor .half + .half {
+  padding-left: 3px;
+  border-left: 1px solid rgba(255, 255, 255, 0.35);
+}
+.skin-gs .ab-floor .mc-wide {
+  width: 143px;
+}
+.skin-gs .ab-floor .mc-wide .mc-info {
+  width: 67px;
+}
+.skin-gs .ab-floor .mc-wide.wide2 {
+  width: 289px;
+}
+.skin-gs .ab-floor .mc-wide.wide2 .mc-face {
+  width: 143px;
+}
+.skin-gs .ab-floor .mc-wide.wide2 .mc-info {
+  width: 146px;
+}
+.skin-gs .ab-floor .mcs {
+  gap: 3px;
+}
+.skin-gs .ab-fh {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 -12px;
+  padding: 0 14px;
+  height: 46px;
+  background: center 40% / 100% auto no-repeat;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.9);
+}
+.skin-gs .ab-fh b {
+  font-family: "NZBZ", var(--p-disp);
+  font-weight: 400;
+  font-size: 17px;
+  color: var(--p-gold);
+}
+.skin-gs .ab-fh span {
+  font-family: var(--p-num);
+  font-size: 13px;
+}
+/* 逐间三格：间号与星、上半 | 下半两串小头像 */
+.skin-gs .ab-rooms {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.skin-gs .ab-room {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 5px 7px 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  min-width: 0;
+}
+.skin-gs .ab-room-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.skin-gs .ab-room-h b {
+  font-size: 11px;
+  font-weight: 600;
+}
+.skin-gs .ab-stars {
+  display: flex;
+  gap: 1px;
+}
+.skin-gs .ab-stars img {
+  width: 12px;
+  height: 12px;
+}
+.skin-gs .ab-stars img.off {
+  opacity: 0.2;
+}
+/* 单层详情（#深渊12层）：一间一块，上下半各一排整卡 */
+.skin-gs .ab-fl-room {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* 不加左右内边距：上下半并排时一半恰好排下四张卡（同总览），多出 16px 第四张就掉行 */
+  padding: 6px 0 10px;
+  border-top: 1px solid rgba(160, 190, 255, 0.14);
+}
+.skin-gs .ab-fl-room:first-of-type {
+  border-top: 0;
+}
+.skin-gs .ab-fl-room .half small {
+  color: var(--p-gold);
+}
+.skin-gs .ab-fl-time {
+  font-family: var(--p-num);
+  font-size: 10px;
+  color: var(--p-mute);
+}
+.skin-gs .ab-room-t {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.skin-gs .ab-mini {
+  display: flex;
+  gap: 1px;
+}
+.skin-gs .ab-mini + .ab-mini {
+  padding-left: 4px;
+  border-left: 1px solid var(--p-line);
+}
+.skin-gs .ab-mini i {
+  position: relative;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--rar-bg);
+}
+.skin-gs .ab-mini img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ========== 七圣召唤三张（卡组 / 卡组列表 / 卡牌收集度）的装饰 ==========
+   卡面外框 `gs/deck/边框.png` 压在卡图之上、
+   等级徽章垫 `gs/deck/七圣召唤.png`、页头右上角 `gs/other/原神.png` 标志。
+   外框是叠层而非背景：卡图本身是 `<img>`，背景会被它盖住。 */
+.skin-gs .cd > img.cd-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+  z-index: 1;
+}
+.skin-gs .cd-hp,
+.skin-gs .cd-cost,
+.skin-gs .cd b,
+.skin-gs .cd em {
+  z-index: 2;
+}
+.skin-gs .gcg-lv {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  background: url("../../gs/deck/七圣召唤.png") center / contain no-repeat;
+  color: #fff;
+  font-family: var(--p-num);
+  font-size: 15px;
+  line-height: 1;
+}
+.skin-gs .game-logo {
+  position: absolute;
+  top: 10px;
+  right: var(--p-pad);
+  width: 64px;
+  height: auto;
+  opacity: 0.9;
+  z-index: 2;
+  pointer-events: none;
+}
+/* ========== 角色卡与世界探索的底图 ==========
+   名片底 `gs/role-card/bg1.jpg`；逐地区底图 `gs/area/<地区>.png` 由模板内联给，此处只管铺法；
+   地区图标 `gs/area-icon/<地区>.png`。 */
+.skin-gs .rc-banner {
+  height: 120px;
+  margin: 0 calc(-1 * var(--p-pad));
+  background: url("../../gs/role-card/bg1.jpg") center / cover no-repeat;
+}
+/* `#探索` 与 `#信息` 的地区卡同一套底：照官方「世界探索」页的四层 —— 地区底色（`--area`，表在 base.css 的
+   `.pf-area`）、地区图按宽铺在顶上、15% 的地区渐变（`--area-g`）、内缩 4px 的 20% 白细框。缺省底色不在这里给：
+   本条与逐地区那条同权重、本文件后载，写了就把逐地区色全压掉 */
+.skin-gs .re-area,
+.skin-gs .pf-area {
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  background-color: var(--area, rgb(84, 88, 104));
+  background-position: center top;
+  background-size: 100% auto;
+  background-repeat: no-repeat;
+}
+.skin-gs .re-area {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 12px 14px;
+  border-radius: 8px;
+}
+.skin-gs .re-area::before,
+.skin-gs .re-area::after,
+.skin-gs .pf-area::before,
+.skin-gs .pf-area::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+.skin-gs .re-area::before,
+.skin-gs .pf-area::before {
+  inset: 0;
+  background: var(--area-g, none);
+  opacity: 0.15;
+}
+.skin-gs .re-area::after,
+.skin-gs .pf-area::after {
+  inset: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+}
+.skin-gs .pf-area::after {
+  border-radius: 4px;
+}
+.skin-gs .re-area > *,
+.skin-gs .pf-area > * {
+  position: relative;
+  z-index: 1;
+}
+.skin-gs .re-area[data-area="蒙德"],
+.skin-gs .pf-area[data-area="蒙德"] { --area-g: linear-gradient(103deg, rgb(64, 255, 232) 50%, rgb(38, 124, 153) 100%); }
+.skin-gs .re-area[data-area="璃月"],
+.skin-gs .pf-area[data-area="璃月"] { --area-g: linear-gradient(103deg, rgb(255, 180, 35) 50%, rgb(138, 13, 13) 100%); }
+.skin-gs .re-area[data-area="稻妻"],
+.skin-gs .pf-area[data-area="稻妻"] { --area-g: linear-gradient(103deg, rgb(204, 128, 255) 50%, rgb(122, 77, 153) 100%); }
+.skin-gs .re-area[data-area="须弥"],
+.skin-gs .pf-area[data-area="须弥"] { --area-g: linear-gradient(103deg, rgb(52, 234, 81) 50%, rgb(26, 145, 82) 100%); }
+.skin-gs .re-area[data-area="枫丹"],
+.skin-gs .pf-area[data-area="枫丹"],
+.skin-gs .re-area[data-area="空之神殿"],
+.skin-gs .pf-area[data-area="空之神殿"] { --area-g: linear-gradient(103deg, rgb(0, 192, 255) 50%, rgb(0, 115, 153) 100%); }
+.skin-gs .re-area[data-area="纳塔"],
+.skin-gs .pf-area[data-area="纳塔"] { --area-g: linear-gradient(103deg, rgb(255, 80, 64) 50%, rgb(153, 38, 38) 100%); }
+.skin-gs .re-area[data-area="挪德卡莱"],
+.skin-gs .pf-area[data-area="挪德卡莱"] { --area-g: linear-gradient(103deg, rgb(75, 210, 255) 50%, rgb(38, 124, 153) 100%); }
+.skin-gs .re-area[data-area="至冬"],
+.skin-gs .pf-area[data-area="至冬"] { --area: rgb(47, 120, 162); --area-g: linear-gradient(103deg, rgb(25, 86, 150) 50%, rgb(9, 121, 172) 100%); }
+/* `#探索` 卡内：照官方页按 343 → 484 放大，块底一律 16% 黑、字 90% 白，满 100% 的数值换金色 */
+.skin-gs .we-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.skin-gs .we-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 4px 0;
+}
+.skin-gs .we-logo {
+  flex: none;
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+.skin-gs .we-hd {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.skin-gs .we-hd > b {
+  font-family: var(--p-disp);
+  font-size: 19px;
+  font-weight: 400;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+.skin-gs .we-lv {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+}
+.skin-gs .we-lv > img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+.skin-gs .we-lv > em,
+.skin-gs .we-pct em {
+  font-style: normal;
+  color: #fff;
+}
+.skin-gs .we-blk {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 9px 12px 11px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.16);
+}
+.skin-gs .we-blk > h5 {
+  font-family: var(--p-disp);
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.9);
+}
+.skin-gs .we-pct {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.skin-gs .we-pct > p:first-child {
+  display: flex;
+  gap: 3px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+}
+.skin-gs .we-pct em.full {
+  color: #ddca9f;
+}
+.skin-gs .we-pct > i {
+  display: block;
+  height: 5px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.16);
+  overflow: hidden;
+}
+.skin-gs .we-pct > i > b {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: #ddca9f;
+}
+/* 两列小表，中间一道 8% 白的竖线；名字过长省略，数值不让位 */
+.skin-gs .we-2col {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 40px;
+}
+.skin-gs .we-2col::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.skin-gs .we-2col > p {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 18px;
+  color: rgba(255, 255, 255, 0.9);
+}
+.skin-gs .we-2col > p > span {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.skin-gs .we-2col > p > em {
+  flex: none;
+  font-style: normal;
+  font-weight: 600;
+}
+/* 部族声望与聚所：两列小格，图标在左、名字与等级两行；未开启的整格半透明 */
+.skin-gs .we-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.skin-gs .we-tile {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px 6px 4px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+.skin-gs .we-tile.locked {
+  opacity: 0.5;
+}
+.skin-gs .we-tile > img {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+.skin-gs .we-tile > p {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-family: var(--p-disp);
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.9);
+}
+.skin-gs .we-tile > p > span {
+  font-family: var(--p-body);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.65);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ========== 天赋正文的元素词 ==========
+   共享那份 `--e` 是给圆点与色条的，压在米黄卡底上当字色对比度只有 1.7～3.4（冰最淡），
+   这里各压深一档到 4 以上。 */
+.skin-gs .wk-desc .e-pyro {
+  --e: #c4462c;
+}
+.skin-gs .wk-desc .e-hydro {
+  --e: #1f74c4;
+}
+.skin-gs .wk-desc .e-anemo {
+  --e: #13876e;
+}
+.skin-gs .wk-desc .e-electro {
+  --e: #8a44c2;
+}
+.skin-gs .wk-desc .e-dendro {
+  --e: #4a8019;
+}
+.skin-gs .wk-desc .e-cryo {
+  --e: #1f80a3;
+}
+.skin-gs .wk-desc .e-geo {
+  --e: #9a6a10;
+}
+.skin-gs .p-head.has-bg {
+  min-height: 170px;
+}
+.skin-gs .p-head-bg {
+  object-position: center 14%;
+}
+
+/* ========== 幽境危战：照官方页 —— 紫黑底、逐场一张三段底图的卡（对手立绘垫右下）、最佳纪录一条 ==========
+   图在 `gs/hard/`：页顶页底、卡片上中下三段、用时条与最佳纪录条，尺寸按官方 345 → 484 放大。
+   卡内是暗底，故整页换一套深色变量；角色卡自带米黄底，不受影响。 */
+.skin-gs .pic:has(> .hc) {
+  background:
+    url("../../gs/hard/page-top.png") center top / 100% auto no-repeat,
+    url("../../gs/hard/page-bottom.png") center bottom / 100% auto no-repeat,
+    #23212d;
+  color: rgba(255, 255, 255, 0.9);
+}
+.skin-gs .pic:has(> .hc) > .p-copyright {
+  color: rgba(255, 255, 255, 0.45);
+}
+.skin-gs .hc {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  --p-ink: rgba(255, 255, 255, 0.9);
+  --p-mute: rgba(255, 255, 255, 0.55);
+  --p-line: rgba(255, 255, 255, 0.12);
+  --p-acc: #ddca9f;
+}
+.skin-gs .hc .p-head {
+  margin: 0;
+  padding: 12px 2px 4px;
+  background: none;
+  border-bottom: 0;
+}
+.skin-gs .hc .p-head::after {
+  display: none;
+}
+.skin-gs .hc .p-kick {
+  color: #c8a8e8;
+}
+.skin-gs .hc .p-sub,
+.skin-gs .hc .p-who span {
+  color: rgba(255, 255, 255, 0.6);
+}
+.skin-gs .hc .p-foot {
+  color: var(--p-mute);
+  border-top-color: var(--p-line);
+}
+/* 「单人模式」两侧各一道渐隐细线 */
+.skin-gs .hc-mode {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.65);
+}
+.skin-gs .hc-mode::before,
+.skin-gs .hc-mode::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.3));
+}
+.skin-gs .hc-mode::after {
+  transform: scaleX(-1);
+}
+.skin-gs .hc-best {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+  padding: 0 22px;
+  background: url("../../gs/hard/best.png") center / 100% 100% no-repeat;
+  font-size: 19px;
+  font-weight: 500;
+}
+.skin-gs .hc-best-r {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.skin-gs .hc-medal {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+}
+.skin-gs .hc-best-r small {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.65);
+}
+.skin-gs .hc-best-r b {
+  font-family: var(--p-num);
+  font-weight: 400;
+}
+/* 一场一张卡：上 128 / 下 160 两段定高、中段平铺；正文抬到对手立绘之上 */
+.skin-gs .hc-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 260px;
+  padding: 20px 20px 18px;
+  background:
+    url("../../gs/hard/card-top.png") center top / 100% auto no-repeat,
+    url("../../gs/hard/card-bottom.png") center bottom / 100% auto no-repeat,
+    url("../../gs/hard/card-mid.png") center / 100% auto repeat-y;
+}
+.skin-gs .hc-card > :not(.hc-boss) {
+  position: relative;
+  z-index: 1;
+}
+.skin-gs .hc-card > h4 {
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 24px;
+}
+.skin-gs .hc-time {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 236px;
+  height: 28px;
+  margin-left: -6px;
+  padding: 0 10px;
+  background: url("../../gs/hard/time.png") center / 100% 100% no-repeat;
+  font-size: 14px;
+  font-weight: 600;
+}
+.skin-gs .hc-time b {
+  font-family: var(--p-num);
+  font-weight: 400;
+}
+.skin-gs .hc-team {
+  width: 289px;
+  gap: 3px;
+}
+.skin-gs .hc-team .mc-wide {
+  width: 143px;
+}
+.skin-gs .hc-team .mc-wide .mc-info {
+  width: 67px;
+}
+.skin-gs .hc-team .mc-wide.wide2 {
+  width: 289px;
+}
+.skin-gs .hc-team .mc-wide.wide2 .mc-face {
+  width: 143px;
+}
+.skin-gs .hc-team .mc-wide.wide2 .mc-info {
+  width: 146px;
+}
+/* 两项亮眼记录：半透明紫格，左圆头像、中名目、右数值 */
+.skin-gs .hc-bests {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+}
+.skin-gs .hc-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 9px;
+  background: rgba(146, 126, 222, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  font-size: 14px;
+}
+.skin-gs .hc-pill > i {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #2a1b2e center / cover no-repeat;
+  box-shadow: 0 0 0 1px #635493;
+}
+.skin-gs .hc-pill > span {
+  font-weight: 600;
+}
+.skin-gs .hc-pill > b {
+  margin-left: auto;
+  font-family: var(--p-num);
+  font-weight: 400;
+}
+/* 对手立绘：右上角 200px 见方，下沿渐隐；等级胶囊压在立绘下部 */
+.skin-gs .hc-boss {
+  position: absolute;
+  top: 46px;
+  right: 6px;
+  width: 190px;
+  height: 190px;
+  z-index: 0;
+}
+.skin-gs .hc-boss > img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  -webkit-mask-image: linear-gradient(180deg, #000 64%, transparent 82%);
+  mask-image: linear-gradient(180deg, #000 64%, transparent 82%);
+}
+.skin-gs .hc-boss > small {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 4px;
+  font-size: 12px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.65);
+}
+.skin-gs .hc-boss > span {
+  position: absolute;
+  left: 50%;
+  bottom: 50px;
+  transform: translateX(-50%);
+  padding: 1px 12px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.48);
+  font-family: var(--p-num);
+  font-size: 14px;
+}
+/* 机制说明：接口给的着色是游戏里压在暗底上的浅色（#FF9999、#99FFFF 一类），这里本就是暗底 */
+.skin-gs .hc-desc {
+  margin: 0;
+  padding: 8px 12px 8px 26px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.24);
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.85);
+}

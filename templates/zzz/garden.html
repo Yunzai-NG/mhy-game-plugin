@@ -1,0 +1,86 @@
+<!--
+  模块职责：零号空洞·枯萎苗圃（`%枯萎苗圃`）—— 执照等级、收集项与「刀耕火焚」那一队
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / foot，
+            以及 common/zzz-avatar-card.html（接了面板库时那一格是整卡）
+  生命周期：静态模板
+  注意事项：四处判据。一是收集项的名称由**视图按位置补**（接口只给数字，官方页面同样照位置写），
+            此处只印不判。二是「刀耕火焚」来自另一条接口，没打过时视图不产出 `throne`、整块不画。
+            三是 `zzz-avatar-card` 那次 include **必须显式传 `_tpl_path`**：带第二参时子模板
+            不继承父数据，漏传则卡里那层 include 拼出 `undefined/skin/…`、整格空白。
+            四是头像按 `fromMeta` 判根（元数据那张要 `_meta_path`，接口那张一处根都不加），
+            邦布同理（见 `template-img-two-roots`）。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'WITHERED GARDEN',
+  title: '枯萎苗圃',
+  sub: '零号空洞　执照等级 ' + level.cur + ' / ' + level.max,
+  who: {face: level.icon, fromMeta: false, name: nickname || '绳匠', uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<div class="p-stats" style="--n:3">
+  <div class="st hi"><b>{{level.cur}}</b><span>执照等级</span></div>
+  <div class="st"><b>{{talent.cur}}/{{talent.max}}</b><span>作战机略</span></div>
+  {{if damage}}<div class="st"><b>{{damage}}</b><span>最高伤害</span></div>{{/if}}
+</div>
+
+{{if collects.length}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '收集数据'}]) %>
+  <!-- 五项一行等分铺满，每项带一条进度；收满的那项高亮 -->
+  <div class="zg-col" style="--n:{{collects.length}}">
+    {{each collects one}}
+    <div class="zg-c {{one.full ? 'full' : ''}}">
+      <b>{{one.cur}}<s>/{{one.max}}</s></b>
+      <div class="bar-t"><i style="width:{{one.max ? one.cur * 100 / one.max : 0}}%"></i></div>
+      <span>{{one.name}}</span>
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/if}}
+
+{{if throne}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{
+    title: '刀耕火焚',
+    note: throne.cost ? '探索耗时 ' + throne.cost : ''
+  }]) %>
+  <!-- 伤害数字与队伍同装一框，与另几张战绩图一致 -->
+  <div class="zb2">
+  <div class="bigline">
+    <b>{{throne.damage}}</b>
+    <span class="p-sub">对首领造成的伤害</span>
+  </div>
+  {{set isCard = throne.avatars[0] && throne.avatars[0].card}}
+  <div class="zt {{isCard ? 'is-card' : ''}}">
+    {{each throne.avatars a}}
+    {{if a.card}}
+    <div class="zt-slot">
+      <% include(_tpl_path + '/zzz-avatar-card.html', [a.card, {_res_path, _meta_path, _tpl_path, cardType: 'mini'}]) %>
+      {{if a.rate}}<small>伤害 {{a.rate}}%</small>{{/if}}
+    </div>
+    {{else if a.empty}}
+    <div class="av sm"><div class="av-img"></div></div>
+    {{else}}
+    <% include(_tpl_path + '/skin/avatar.html', [{
+      face: a.icon, fromMeta: a.fromMeta, star: a.rarity == 'A' ? 4 : 5, cons: a.rank,
+      name: a.name, level: a.level, mark: a.rate ? a.rate + '%' : ''
+    }, {_res_path, _meta_path, size: 'sm'}]) %>
+    {{/if}}
+    {{/each}}
+    {{if throne.buddy}}
+    <% include(_tpl_path + '/skin/avatar.html', [{
+      face: throne.buddy.icon, fromMeta: throne.buddy.fromMeta,
+      star: throne.buddy.rarity == 'A' ? 4 : 5
+    }, {_res_path, _meta_path, size: 'sm'}]) %>
+    {{/if}}
+  </div>
+  </div>
+</section>
+{{/if}}
+
+<% include(_tpl_path + '/skin/foot.html', [{note: '收集项名称按官方页面的次序对应'}]) %>
+{{/block}}

@@ -1,0 +1,85 @@
+<!--
+  模块职责：抽卡记录（`#抽卡记录`）—— 按年分组的逐次出金，带保底进度条
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / foot
+  生命周期：静态模板
+  注意事项：四处判据。一是保底上限随池子变（角色池 90、武器与光锥池 80），由 `isChar` 判，
+            判错只是条长比例不对、不报错。二是头像在元数据里要加 `_meta_path`，而 `img` 为空的
+            （「已抽」那条与查不到元数据的条目）换插件自带的 `gacha/imgs/no-avatar.webp`、在资源根，
+            根拼错则那一格是碎图（见 `template-img-two-roots`）。三是「UP原石 / UP星琼 / UP菲林」
+            那一项的名字随游戏变，三套文案字句不改。四是没有元数据的条目仍列出来，丢掉它等于让最近一次出金消失。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+{{set statMap = game === 'gs'
+  ? {allNum: '抽卡总数', fiveNum: '金卡数', wai: '歪 T.T', fourNum: '紫卡数', fiveAvg: '平均出金', upYs: 'UP原石'}
+  : (game === 'sr'
+      ? {allNum: '抽卡总数', fiveNum: '金卡数', wai: '歪 T.T', fourNum: '紫卡数', fiveAvg: '平均出金', upYs: 'UP星琼'}
+      : {allNum: '抽卡总数', fiveNum: '金卡数', wai: '歪 T.T', fourNum: '紫卡数', fiveAvg: '平均出金', upYs: 'UP菲林'}) }}
+{{set face = face || {banner: '', face: '', name: uid} }}
+{{set stat = (gacha && gacha.stat) || {} }}
+{{set mp = maxPity || 90}}
+
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'GACHA RECORDS',
+  title: '抽卡记录',
+  who: {face: face.face, fromMeta: true, name: face.name, uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+{{if gacha && gacha.stat}}
+<div class="kv">
+  {{each statMap title key}}
+  {{if stat[key]}}
+  <div class="kv-i">
+    <b>{{stat[key]}}</b>
+    <span>{{title}}</span>
+  </div>
+  {{/if}}
+  {{/each}}
+</div>
+{{/if}}
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '出金记录', note: '条长为这一发用掉的抽数，满格即 ' + mp + ' 抽保底'}]) %>
+  <div class="gl">
+    {{each gacha.yearLists year}}
+    <div class="gl-y">{{year}}</div>
+    {{each gacha.fiveLog[year] ds}}
+    {{set item = gacha.items[ds.id] || {} }}
+    {{set count = ds.count}}
+    {{set pending = ds.pending}}
+    <div class="gr {{pending ? 'pending' : (ds.tag === '歪' ? 'wai' : (ds.tag === 'UP' ? 'up' : ''))}} {{ds.luck}}">
+      <!-- 图作背景 contain：武器图 4:3，img 铺满方格会裁掉下半 -->
+      <div class="cr-ic r{{item.star == 4 ? 4 : 5}}" style="--av-fg:url('{{item.img ? _meta_path + item.img : _res_path + 'gacha/imgs/no-avatar.webp'}}')"></div>
+      <div class="gr-nm">
+        <b>{{pending ? '当前垫抽' : item.abbr}}</b>
+        {{if ds.tag}}<em class="gr-tag t-{{ds.tag === 'UP' ? 'up' : 'wai'}}">{{ds.tag === 'UP' ? 'UP' : '歪·常驻'}}</em>{{/if}}
+        <span class="dt">{{ds.date}}</span>
+      </div>
+      <div class="gr-bar {{count <= mp * 0.4 ? 'g1' : (count < mp * 0.6 ? 'g2' : (count < mp * 0.8 ? 'g3' : 'g4'))}}">
+        <i style="width:{{(count / mp * 100) > 100 ? 100 : count / mp * 100}}%"></i>
+        <s style="left:{{softPity / mp * 100}}%"></s>
+        <b>{{count}}<small>抽</small></b>
+      </div>
+      <span class="gr-luck">{{if pending}}垫着{{else if ds.luck === 'ou'}}欧{{else if ds.luck === 'fei'}}非{{/if}}</span>
+    </div>
+    {{/each}}
+    {{/each}}
+  </div>
+  <div class="gr-legend">
+    <span><i class="t-up">UP</i>当期 UP</span>
+    <span><i class="t-wai">歪·常驻</i>歪了，出的是常驻</span>
+    <span><b class="lk-ou">欧</b>{{(mp * 0.4).toFixed(0)}} 抽内出</span>
+    <span><b class="lk-fei">非</b>{{(mp * 0.8).toFixed(0)}} 抽以上</span>
+    <span><s></s>软保底起点</span>
+  </div>
+</section>
+
+<% include(_tpl_path + '/skin/foot.html', [{
+  tips: [
+    _hash + '抽卡帮助 获取抽卡链接',
+    _hash + '更新抽卡记录 更新抽卡信息',
+    _hash + '抽卡统计 按卡池分析'
+  ]
+}]) %>
+{{/block}}

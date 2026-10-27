@@ -1,0 +1,12 @@
+<!--
+  模块职责：混沌回忆（`*混沌回忆`）—— 薄壳，图身与虚构叙事、末日幻影共用
+  依赖方向：extend skinLayout，include common/sr-challenge.html
+  生命周期：静态模板
+  注意事项：三张薄壳的差别只在视图给的 `kind`（图身按它决定印不印轮次与首领那一行），
+            故这里除了继承布局之外不加任何东西 —— 在某一张里单独改版式会让三张走形。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/sr-challenge.html') %>
+{{/block}}

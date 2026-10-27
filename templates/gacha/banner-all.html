@@ -1,0 +1,44 @@
+<!--
+  模块职责：卡池复刻统计（`#五星角色复刻`）—— 一行一个角色 / 武器，带 UP 次数与距今间隔
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head
+  生命周期：静态模板
+  注意事项：三处判据。一是头像在元数据里，要 `_meta_path`（见 `template-img-two-roots`）。
+            二是「距今间隔」那一格有五种口径（下期 UP / 当期今天开启 / 上期今天关闭 / 当期长期开放 /
+            当期若干天后关闭），判据是 `daysDiff` 与 `daysStar` 的正负，**五句字句不改** ——
+            合并任意两句都会让「还没开」与「已经关」看起来一样。
+            三是标题里的记号取 `gameMap[game]` 而非写死 `#`：绝区零那一路是 `%`。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+{{set gameMap = {gs: '#', sr: '*', zzz: '%'} }}
+
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'BANNER HISTORY',
+  title: gameMap[game] + star + '星' + type + '复刻统计',
+  sub: new_pool.data.length != 0
+    ? '当前卡池：' + new_pool.data[0].version + ' ' + new_pool.name.join('、') + '　' + new_pool.data[0].from + ' ~ ' + new_pool.data[0].to
+    : ''
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: type, note: data.length + ' 个　左上为名次，右侧大字为距今天数'}]) %>
+  <!-- 两列小卡：图标 | 名字与「UP 次数 · 上次卡池」| 距今天数。单列长表按 640px 排时每行中间空着一大截 -->
+  <div class="ba-grid">
+    {{each data item idx}}
+    <div class="ba-it {{item.daysDiff > 0 ? '' : 'now'}}">
+      <div class="ba-ic r{{star == 4 ? 4 : 5}}" style="--av-fg:url('{{_meta_path}}{{item.icon}}')"><i>{{idx+1}}</i></div>
+      <div class="ba-t">
+        <b>{{item.name}}</b>
+        <span>UP {{item.count}} 次 · {{item.version}}</span>
+      </div>
+      {{if item.daysDiff > 0}}
+      <div class="ba-d"><b>{{item.daysDiff}}</b><span>天</span></div>
+      {{else}}
+      <div class="ba-d txt">{{item.daysStar < 0 ? `下期up(${item.daysStar*-1}天后开启)` : item.daysStar == 0 ? "当期UP(今天开启)" : item.daysDiff == 0 ? "上期UP(今天关闭)": item.daysDiff < -99 ? "当期UP(长期开放)": `当期UP(${item.daysDiff*-1}天后关闭)`}}</div>
+      {{/if}}
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/block}}

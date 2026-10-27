@@ -1,0 +1,42 @@
+<!--
+  模块职责：七圣召唤牌组列表（`#七圣卡组`）—— 每副只画角色牌，行动牌要看单副那张
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head
+  生命周期：静态模板
+  注意事项：三处判据。一是卡面 `one.image` 是米游社给的绝对地址，**一处根都不加**；底框与
+            数字图在插件资源里走 `_res_path`（见 `template-img-two-roots`）。
+            二是数字图只有 0 到 8 与 10、**没有 9**，照录未补，血量为 9 那张取不到图。
+            三是「使用 #七圣卡组N 查看详情」这句要印在每副上 —— 这张图只有角色牌，少了这句
+            使用者不知道行动牌去哪看。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'GENIUS INVOKATION',
+  title: '七圣召唤牌组',
+  sub: '共 ' + decks.length + ' 副',
+  who: {name: nickname, uid: uid, level: level ? 'Lv.' + level : ''}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+<img class="game-logo" src="{{_res_path}}gs/other/原神.png" alt="">
+
+{{each decks deck}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{
+    title: '七圣卡组' + deck.id,
+    note: '使用 ' + _hash + '七圣卡组' + deck.id + ' 查看详情'
+  }]) %>
+  <div class="cards">
+    {{each deck.avatars one}}
+    <div class="cd">
+      <img src="{{one.image}}" onerror="whenError(this)" alt="">
+      <img class="cd-frame" src="{{_res_path}}gs/deck/边框.png" alt="">
+      <div class="cd-hp">
+        <img src="{{_res_path}}gs/deck/容器.png" alt="">
+        <img src="{{_res_path}}gs/deck/{{one.hp}}.png" onerror="whenError(this)" alt="">
+      </div>
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/each}}
+{{/block}}

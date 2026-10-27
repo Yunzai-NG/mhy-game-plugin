@@ -1,0 +1,20 @@
+<!--
+  模块职责：活动日历的三枚小图（钟 / 锁 / 星）—— 内联 svg，颜色随所在那一句的文字色
+  依赖方向：被 act-calendar.html include，自己不引别的片段
+  生命周期：静态片段
+  注意事项：不能改回 css mask 引外部 svg：出图用的浏览器不让 mask 读本地文件，那一格只剩一段空白、
+            不报错。钟按游戏分三种形状（原神线条、星铁粗环、绝区零半饼），认不出游戏时取原神那枚。
+-->
+{{set k = $data[0] || '' }}
+{{set g = $data[1] || '' }}
+{{if k === 'lock'}}
+<svg class="ec-ic" viewBox="0 0 12 12"><path fill="currentColor" d="M3.5 5V3.75a2.5 2.5 0 0 1 5 0V5h.5a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 0h3V3.75a1.5 1.5 0 0 0-3 0z"/></svg>
+{{else if k === 'star'}}
+<svg class="ec-ic star" viewBox="0 0 24 24"><path fill="currentColor" d="M12 1.5l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6L12 15.7l-5.8 3.6 1.6-6.6-5.2-4.4 6.8-.5z"/></svg>
+{{else if g === 'zzz'}}
+<svg class="ec-ic clock" viewBox="0 0 10 10"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M8.75 5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM10 5A5 5 0 110 5a5 5 0 0110 0zM5 5V2a3 3 0 11-2.882 2.166L5 5z"/></svg>
+{{else if g === 'sr'}}
+<svg class="ec-ic clock" viewBox="0 0 14 13"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M11.372 6.5a4.117 4.117 0 1 1-8.233 0 4.117 4.117 0 0 1 8.233 0m1.3 0a5.417 5.417 0 1 1-10.833 0 5.417 5.417 0 0 1 10.833 0M6.713 3.25v3.585l.169.16L9.048 9.06l.747-.784L7.797 6.37V3.25z"/></svg>
+{{else}}
+<svg class="ec-ic clock" viewBox="0 0 12 13"><path fill="currentColor" d="M6 3.353a.5.5 0 0 1 .5.5v2.13h1.403a.5.5 0 1 1 0 1H5.97a.5.5 0 0 1-.47-.508V3.853a.5.5 0 0 1 .5-.5"/><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M10.987 6.046a5 5 0 1 1-10 0 5 5 0 0 1 10 0m-5 4a4 4 0 1 0 0-8 4 4 0 0 0 0 8"/></svg>
+{{/if}}

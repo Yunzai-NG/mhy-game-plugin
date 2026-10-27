@@ -1,0 +1,99 @@
+<!--
+  模块职责：原神札记与星铁月历共用的正文 —— 名片与本月总数、本月对上月、收入来源饼图
+  依赖方向：被 gs/ledger 与 sr/ledger include，引 common/script/g2plot.min.js
+  生命周期：静态片段
+  注意事项：饼图那两串走原样输出（`JSON.parse`
+            读未转义的串），改成普通插值引号被转掉、整张饼画不出来。图表容器高度写死在 css 里，
+            g2plot 量到高度 0 时同样整块空白。
+-->
+{{set d = $data[0] || {} }}
+{{set {_res_path, _meta_path, _tpl_path} = $data[1] || {} }}
+{{set first = d.cmp[0] || {} }}
+
+<section class="p-sec lb-hero">
+  <div class="lb-main">
+    <div class="lb-total">
+      <span class="lb-tag">{{d.monthLabel}}</span>
+      <div class="lb-big">
+        <img src="{{_res_path}}{{first.icon}}" alt="">
+        <b>{{first.now}}</b>
+        <span>{{first.label}}<br>≈ {{d.gacha}} 抽</span>
+      </div>
+    </div>
+    <div class="lb-today">
+      <em>今日</em>
+      {{each d.today t}}
+      <span><img src="{{_res_path}}{{t.icon}}" alt="">{{t.value}}</span>
+      {{/each}}
+    </div>
+    <div class="lb-cmp">
+      {{each d.cmp row}}
+      <div class="lb-row">
+        <img class="lb-ic" src="{{_res_path}}{{row.icon}}" alt="">
+        <div class="lb-bars">
+          <div class="lb-bar now"><i style="width:{{row.nowBar}}%"></i><span>本月 <b>{{row.now}}</b></span></div>
+          <div class="lb-bar last"><i style="width:{{row.lastBar}}%"></i><span>上月 <b>{{row.last}}</b></span></div>
+        </div>
+        <span class="lb-rate {{row.dir}}">{{row.rate || '—'}}</span>
+      </div>
+      {{/each}}
+    </div>
+  </div>
+</section>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: d.primaryName + '收入组成', note: d.top ? '最多来自' + d.top.label + '，占 ' + d.top.percent + '%' : ''}]) %>
+  <div class="lb-src">
+    {{if d.hasPie}}
+    <div class="chart lb-pie" id="chartContainer"></div>
+    {{else}}
+    <div class="chart lb-pie pie-empty"><div class="ring"><span>总计</span><b>0</b></div></div>
+    {{/if}}
+    <ul class="lb-lgd">
+      {{each d.slices val}}
+      <li>
+        <i style="background: {{val.color}}"></i>
+        <span>{{val.label}}</span>
+        <b>{{val.num}}</b>
+        <em>{{val.percent}}%</em>
+        <s><u style="width:{{val.percent}}%;background:{{val.color}}"></u></s>
+      </li>
+      {{/each}}
+    </ul>
+  </div>
+</section>
+
+{{if d.hasPie}}
+<script type="text/javascript" src="{{_res_path}}common/script/g2plot.min.js"></script>
+<script>
+  const { Pie } = G2Plot
+  // g2plot 的中心字缺省是深色，星铁的近黑底上读不出来，取皮肤的墨色
+  const ink = getComputedStyle(document.body).getPropertyValue('--p-ink').trim()
+  new Pie('chartContainer', {
+    renderer: 'svg',
+    animation: false,
+    data: JSON.parse(`{{@ d.pie}}`),
+    appendPadding: 6,
+    angleField: 'num',
+    colorField: 'label',
+    radius: 1,
+    innerRadius: 0.68,
+    color: JSON.parse(`{{@ d.color}}`),
+    label: {
+      type: 'inner',
+      offset: '-50%',
+      autoRotate: false,
+      style: { textAlign: 'center', fontFamily: 'tttgbnumber', fontSize: 10 },
+      formatter: ({ percent }) => {
+        percent = (percent * 100).toFixed(0)
+        return percent > 4 ? `${percent}%` : ''
+      }
+    },
+    statistic: {
+      title: { offsetY: -14, content: '总计', style: { color: ink, fontSize: 11 } },
+      content: { offsetY: -6, style: { fontFamily: 'tttgbnumber', color: ink, fontSize: 20 } }
+    },
+    legend: false
+  }).render()
+</script>
+{{/if}}

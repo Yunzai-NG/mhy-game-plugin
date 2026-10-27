@@ -1,0 +1,46 @@
+<!--
+  模块职责：绘想游迹（`#绘想游迹`）—— 收集进度与逐项的完成状态
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head
+  生命周期：静态模板
+  注意事项：两处判据。一是专精图与顶栏头像**都是米游社接口给的绝对地址**，一处根都不加
+            （见 `template-img-two-roots`）。二是三档状态（已完成 / 进行中 / 未解锁）官方各有
+            一张角标图，本插件不带那三张素材，故用文字角标加压暗 —— 不可改用插件里别的图标
+            充当，那会让三档看着像另一套含义。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<!-- 与剧诗同一族：页眉页脚花饰取 page-top / page-bottom，正文包在 .cb 里抬到装饰之上 -->
+<i class="cb-deco top"></i>
+<i class="cb-deco bottom"></i>
+<div class="cb">
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'CHARACTER MASTERY',
+  title: '绘想游迹',
+  sub: '已完成 ' + done + ' / ' + total,
+  who: {
+    face: role.game_head_icon,
+    fromMeta: false,
+    name: role.nickname,
+    uid: uid,
+    level: role.level ? 'Lv.' + role.level : ''
+  }
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '绘想游迹', note: done + ' / ' + total}]) %>
+  <div class="coll">
+    {{each items one}}
+    <div class="co {{one.done ? 'done' : (one.locked ? 'off' : '')}}">
+      <div class="co-pic">
+        <img src="{{one.icon}}" onerror="whenError(this)" alt="">
+        {{if one.done}}<span class="co-tag">已完成</span>{{/if}}
+        {{if one.locked}}<span class="co-tag off">未解锁</span>{{/if}}
+      </div>
+      <b>{{one.name}}</b>
+    </div>
+    {{/each}}
+  </div>
+</section>
+</div>
+{{/block}}

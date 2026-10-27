@@ -1,0 +1,452 @@
+<!--
+  模块职责：面板详情（`#胡桃面板`）—— 立绘、属性、武器、天赋、五件圣遗物与评分，开了伤害计算时末尾加伤害表
+  依赖方向：extend elemLayout，样式 character/profile-detail.css + profile-detail-skin.css；数据由 views/panel.ts 装配
+  生命周期：静态模板
+  注意事项：立绘在 `splashUpload` 为真时走 `_panel_path`（上传的面板图），否则走 `_meta_path`；图标按
+            `meta-` 前缀选根（见 `template-img-two-roots`）。根选错不报错，只是那一格空白。
+-->
+{{extend elemLayout}}
+
+{{block 'css'}}
+<link rel="stylesheet" type="text/css" href="{{_res_path}}character/profile-detail.css"/>
+<link rel="stylesheet" type="text/css" href="{{_res_path}}character/profile-detail-skin.css"/>
+{{/block}}
+
+{{set weapon = data.weapon}}
+
+{{set dataSource = data.dataSource}}
+{{set {imgs, costumeSplash} = data }}
+{{set imgs = imgs || {} }}
+{{set gameHash = _hash }}
+
+{{block 'main'}}
+<div class="profile-cont game-{{game}}">
+  <div class="basic">
+    <div class="main-pic" style="background-image:url('{{data.splashUpload ? _panel_path : _meta_path}}{{costumeSplash||imgs?.splash}}')"></div>
+    <div class="detail">
+      <div class="char-name">{{if data.fetter}}<i class="char-fetter f{{data.fetter}}"></i>{{/if}}{{data.name}}{{if data.travelerElem}}<small class="traveler-elem">{{data.travelerElem}}</small>{{/if}}</div>
+      <div class="char-lv">UID {{uid}} - Lv.{{data.level}}
+        <span class="cons cons-{{data.cons}}">{{data.cons}}{{game === 'zzz' ? '影' : '命'}}</span></div>
+      {{if game === 'zzz' && data.zzzInfo}}
+      <div class="char-tags">
+        {{if data.zzzInfo.rank}}<span>{{data.zzzInfo.rank}} 级</span>{{/if}}
+        {{if elem}}<span>{{elem}}</span>{{/if}}
+        {{if data.zzzInfo.prof}}<span>{{data.zzzInfo.prof}}</span>{{/if}}
+        {{if data.zzzInfo.camp}}<span>{{data.zzzInfo.camp}}</span>{{/if}}
+        {{if data.zzzInfo.mysRating}}<span>米游社 {{data.zzzInfo.mysRating}} {{data.zzzInfo.mysScore}}</span>{{/if}}
+      </div>
+      {{/if}}
+      <div class="char-detail">
+        {{if mode !== 'weapon'}}
+        {{if game === 'gs'}}
+        {{set talentMap = {a: '普攻', e: '战技', q: '爆发'} }}
+        <div class="char-talents">
+          {{each talentMap tName key}}
+          {{set talent = data.talent[key] || {} }}
+          {{set ico = '' + (imgs[key] || '')}}
+          <div class="talent-item">
+            <div class="talent-icon
+               {{talent.level > talent.original ? `talent-plus`:``}}
+                {{talent.original >= 10 ? `talent-crown`:``}}">
+              <div class="talent-icon-img"
+                   style="background-image:url('{{ico.indexOf('meta-') === 0 ? _meta_path : _res_path}}{{ico}}')"></div>
+              <strong>{{talent.level}}</strong>
+            </div>
+          </div>
+          {{/each}}
+        </div>
+        {{else if game === 'zzz'}}
+        <div class="char-talents six">
+          {{each data.zzzInfo.skills one}}
+          {{set talent = data.talent[one.key] || {} }}
+          {{set ico = '' + (imgs[one.icon] || '')}}
+          <div class="talent-item">
+            <div class="talent-icon {{talent.level >= 12 ? `talent-crown` : ``}}">
+              <div class="talent-icon-img"
+                   style="background-image:url('{{ico.indexOf('meta-') === 0 ? _meta_path : _res_path}}{{ico}}')"></div>
+              <strong>{{talent.level}}</strong>
+            </div>
+          </div>
+          {{/each}}
+        </div>
+        {{/if}}
+        <ul class="char-attr">
+          <!-- 属性名与次序由视图层给（panel/prop 下按游戏各一份），此处只负责画 -->
+          {{set cw = artisDetail?.charWeight || {} }}
+          {{each attrMap title key}}
+          <li>
+            <div class="icon"><i class="i-{{key}}"></i></div>
+
+            <div class="title">{{title}}</div>
+            <div class="weight">
+              {{if cw[key]}}
+              <span class="{{cw[key]>=80?'gold':'normal'}}">{{cw[key]}}</span>
+              {{/if}}
+            </div>
+            <div class="value">
+              {{attr[key]}}
+            </div>
+            <div class="value2">
+              <span class="base {{attr[key+'Base'] === '0.0%' ? 'zero':''}}">{{attr[key+'Base']}}</span>
+              <span class="plus">{{if attr[key+'Plus']}}+{{attr[key+'Plus']}}{{/if}}</span>
+            </div>
+
+          </li>
+          {{/each}}
+        </ul>
+        {{else}}
+        <div class="char-weapon">
+          <div class="img" style="background-image:url('{{_meta_path}}{{weapon.img}}')"></div>
+          <div class="head">
+            <strong>{{weapon.sName || weapon.name}}</strong>
+            <div class="star star-{{weapon.star}}"></div>
+            <span><span class="affix affix-{{weapon.affix}}">精{{weapon.affix}}</span> Lv.{{weapon.leve || weapon.level}} </span>
+          </div>
+        </div>
+        {{/if}}
+      </div>
+    </div>
+    <div class="char-cons">
+      {{set cons = [1,2,3,4,5,6]}}
+      {{each cons idx}}
+      {{set ci = '' + (imgs[`cons${idx}`] || '')}}
+      <div class="cons-item">
+        <div class="talent-icon {{idx * 1 > data.cons * 1 ? 'off' : '' }}">
+          <div class="talent-icon-img" style="background-image:url('{{ci.indexOf('meta-') === 0 ? _meta_path : _res_path}}{{ci}}')"></div>
+        </div>
+      </div>
+      {{/each}}
+    </div>
+
+    <div class="data-info">
+      {{if data.dataSource}}
+      <span>数据源：{{ {change:"面板变换"}[data.dataSource]||data.dataSource }}</span>
+      {{/if}}
+      {{if data.updateTime}}
+      <span class="time">{{data.updateTime}}</span>
+      {{/if}}
+    </div>
+  </div>
+
+  {{if mode === "dmg" && dmgCalc?.dmgCfg?.title}}
+  <div class="cont">
+    <div class="cont-footer dmg-desc">
+      当前模式下，上方展示面板属性为当前伤害计算[{{dmgCalc.dmgCfg.title}}]下计入全部加成后的面板数据，仅供参考
+    </div>
+  </div>
+  {{/if}}
+  {{if changeProfile}}
+  <div class="cont">
+    <div class="cont-footer dmg-desc">
+      <strong>该面板为非实际数据。当前替换命令：</strong> {{changeProfile}}
+    </div>
+  </div>
+  {{/if}}
+
+  <!-- 【 武器+圣遗物列表】 -->
+  <div class="profile-detail">
+    {{if game === 'sr'}}
+    <!-- 【 星铁 天赋+行迹 】 -->
+    {{if data.charWeapon === '记忆'}}
+    {{set talentMap = {a: '普攻', e: '战技', t:'天赋', q: '爆发', me: '忆灵技', mt: '忆灵天赋'} }}
+    <div class="sr-talent memosprite">
+    {{else if data.charWeapon === '欢愉'}}
+    {{set talentMap = {a: '普攻', e: '战技', t:'天赋', q: '爆发', j: '欢愉技'} }}
+    <div class="sr-talent elation">
+    {{else}}
+    {{set talentMap = {a: '普攻', e: '战技', t:'天赋', q: '爆发'} }}
+    <div class="sr-talent">
+    {{/if}}
+      <div class="char-talents left">
+        {{each talentMap tName key}}
+        {{set talent = data.talent[key] || {} }}
+        {{set ico = '' + (imgs[key] || '')}}
+        <div class="talent-item">
+          <div class="talent-icon
+               {{talent.level > talent.original ? `talent-plus`:``}}
+                {{talent.original >= 10 ? `talent-crown`:``}}">
+            <div class="talent-icon-img" style="background-image:url('{{ico.indexOf('meta-') === 0 ? _meta_path : _res_path}}{{ico}}')"></div>
+            <strong>{{talent.level}}</strong>
+            <span>{{tName}}</span>
+          </div>
+        </div>
+        {{/each}}
+      </div>
+
+      <div class="char-talents char-trees">
+        {{each data.treeData tCfg}}
+        {{if tCfg?.type === 'talent' }}
+        <div class="talent-item">
+          <div class="talent-icon {{tCfg.value ? '':'off'}}">
+            <div class="talent-icon-img" style="background-image:url('{{_meta_path}}{{tCfg.img}}')"></div>
+          </div>
+        </div>
+        {{else}}
+        <div class="tree-item">
+          {{each tCfg tIdx}}
+          <div class="talent-icon  {{tIdx.value ? '':'off'}}">
+            <div class="talent-icon-img" style="background-image:url('{{_meta_path}}{{tIdx.img}}')"></div>
+          </div>
+          {{/each}}
+        </div>
+        {{/if}}
+        {{/each}}
+
+      </div>
+    </div>
+    {{/if}}
+
+    <!-- 【 武器 / 光锥 / 音擎 】 星铁与绝区零都把它独立成一块，而不占遗器 / 驱动盘那个格子
+         —— 否则绝区零六件驱动盘加上音擎正好顶出一行、末行留两个空位。原神的武器仍在圣遗物格里。 -->
+    {{if (game === 'sr' || game === 'zzz') && weapon && weapon.name}}
+    <div class="sr-weapon">
+      <div class="weapon-img" style="background-image:url('{{_meta_path}}{{weapon.splash || weapon.img}}')"></div>
+      <div class="weapon-info">
+        <div class="weapon-title">
+          <strong>{{weapon.name}}</strong>
+          <span>Lv.{{weapon.level}}</span>
+          <span>叠影{{weapon.affix}}阶</span>
+        </div>
+        <div class="weapon-attr">
+          {{if weapon.attrList}}
+          <!-- 绝区零：主属性 + 高级属性由视图层给了短标题，逐条印 -->
+          {{each weapon.attrList one}}
+          <div class="attr"><span>{{one.title}}</span>{{one.value}}</div>
+          {{/each}}
+          {{else}}
+          {{set a = weapon.attrs}}
+          <div class="attr i-hp"><span>生命</span>{{a.hp}}</div>
+          <div class="attr i-atk"><span>攻击</span>{{a.atk}}</div>
+          <div class="attr i-def"><span>防御</span>{{a.def}}</div>
+          {{/if}}
+        </div>
+        <div class="weapon-desc">
+          {{@weapon.desc?.desc}}
+        </div>
+      </div>
+    </div>
+    {{/if}}
+
+
+    {{if mode === "profile" || mode === "artis"}}
+    {{set ad = artisDetail}}
+    {{set gearName = game === 'zzz' ? '驱动盘' : game === 'sr' ? '遗器' : '圣遗物'}}
+    <div class="cont arti-mark-cont">
+      <div class="arti-stat">
+        <div class="arti-stat-ret">
+          <div><span>{{gearName}}总分</span><strong>{{ad.mark}}</strong></div>
+          <div><span>{{gearName}}评级</span><strong class="mark-{{ad.markClass}}">{{ad.markClass}}</strong></div>
+        </div>
+        <div class="arti-class-title">评分规则：{{ad.classTitle}}</div>
+      </div>
+      <div class="arti-info">
+        <div class="arti-all-attr">
+          <ul class="detail attr arti-attr">
+            <!-- 这一块是三列窄格，长名会与右侧数值挤在一起（绝区零的词条名多为四五个字，
+                 且 `artisKeyTitle` 会被装备上的接口名覆盖成「基础攻击力」这种），故逐个给短名 -->
+            {{set sTitle = {暴击率:'暴击',暴击伤害:'爆伤',充能效率:'充能',元素精通:'精通',效果命中:'命中',效果抵抗:'抵抗',击破特攻:'击破',
+            大生命:'生命',大攻击:'攻击',大防御:'防御',小生命:'生命',小攻击:'攻击',小防御:'防御',
+            生命值:'生命',攻击力:'攻击',防御力:'防御',基础攻击力:'攻击',基础生命值:'生命',基础防御力:'防御',
+            冲击力:'冲击',异常掌控:'掌控',异常精通:'精通',穿透率:'穿透',穿透值:'穿透',能量自动回复:'回能',
+            贯穿力:'贯穿',锐暴伤害:'锐暴',物理伤害加成:'物伤',火属性伤害加成:'火伤',冰属性伤害加成:'冰伤',
+            电属性伤害加成:'电伤',风属性伤害加成:'风伤',以太伤害加成:'以太'}
+            }}
+            {{each ad.allAttr attr}}
+            {{if attr && attr.key}}
+            <li class="{{ad.charWeight[attr.key]*1 > 79.9 ?`great`:(ad.charWeight[attr.key]*1>0 ? `useful`:`nouse`)}}">
+              <span class="title">{{if attr.eff}}<i class="eff">{{attr.eff || ''}}</i>{{/if}} {{sTitle[artisKeyTitle[attr.key]] || artisKeyTitle[attr.key] || attr.key}}</span>
+              <span class="val">+{{attr.value}}</span>
+            </li>
+            {{else}}
+            <li></li>
+            {{/if}}
+            {{/each}}
+          </ul>
+        </div>
+        <div class="dmg-desc arti-notice">
+          {{if game === 'zzz'}}
+          评分按<strong>代理人专属规则</strong>计算，仅供参考与娱乐。上方汇总为各副词条在六件上的<strong>合计值</strong>
+          {{if data.zzzInfo.sets.length}}<br>套装：{{each data.zzzInfo.sets one}}<strong>{{one.name}} {{one.own}} 件</strong>　{{/each}}{{/if}}
+          {{else}}
+          评分按<strong>角色专属规则</strong>计算，仅供参考与娱乐。可使用<strong>{{gameHash}}{{data.abbr}}{{gearName}}</strong>来查看评分详情
+          {{/if}}
+        </div>
+      </div>
+    </div>
+
+    <div class="artis">
+      {{ if game === 'gs' }}
+      <div class="artis-weapon">
+        <div class="item weapon">
+          <div class="img" style="background-image:url('{{_meta_path}}{{weapon.img}}')"></div>
+          <div class="head">
+            <strong>{{weapon.sName || weapon.name}}</strong>
+            <span class="info"><span
+              class="affix affix-{{weapon.affix}}">精{{weapon.affix}}</span> Lv.{{weapon.leve || weapon.level}} </span>
+            <div class="weapon-attr">
+              <div><span>攻击</span> +{{weapon.attrs.atkBase}}</div>
+              {{each weapon.attrs v k}} {{if k!== 'atkBase' }}
+              {{ set titleMap = {atkPct:'攻击',mastery:'精通',dmg:'伤害',hpPct:'生命',defPct:'防御',
+              cpct:'暴击', cdmg:'爆伤', phy:'物伤', recharge:'充能', heal:'治疗', shield:'护盾'} }}
+              <div><span>{{ titleMap[k] }}</span> +{{v}}</div>
+              {{/if}} {{/each}}
+            </div>
+          </div>
+          <div class="weapon-desc-cont">
+            <div class="weapon-desc">{{@weapon.desc?.desc}}</div>
+          </div>
+        </div>
+
+      </div>
+      {{/if}}
+
+      {{each ad.artis ds idx}}
+      <div class="item arti arti-class-{{ds.markClass}}">
+        {{if ds && ds.name && ds.main && ds.main.key && ds.main.key!="undefined"}}
+        <div class="arti-icon">
+          <div class="img" style="background-image:url('{{_meta_path}}{{ds.img}}')"></div>
+          <span>+{{ds.level}}</span>
+        </div>
+        <div class="head">
+          <strong>{{ds.abbr || ds.name}}</strong>
+          <span class="mark mark-{{ds.markClass}}"><span>{{ds.mark}}分</span> - {{ds.markClass}}</span>
+        </div>
+        <ul class="detail attr">
+          <li class="arti-main"><span class="title">{{artisKeyTitle[ds.main?.key]}}</span><span class="val">+{{ds.main.value}}</span>
+          </li>
+          {{each ds.attrs attr}}
+          {{if attr && attr.key}}
+          <li class="{{ad.charWeight[attr.key]*1 > 79.9 ?`great`:(ad.charWeight[attr.key]*1>0 ? `useful`:`nouse`)}}">
+          <span class="title">{{if attr.eff}}<i class="eff">{{attr.eff || ''}}</i>{{/if}}{{if attr.upNum}}<i
+            class="up-num up-{{attr.upNum}}"></i>{{/if}}{{artisKeyTitle[attr.key] || attr.key}}</span>
+            <span class="val">+{{attr.value}}</span>
+          </li>
+          {{/if}}
+          {{/each}}
+        </ul>
+        {{/if}}
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+  </div>
+
+
+  <!-- 【 评分拆解 】`#胡桃圣遗物`：与面板同一张图，伤害表换成逐件得分与评分规则 -->
+  {{if mode === "artis"}}
+  <% include(_tpl_path + '/artis-rule.html', [{ ad: artisDetail, cfg: charCfg || {}, attrMap: artiAttrMap || {}, artisKeyTitle, game, name: data.name, elem: elem, gameHash, zzzRule: zzzRule || {} }]) %>
+  {{/if}}
+
+  <!-- 【 伤害表格 】 -->
+  <!-- 兜一个空对象：伤害计算缺省关闭，那时 dmgCalc 不存在，直接解构会抛错并让整张图退回文字 -->
+  {{ set {dmgRet, dmgCfg, enemyLv, enemyName, dmgMsg, dmgData, createdBy} = dmgCalc || {} }}
+  <div>
+    {{if mode !== "artis" && dmgData?.length > 0}}
+    <div class="dmg-cont dmg-list cont">
+      <div class="cont-title">
+        伤害计算
+        <span class="not-dmg-mode dmg-desc">使用<strong>{{gameHash}}{{data.abbr}}伤害</strong>命令可以查看伤害详情</span>
+      </div>
+      <div class="cont-table">
+        <div class="tr thead">
+          <div class="title dmg-idx">#</div>
+          <div class="title dmg-title">伤害类型</div>
+          <div>暴击伤害</div>
+          <div>期望伤害</div>
+        </div>
+        {{each dmgData dmg idx}}
+        <div class="dmg tr">
+          <div class="title dmg-idx">{{idx+1}}</div>
+          <div class="title dmg-title">{{dmg.title}}</div>
+          <!-- 面板替换才有 avgDiff / dmgDiff：增红减绿，不变不印 -->
+          {{if !dmg.dmg || dmg.dmg === "NaN"}}
+          <div class="value value-full">{{dmg.avg}}{{dmg.unit}}{{if dmg.avgDiff}}<i class="dmg-diff {{dmg.avgDiff[0] === '+' ? 'up' : 'dn'}}">{{dmg.avgDiff}}</i>{{/if}}</div>
+          <div class="value value-none"></div>
+          {{else}}
+          <div class="value">{{dmg.dmg}}{{dmg.unit}}{{if dmg.dmgDiff}}<i class="dmg-diff {{dmg.dmgDiff[0] === '+' ? 'up' : 'dn'}}">{{dmg.dmgDiff}}</i>{{/if}}</div>
+          <div class="value">{{dmg.avg}}{{dmg.unit}}{{if dmg.avgDiff}}<i class="dmg-diff {{dmg.avgDiff[0] === '+' ? 'up' : 'dn'}}">{{dmg.avgDiff}}</i>{{/if}}</div>
+          {{/if}}
+        </div>
+        {{/each}}
+      </div>
+      <div class="cont-footer dmg-desc">
+        <span>目标为{{enemyLv}}级{{enemyName||'小宝'}}{{if game==='gs'}}，使用<strong>#敌人等级{{enemyLv}}</strong>命令可指定等级{{/if}}</span>
+        {{if createdBy}}
+        <!-- 优先展示calc.js中 返回的createdBy字段，用于展示伤害计算作者-->
+        <span class="dmg-created-by">伤害计算来源：<strong>{{createdBy}}</strong></span>
+        {{/if}}
+      </div>
+    </div>
+    {{/if}}
+  </div>
+
+  <!-- 【 伤害变化详情 】 -->
+  <div>
+    {{if mode === "dmg"}}
+    {{if dmgCfg && dmgCfg.attr && dmgCfg.attr.length>0 && dmgRet}}
+    <div class="dmg-calc dmg-cont cont">
+      <div class="cont-title">
+        词条伤害计算<span>{{gameHash}}{{data.abbr}}伤害{{dmgCfg.userIdx+1}}: 当前计算为[{{dmgCfg.title}}]</span>
+      </div>
+      <div class="cont-table">
+        <div class="tr thead ">
+          <div class="td">词条变化</div>
+          {{each dmgCfg.attr attr}}
+          <div class="td">
+            <strong>{{attr?.title}}</strong>
+            <span>+{{attr?.text}}</span>
+          </div>
+          {{/each}}
+        </div>
+        {{each dmgRet row rowIdx}}
+        <div class="tr">
+          <div class="title">
+            <strong>{{dmgCfg.attr[rowIdx].title}}</strong>
+            <span>-{{dmgCfg.attr[rowIdx].text}}</span>
+          </div>
+          {{each row cell colIdx}}
+          {{if cell.type === "na"}}
+          <div class="td na">
+            <strong>-</strong>
+            <span>{{dmgCfg.basicRet.avg}}{{(dmgCfg.basicRet.dmg&&dmgCfg.basicRet.dmg!="NaN")?`/${dmgCfg.basicRet.dmg}`:''}}</span>
+          </div>
+          {{else}}
+          <div class="td {{cell.type}}">
+            <strong>{{cell.val}}</strong>
+
+            <span>{{cell.avg}}{{cell.dmg!="NaN"?`/${cell.dmg}`:''}}</span>
+          </div>
+          {{/if}}
+          {{/each}}
+        </div>
+        {{/each}}
+      </div>
+      <div class="cont-footer dmg-desc">
+        <ul>
+          <li>
+            大数字的含义为圣遗物副词条置换后<strong>平均伤害</strong>的变化，下方的详情数字为<strong>平均伤害</strong>/<strong>暴击伤害</strong>。
+          </li>
+          <li>关于<strong>平均伤害</strong>：是将暴击率计算在内的伤害期望，能反映综合的输出能力，不等于实际伤害数字。</li>
+          <li>可用于评估当前面板下圣遗物副词条的侧重方向。实际游戏情况更加复杂，结果供参考~</li>
+          <li>如需更换计算的伤害类型，可使用命令 <strong>{{gameHash}}{{data.abbr}}伤害+序号</strong>来切换，序号参见伤害计算板块</li>
+        </ul>
+      </div>
+    </div>
+    {{/if}}
+
+    <div class="dmg-cont dmg-msg cont">
+      <div class="cont-title">Buff列表<span>部分Buff的触发条件以及层数可能影响实际伤害结果</span></div>
+      <div class="cont-table">
+        {{each dmgMsg msg}}
+        <div class="tr">
+          <div class="th">{{msg[0]}}</div>
+          <div class="td">{{msg[1]}}</div>
+        </div>
+        {{/each}}
+      </div>
+    </div>
+    {{/if}}
+  </div>
+</div>
+
+{{/block}}

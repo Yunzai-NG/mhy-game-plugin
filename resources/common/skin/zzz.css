@@ -1,0 +1,341 @@
+/*
+  模块职责：绝区零皮肤「绳网」—— 覆写 base.css 的设计变量，外加网点底、斜纹与斜切几处
+  依赖方向：在 base.css 之后加载；靠 body 上的 `skin-zzz` 根 class 生效，四份皮肤恒全部加载
+  生命周期：静态资源
+  注意事项：三处判据。一是每条选择器都须以 `.skin-zzz` 开头。二是标题与评级的斜切用
+            `transform: skewX()`，`transform-origin` 必须钉在 `left bottom`，不钉则逐行左移、
+            与上一行对不齐。三是本皮肤的物理属性色与原神星铁不同（官方是黄而非灰），故在此覆盖
+            `.e-physical`，删掉只会让颜色回到灰、不报错。
+*/
+
+.skin-zzz {
+  --p-bg: #0e0e0e;
+  --p-ink: #f3f3f0;
+  --p-mute: #9b9b95;
+  --p-card: #1b1b1b;
+  --p-line: #2f2f2f;
+  --p-acc: #d4f53c;
+  --p-acc2: #ff8a1f;
+  --p-on-e: #0e0e0e;
+  --ok: #d4f53c;
+  --bad: #ff5a4f;
+  --p-disp: "mhy-zzz", "YSBold", "YS", "汉仪文黑-65W", "PingFang SC", sans-serif;
+  --p-body: "mhy-zzz", "YS", "汉仪文黑-65W", "PingFang SC", sans-serif;
+  --p-num: "NZBZ", "印品南征北战NZBZ体", "Number", sans-serif;
+}
+
+/* 黑底加网点 */
+body.skin-zzz,
+.skin-zzz .pic,
+.pic.skin-zzz {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, rgba(255, 255, 255, 0) 1.6px) 0 0 / 7px 7px, #0e0e0e;
+}
+
+.skin-zzz .p-head {
+  padding-bottom: 14px;
+}
+/* 下沿警示斜纹 */
+.skin-zzz .p-head::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 5px;
+  background: repeating-linear-gradient(-45deg, var(--p-acc) 0 6px, rgba(0, 0, 0, 0) 6px 12px);
+  opacity: 0.85;
+}
+.skin-zzz .p-kick {
+  align-self: flex-start;
+  background: var(--p-acc);
+  color: #0e0e0e;
+  letter-spacing: 0.1em;
+  padding: 2px 8px;
+  transform: skewX(-12deg);
+  margin-left: 3px;
+}
+.skin-zzz .p-head h3 {
+  font-weight: 700;
+  transform: skewX(-7deg);
+  transform-origin: left bottom;
+  font-size: 26px;
+}
+/* 账号头像一律圆形（三个皮肤同）：外圈荧光绿、内圈头像缩进 3px，中间垫一圈斜纹 */
+.skin-zzz .p-face {
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--p-acc);
+  background: repeating-linear-gradient(135deg, rgba(212, 245, 60, 0.35) 0 2px, rgba(212, 245, 60, 0) 2px 5px), #1b1b1b;
+}
+.skin-zzz .p-face img {
+  inset: 3px;
+  width: calc(100% - 6px);
+  height: calc(100% - 6px);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1.5px var(--p-acc);
+  background: #1b1b1b;
+}
+
+.skin-zzz .st {
+  border-radius: 12px;
+  border-width: 2px;
+}
+.skin-zzz .st b {
+  color: var(--p-acc);
+  font-size: 17px;
+}
+.skin-zzz .st.hi {
+  background: var(--p-acc);
+  border-color: var(--p-acc);
+}
+.skin-zzz .st.hi b,
+.skin-zzz .st.hi span {
+  color: #0e0e0e;
+}
+.skin-zzz .p-sec {
+  border-radius: 16px;
+  border-width: 2px;
+}
+.skin-zzz .p-sec-h h4 {
+  font-weight: 700;
+  transform: skewX(-7deg);
+  transform-origin: left bottom;
+  font-size: 15px;
+}
+.skin-zzz .p-sec-h h4::before {
+  content: "//";
+  color: var(--p-acc);
+  margin-right: 6px;
+  font-family: var(--p-num);
+  font-weight: 400;
+}
+
+/* 头像：圆角方框，粗边按 S 级金、A 级紫 */
+.skin-zzz .r5 {
+  --rar: #ffb21f;
+  --rar-bg: linear-gradient(160deg, #3b2c10, #1a140a);
+}
+.skin-zzz .r4 {
+  --rar: #b968ff;
+  --rar-bg: linear-gradient(160deg, #30183f, #160d1d);
+}
+.skin-zzz .r3 {
+  --rar: #4aa8ff;
+  --rar-bg: linear-gradient(160deg, #10263b, #0a141d);
+}
+.skin-zzz .av-img {
+  border-radius: 12px;
+  border: 2px solid var(--rar, var(--p-line));
+}
+.skin-zzz .av.sm .av-img {
+  border-radius: 9px;
+}
+.skin-zzz .av-img em {
+  background: #0e0e0e;
+  color: var(--p-acc);
+  border-radius: 5px;
+  font-family: var(--p-num);
+}
+.skin-zzz .av-img u {
+  background: var(--p-acc2);
+  color: #0e0e0e;
+  border-radius: 5px;
+  font-weight: 700;
+}
+.skin-zzz .stars s {
+  color: #3a3a3a;
+}
+
+.skin-zzz .tag {
+  background: #2a2a2a;
+  color: var(--p-ink);
+  border-radius: 999px;
+  padding: 1px 10px;
+  font-weight: 700;
+}
+.skin-zzz .tag.hi {
+  background: var(--p-acc);
+  color: #0e0e0e;
+}
+.skin-zzz .p-foot {
+  background: #1b1b1b;
+  border-radius: 999px;
+  padding: 5px 12px;
+}
+.skin-zzz .boss-ic {
+  border-radius: 12px;
+  background: linear-gradient(150deg, #ff8a1f, #5c2a05);
+}
+.skin-zzz .bigline > b {
+  font-size: 34px;
+  transform: skewX(-7deg);
+}
+
+.skin-zzz .u-row {
+  border-radius: 14px;
+  border-width: 2px;
+}
+.skin-zzz .u-row.on {
+  border-color: var(--p-acc);
+}
+.skin-zzz .flag {
+  border-radius: 6px;
+  font-weight: 700;
+}
+.skin-zzz .flag.ok {
+  background: var(--p-acc);
+  color: #0e0e0e;
+  border-color: var(--p-acc);
+}
+.skin-zzz .u-empty {
+  border-radius: 14px;
+  border-width: 2px;
+}
+
+/* 评级 S / A / B：斜切色块 */
+.skin-zzz .rate {
+  display: inline-block;
+  /* 档位是字母，数字字体里 S 与 5 同形，取正文粗体 */
+  font-family: var(--p-body);
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1;
+  padding: 4px 7px;
+  background: var(--p-acc);
+  color: #0e0e0e;
+  border-radius: 6px;
+  transform: skewX(-10deg);
+}
+.skin-zzz .rate.a {
+  background: #b968ff;
+}
+.skin-zzz .rate.b {
+  background: #4aa8ff;
+}
+.skin-zzz .rate.c {
+  background: #6f7a86;
+  color: var(--p-ink);
+}
+
+/* 推演结局 */
+.skin-zzz .ending {
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: repeating-linear-gradient(-45deg, #1f1f1f 0 10px, #191919 10px 20px);
+  border: 2px solid #2f2f2f;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.skin-zzz .ending span {
+  font-size: 10.5px;
+  color: var(--p-mute);
+}
+.skin-zzz .ending b {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--p-acc2);
+  transform: skewX(-7deg);
+}
+
+/* 官方把物理标成黄色，与原神星铁的灰不同，见文件头 */
+.skin-zzz .e-physical {
+  --e: #f2c14a;
+}
+.skin-zzz .e-ice {
+  --e: #7fdfe8;
+}
+.skin-zzz .e-fire {
+  --e: #ff6a3d;
+}
+
+/* ========== 每日便笺的装饰 ==========
+   图在 `zzz/note/`：电量卡底 `note-bg-1.png`、三栏底 `note-bg.png`、
+   电量图标 `energy.png`、栏间分隔 `line.png`。底图压一层暗色，免得荧光字看不清。 */
+.skin-zzz .zn-energy {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background:
+    linear-gradient(rgba(14, 14, 14, 0.35), rgba(14, 14, 14, 0.35)),
+    url("../../zzz/note/note-bg-1.png") center / cover no-repeat;
+}
+.skin-zzz .zn-ic {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+.skin-zzz .zn-states {
+  padding: 4px 10px;
+  border-radius: 12px;
+  background:
+    linear-gradient(rgba(14, 14, 14, 0.45), rgba(14, 14, 14, 0.45)),
+    url("../../zzz/note/note-bg.png") center / cover no-repeat;
+}
+.skin-zzz .zn-states > .nt {
+  border-bottom: 0;
+}
+.skin-zzz .zn-states > .nt + .nt {
+  background: url("../../zzz/note/line.png") center top / 100% 2px no-repeat;
+}
+/* 官方便笺的值一律亮黄；待处理那几项另加粗，不改色（荧光黄底上的红读不清） */
+.skin-zzz .zn-states .nt-v {
+  color: var(--p-acc);
+  font-size: 13px;
+}
+/* 数字字体只认数字，中文值（未领取、待结算）落到它上面会变成一笔一画的拼贴，换回正文字体 */
+.skin-zzz .zn-states .nt-v.txt {
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.skin-zzz .zn-member {
+  margin-top: -4px;
+}
+.skin-zzz .zn-states .nt.hot .nt-v {
+  color: var(--p-acc);
+}
+.skin-zzz .zn-energy b {
+  font-family: var(--p-num);
+  font-size: 26px;
+  font-weight: 400;
+}
+.skin-zzz .zn-energy.hot b {
+  color: var(--p-acc);
+}
+
+/* ========== 邦布列表的稀有度丝带与角标 ==========
+   图在 `zzz/other/`：左侧一条 S / A 丝带（20×70 的竖图，按格高缩放），
+   右下角一枚 fill.png。两者都压在头像图之上、不挡命座角标。 */
+.skin-zzz .bb-rib {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 18%;
+  height: 64%;
+  background: center top / 100% auto no-repeat;
+  pointer-events: none;
+}
+.skin-zzz .bb-S {
+  background-image: url("../../zzz/other/S.png");
+}
+.skin-zzz .bb-A {
+  background-image: url("../../zzz/other/A.png");
+}
+.skin-zzz .av-img img.bb-fill {
+  position: absolute;
+  right: 0;
+  bottom: 18%;
+  width: 18%;
+  height: auto;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+/* 活动日历：进行中的钟是黄色（官方页那枚），已完成与未开启随文字灰 */
+.skin-zzz .ec-row.active .ec-ic.clock,
+.skin-zzz .ec-pool.active .ec-ic.clock {
+  color: #ffde00;
+}
+.skin-zzz .ec-ver {
+  color: #0e0e0e;
+}

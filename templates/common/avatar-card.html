@@ -1,0 +1,69 @@
+<!--
+  模块职责：战绩图上的一张角色卡 —— 头像、命座、等级、天赋、武器与套装
+  依赖方向：自己不引片段；被 gs/abyss、gs/hard-challenge 直接 include，星铁战绩图经 common/sr-stat-avatar、
+            绝区零战绩图经 common/zzz-avatar-card 各转一道
+  生命周期：静态片段
+  注意事项：天赋行只画 `tals`，星铁记忆与欢愉多出来的 `xtals` 画成头像右下角标 —— 塞进同一行时每格被压到 8px、
+            「10」塞不下。格宽按格数取档（`t3` / `t4` / 绝区零六格的 `t6` 两行），不取档则四格起溢出卡宽。
+            图按 `meta-` 前缀挑根：元数据里的加 `_meta_path`，接口给的绝对地址一处根都不加（见 `template-img-two-roots`）。
+            `cardType` 取 `mini` / `wide` / `wide wide2`，宽卡换立绘并把名字挪进右栏；取不到立绘时仍用头像。
+            `mark`（剧诗的「试用」/「助演」）占命座那一角，宽卡也画 —— 那是借来的配装，比命座要紧。
+-->
+{{set c = $data[0] || false }}
+{{set {_meta_path, cardType} = $data[1] || {} }}
+{{set ct = cardType || 'mini' }}
+{{set face = '' + (c.face || '') }}
+{{set big = '' + (c.gacha || c.preview || '') }}
+{{set pic = ct !== 'mini' && big ? big : face }}
+{{set tals = c.tals || [] }}
+{{set xtals = c.xtals || [] }}
+{{set weapon = c.weapon || {} }}
+{{set aset = c.artisSet || {} }}
+{{set setImgs = aset.imgs || [] }}
+
+{{if c}}
+<div class="mc mc-{{ct}}">
+  <div class="mc-face r{{c.star == 4 ? 4 : 5}} {{pic === big && ct !== 'mini' ? 'is-big' : ''}}">
+    {{if pic}}<img src="{{pic.indexOf('meta-') === 0 ? _meta_path : ''}}{{pic}}" onerror="whenError(this)" alt="">{{/if}}
+    {{if c.elemIcon}}<img class="mc-el" src="{{_meta_path}}{{c.elemIcon}}" alt="">{{/if}}
+    {{if c.mark}}<span class="mc-cons mk-{{c.mark}}">{{c.mark}}</span>{{else if c.cons}}<span class="mc-cons cons-{{c.cons}} only-mini">{{c.cons}}</span>{{/if}}
+    {{if xtals.length}}
+    <div class="mc-x">
+      {{each xtals t}}<i class="x-{{t.key}} {{t.crown ? 'crown' : ''}} {{t.plus ? 'plus' : ''}}">{{t.name}} {{t.level}}</i>{{/each}}
+    </div>
+    {{/if}}
+    <div class="mc-lv"><span>Lv</span>{{c.level}}<b class="only-mini"> {{c.abbr || c.name}}</b></div>
+  </div>
+
+  <div class="mc-info">
+    <div class="mc-name only-wide">
+      <strong>{{c.abbr || c.name}}</strong>
+      <div><span class="mc-cons cons-{{c.cons || 0}}">{{c.cons || 0}}</span><span class="mc-lv2">Lv{{c.level}}</span></div>
+    </div>
+
+    {{if c.noData}}
+    <div class="mc-tal none"><span>{{c.noData}}</span></div>
+    {{else if tals.length}}
+    <div class="mc-tal t{{tals.length > 4 ? 6 : (tals.length > 3 ? 4 : 3)}}">
+      {{each tals t}}<span class="{{t.crown ? 'crown' : ''}} {{t.plus ? 'plus' : ''}}">{{t.level}}</span>{{/each}}
+    </div>
+    {{else}}
+    <div class="mc-tal none"><span>{{c.noTalent || '暂无天赋数据'}}</span></div>
+    {{/if}}
+
+    {{if !c.noData}}
+    <div class="mc-gear">
+      <div class="mc-item r{{weapon.star == 4 ? 4 : (weapon.star == 3 ? 3 : 5)}} {{weapon.star ? '' : 'empty'}}" {{if weapon.img}}style="--av-fg:url('{{_meta_path}}{{weapon.img}}')"{{/if}}>
+        {{if weapon.star}}
+        {{if weapon.affix}}<span class="cons-{{weapon.affix > 4 ? weapon.affix + 1 : weapon.affix}}">{{weapon.affix}}</span>{{/if}}
+        {{/if}}
+      </div>
+      <!-- 两套套装叠在同一格（左上、右下各缩 0.7），一套都没有时垫圣遗物剪影 -->
+      <div class="mc-item mc-set n{{setImgs.length > 1 ? 2 : setImgs.length}}">
+        {{each setImgs img i}}{{if i < 2}}<img src="{{_meta_path}}{{img}}" onerror="whenError(this)" alt="">{{/if}}{{/each}}
+      </div>
+    </div>
+    {{/if}}
+  </div>
+</div>
+{{/if}}

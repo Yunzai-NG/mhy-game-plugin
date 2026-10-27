@@ -1,0 +1,59 @@
+<!--
+  模块职责：武器 / 光锥列表（`#武器`）—— 逐件已装备的武器，带稀有度统计
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / foot
+  生命周期：静态模板
+  注意事项：三处判据。一是 `val.icon` 与 `val.role_icon` 都是元数据相对路径、要加 `_meta_path`
+            （见 `template-img-two-roots`）；只有武器类型那五张图标在插件资源里。
+            二是武器类型统计只原神有（视图层不给星铁 `types` 键），整块按它判存在。
+            三是「仅显现已装备的」这句说明不可删：没装备的武器接口压根不返回，少了这句看着像丢数据。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+{{set affixWord = (!noun || noun === '武器') ? '精' : '叠'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'EQUIPMENT',
+  title: (noun || '武器') + '列表',
+  sub: '共 ' + list.length + ' 件',
+  who: {uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<div class="p-stats" style="--n:3">
+  <div class="st"><b>{{count.five}}</b><span>五星</span></div>
+  <div class="st"><b>{{count.four}}</b><span>四星</span></div>
+  <div class="st"><b>{{count.three}}</b><span>三星</span></div>
+</div>
+
+{{if types}}
+{{set typeIcon = {单手剑: '单手剑', 双手剑: '大剑', 长柄武器: '枪', 弓: '弓', 法器: '法器'} }}
+{{set typeName = {单手剑: '单手剑', 双手剑: '双手剑', 长柄武器: '枪', 弓: '弓', 法器: '法器'} }}
+<div class="kv">
+  {{each types one}}
+  <div class="kv-i">
+    <img class="kv-ic" src="{{_res_path}}gs/weapon-type/{{typeIcon[one]}}.png" onerror="whenError(this)" alt="">
+    <b>{{count[one]}}</b>
+    <span>{{typeName[one]}}</span>
+  </div>
+  {{/each}}
+</div>
+{{/if}}
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '已装备的' + (noun || '武器')}]) %>
+  <div class="grid wl">
+    {{each list val}}
+    <div class="av r{{val.rarity == 4 ? 4 : (val.rarity == 3 ? 3 : 5)}}">
+      <!-- 武器图作背景按高铺满：原神武器图 4:3，img 宽 100% 时下半截被方格裁掉 -->
+      <div class="av-img" {{if val.icon}}style="--av-fg:url('{{_meta_path}}{{val.icon}}')"{{/if}}>
+        {{if val.affix_level > 1}}<em>{{affixWord}}{{val.affix_level}}</em>{{/if}}
+        {{if val.role_icon}}<i class="who" style="background-image:url('{{_meta_path}}{{val.role_icon}}')"></i>{{/if}}
+      </div>
+      <b>{{val.showName}}</b>
+      <i>Lv{{val.level}}</i>
+    </div>
+    {{/each}}
+  </div>
+</section>
+
+<% include(_tpl_path + '/skin/foot.html', [{note: '仅显现已装备的' + (noun || '武器')}]) %>
+{{/block}}

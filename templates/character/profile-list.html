@@ -1,0 +1,75 @@
+<!--
+  模块职责：面板列表（`#面板列表` / `#更新面板`）—— 一框头像网格，三个游戏共用
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / foot
+  生命周期：静态模板
+  注意事项：元素字段叫 `element` 而非 `elem`，取错只丢颜色。头像恒在元数据里，`_meta_path` 写死。
+            次序与 `state`（chg 有变 / new 取到未变 / 空）都由视图层排好，模板只按 `state` 打光；
+            「有变」与「未变」合成一种光会让使用者以为每次都全量重取。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+{{set demo = chars[0] ? chars[0].abbr : (game === 'zzz' ? '安比' : '雷神')}}
+{{set role = game === 'zzz' ? '代理人' : '角色'}}
+
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: game === 'zzz' ? 'AGENT FILE' : 'CHARACTER PROFILE',
+  title: game === 'zzz' ? '代理人面板' : '面板列表',
+  sub: (updateTime.profile ? '更新时间：' + updateTime.profile : '') + (msg ? '　' + msg : ''),
+  who: {uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+{{set consWord = game === 'zzz' ? '影' : (game === 'sr' ? '魂' : '命')}}
+{{set rankMax = (rankCfg && rankCfg.number) || 15}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{
+    title: role + '面板',
+    note: chars.length + ' 位' + (hasNew ? '　本次有变 ' + chgCount + ' 位' : '')
+  }]) %>
+  <div class="grid pl-grid">
+    {{each chars char}}
+    {{set rr = 'r' + (char.star == 4 ? 4 : (char.star == 3 ? 3 : 5))}}
+    <!-- 稀有度 class 在外框上也写一份：皮肤按 `.r5 > .av-img` 取底图，隔了一层 `.pl-ring` 就落空 -->
+    <div class="av pl-av {{rr}} {{char.element ? 'e-' + char.element : 'e-none'}} {{char.state ? 'pl-' + char.state : ''}}">
+      <div class="pl-ring {{rr}}">
+        <div class="av-img">
+          {{if char.face}}<img src="{{_meta_path}}{{char.face}}" onerror="whenError(this)" alt="">{{else}}<span>{{char.abbr.slice(0, 1)}}</span>{{/if}}
+        </div>
+      </div>
+      {{if char.markClass}}<s class="av-rate rate-{{char.markClass}}">{{char.markClass}}</s>{{/if}}
+      {{if char.groupRank}}<i class="av-rank rank-{{char.groupRank.rank >= rankMax ? 10 : (char.groupRank.rank <= 3 ? char.groupRank.rank : 4)}} rank-type-{{char.groupRank.rankType || 'dmg'}}"><span>{{char.groupRank.rank}}</span></i>{{/if}}
+      <b><em class="pl-cons c{{char.cons >= 6 ? 6 : (char.cons > 0 ? 1 : 0)}}">{{char.cons}}{{consWord}}</em>{{char.abbr}}</b>
+      <i>Lv{{char.level}}</i>
+    </div>
+    {{/each}}
+  </div>
+  {{if hasNew}}
+  <div class="pl-legend"><span><i class="pl-dot chg"></i>本次数据有变</span><span><i class="pl-dot new"></i>本次已更新、数据未变</span><span><i class="pl-dot"></i>本次未取到</span></div>
+  {{/if}}
+</section>
+
+{{if groupRank}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{
+    title: '群内排名',
+    note: allowRank ? '本群内 ' + rankCfg.time + ' 后查看过的角色数据' : ''
+  }]) %>
+  {{if !allowRank}}
+  <!-- 两枚图例：character/imgs/mark-icon.png 精灵图，左格练度、右格评分 -->
+  <div class="p-sub"><i class="rank-ic"></i>本面板暂未参与排名，参与要求：{{rankCfg.limitTxt}}</div>
+  {{else}}
+  <div class="row-h">
+    <span class="tag"><i class="rank-ic"></i>综合练度排名</span>
+    <span class="tag"><i class="rank-ic mark"></i>圣遗物评分排名</span>
+  </div>
+  {{/if}}
+</section>
+{{/if}}
+
+<% include(_tpl_path + '/skin/foot.html', [{
+  tips: game === 'zzz'
+    ? [_hash + demo + '面板 查看代理人的驱动盘与属性明细']
+    : [_hash + demo + '面板 看面板', _hash + demo + '伤害 算伤害', _hash + demo + (game === 'sr' ? '遗器' : '圣遗物') + ' 看评分'],
+  note: servName ? '当前更新服务：' + servName : ''
+}]) %>
+{{/block}}

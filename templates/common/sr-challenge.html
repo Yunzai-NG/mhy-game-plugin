@@ -1,0 +1,95 @@
+<!--
+  模块职责：忘却之庭三类玩法共用的图身 —— 混沌回忆 / 虚构叙事 / 末日幻影
+  依赖方向：include common/skin 下的 head / sec-head，以及 common/sr-stat-avatar.html
+  生命周期：静态片段，被 sr/challenge-{memory,story,boss} 三张薄模板各 include 一次
+  注意事项：四处判据。一是三者只差标题与 `kind`，末日幻影（`kind === 'boss'`）多出页头三个首领、
+            且关卡头不印轮次 —— 判错只是多印或少印一行、不报错。`kind` 进 class 时带 `k-` 前缀：
+            裸写成 `boss` 会撞上 base.css 的首领行网格，整块被压成 44px 一列。
+            二是三个根不可混用：角色相关的图在元数据（由角色格自己加根），星星底图在插件资源，
+            而祝福与首领的 `icon` 是米游社给的完整地址、一处根都不能加。
+            三是星格是「有几颗画几颗」，视图层给的是长度等于星数的数组；art-template 没有
+            「重复 N 次」的原语，也不可在插值里用全局构造器（见 `art-template-shadows-globals`）。
+            四是额外星（深渊星）与普通星分两种图，中间那道分隔只在两者都有时画。
+-->
+<!-- 页底、摘要卡底与关卡卡底：css 见 sr.css 的 `.sc-*`。垫层排在页头之前 —— `.sc-deco ~ *` 只抬它后面的兄弟，排在后面则页头被底图盖住、字发灰 -->
+<div class="sc-deco"></div>
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: kind === 'boss' ? 'APOCALYPTIC SHADOW' : (kind === 'story' ? 'PURE FICTION' : 'MEMORY OF CHAOS'),
+  title: title + '·挑战回顾',
+  sub: '统计周期：' + story.beginText + ' - ' + story.endText,
+  who: {uid: uid, name: nickname || '开拓者'}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+<!-- 一队几人就配几种卡（同 gs/abyss）：四人四张小卡、三人一宽两小、两人两宽、一人一张双宽，总宽恒等 -->
+{{set cardTypes = {1: ['wide wide2'], 2: ['wide', 'wide'], 3: ['wide', 'mini', 'mini'], 4: ['mini', 'mini', 'mini', 'mini']} }}
+
+<section class="p-sec sc-top k-{{kind || 'memory'}}">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: story.season || title + '挑战回顾'}]) %>
+  <div class="bigline">
+    <span class="sc-stars lg">
+      <img src="{{_res_path}}sr/challenge/peak/mob_star.png" alt=""><b>{{story.totalStar || 0}}</b>
+      {{if story.extraStarList.length}}<i class="sep"></i>{{/if}}
+      {{each story.extraStarList i}}<img class="ex" src="{{_res_path}}sr/challenge/boss/abyss_star.png" alt="">{{/each}}
+    </span>
+    <span class="tag">最高关卡 {{story.bestFloor || '-'}}</span>
+    <span class="tag">挑战次数 {{story.battleNum || '-'}}</span>
+    {{if story.totalScore}}<span class="tag hi">总积分 {{story.totalScore}}</span>{{/if}}
+  </div>
+
+  {{if story.bosses.length}}
+  <div class="sc-bosses">
+    {{each story.bosses one}}
+    <div class="row-h">
+      <span class="boss-ic sm"><img src="{{one.icon}}" onerror="whenError(this)" alt=""></span>
+      <b>{{one.label}}</b>
+    </div>
+    {{/each}}
+  </div>
+  {{/if}}
+</section>
+
+{{each story.floors floor}}
+<section class="p-sec sc-floor k-{{kind || 'memory'}}">
+  <% include(_tpl_path + '/skin/sec-head.html', [{
+    title: floor.name,
+    note: (kind !== 'boss' && !floor.isFast ? '使用轮次：' + (floor.roundNum || 0) : '')
+      + (!floor.isFast && floor.score ? '　总分：' + floor.score : '')
+  }]) %>
+  <div class="row-h">
+    {{if floor.mode}}<span class="tag sc-mode {{floor.hard ? 'hard' : ''}}">{{floor.mode}}</span>{{/if}}
+    <span class="sc-stars">
+      {{each floor.starList i}}<img src="{{_res_path}}sr/challenge/peak/mob_star.png" alt="">{{/each}}
+      {{if floor.starList.length && floor.extraStarList.length}}<i class="sep"></i>{{/if}}
+      {{each floor.extraStarList i}}<img class="ex" src="{{_res_path}}sr/challenge/boss/abyss_star.png" alt="">{{/each}}
+    </span>
+    {{if floor.isFast}}<span class="tag hi">快速通关</span>{{/if}}
+  </div>
+
+  {{each floor.nodes node nodeIndex}}
+  {{if node.avatars.length}}
+  <div class="row">
+    <div class="row-h">
+      <b>节点{{nodeIndex + 1}}</b>
+      {{if node.score}}<span class="tag">积分 {{node.score}}</span>{{/if}}
+      {{if node.time}}<span class="rt">{{node.time}}</span>{{/if}}
+    </div>
+    <!-- 四张定宽卡占满一行（页宽按一队定，见 base.css 的 `.pic-team`），本节点的关卡效果另起一条放在队伍下方 -->
+    <div class="mcs">
+      {{each node.avatars a idx}}
+      <% include(_tpl_path + '/sr-stat-avatar.html', [a, {av: avatars[a.id], mysFailed, _res_path, _meta_path, _tpl_path, cardType: (cardTypes[node.avatars.length] || [])[idx]}]) %>
+      {{/each}}
+    </div>
+    {{if node.buffName || node.buffDesc}}
+    <div class="buff row-buff">
+      {{if node.buffIcon}}<img src="{{node.buffIcon}}" onerror="whenError(this)" alt="">{{/if}}
+      <div class="buff-b">
+        <b>{{node.buffName || '关卡效果'}}</b>
+        <span>{{node.buffDesc}}</span>
+        {{if node.buffMech}}<span><b>战意机制：</b>{{node.buffMech}}</span>{{/if}}
+      </div>
+    </div>
+    {{/if}}
+  </div>
+  {{/if}}
+  {{/each}}
+</section>
+{{/each}}

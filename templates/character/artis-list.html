@@ -1,0 +1,60 @@
+<!--
+  模块职责：圣遗物列表（`#圣遗物` / `#遗器`）—— 跨角色拉平的一张列表，每格一件带着它属于谁
+  依赖方向：extend elemLayout，样式借面板详情那份（character/profile-detail.css 的圣遗物格），
+            另有本图专属的几条（artis-list.css）
+  生命周期：静态模板
+  注意事项：三处判据。一是每件自带 `charWeight`（这张图跨角色，权重逐件不同），不可改读
+            外层的那一份 —— 读错只是配色按别人的权重来、不报错。二是主词条键为字符串
+            `"undefined"` 的那些要跳过（接口偶尔给这种脏值），印出来是一行 undefined。
+            三是词条名取 `artisKeyTitle`，缺这张表时取值抛错、整条命令退回文字。
+-->
+{{extend elemLayout}}
+
+{{block 'css'}}
+<link rel="stylesheet" type="text/css" href="{{_res_path}}character/profile-detail.css"/>
+<link rel="stylesheet" type="text/css" href="{{_res_path}}character/profile-detail-skin.css"/>
+<link rel="stylesheet" type="text/css" href="{{_res_path}}character/artis-list.css"/>
+{{/block}}
+
+{{block 'main'}}
+<div class="profile-cont game-{{game}} al-cont">
+  <div class="al-head">
+    <div>
+      <strong>{{game === 'zzz' ? '驱动盘列表' : game === 'sr' ? '遗器列表' : '圣遗物列表'}}</strong>
+      <span>UID {{uid}} · 共 {{artis.length}} 件 · 按评分从高到低</span>
+    </div>
+  </div>
+  <div class="artis al-artis">
+    {{each artis ds}}
+    {{if ds && ds.name && ds.main && ds.main.key && ds.main.key != 'undefined'}}
+    <div class="item arti arti-class-{{ds.markClass}}">
+      <div class="arti-icon">
+        <div class="img" style="background-image:url('{{_meta_path}}{{ds.img}}')"></div>
+        {{if ds.level}}<span>+{{ds.level}}</span>{{/if}}
+      </div>
+      {{if ds.side}}
+      <div class="al-who" title="{{ds.avatar}}">
+        <img src="{{_meta_path}}{{ds.side}}" onerror="whenError(this)" alt="">
+      </div>
+      {{/if}}
+      <div class="head">
+        <strong>{{ds.abbr || ds.name}}</strong>
+        <span class="mark mark-{{ds.markClass}}"><span>{{ds.mark}}分</span> - {{ds.markClass}}</span>
+      </div>
+      <ul class="detail attr">
+        <li class="arti-main"><span class="title">{{artisKeyTitle[ds.main.key] || ds.main.key}}</span><span class="val">+{{ds.main.value}}</span></li>
+        {{each ds.attrs attr}}
+        {{if attr && attr.key}}
+        <li class="{{ds.charWeight[attr.key] * 1 > 79.9 ? 'great' : (ds.charWeight[attr.key] * 1 > 0 ? 'useful' : 'nouse')}}">
+          <span class="title">{{if attr.eff}}<i class="eff">{{attr.eff}}</i>{{/if}}{{if attr.upNum}}<i class="up-num up-{{attr.upNum}}"></i>{{/if}}{{artisKeyTitle[attr.key] || attr.key}}</span>
+          <span class="val">+{{attr.value}}</span>
+        </li>
+        {{/if}}
+        {{/each}}
+      </ul>
+    </div>
+    {{/if}}
+    {{/each}}
+  </div>
+</div>
+{{/block}}

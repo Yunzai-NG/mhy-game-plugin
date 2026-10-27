@@ -1,0 +1,58 @@
+<!--
+  模块职责：主帮助图（`#帮助` / `*帮助` / `%帮助`）—— 新手三步、逐块命令、底部细分帮助
+  依赖方向：extend skinLayout，include common/skin 下的 head / foot
+  生命周期：静态模板
+  注意事项：一是**说明全文印出、不截断**（图上看不到的字没有别处可查），故命令两列而非三列。
+            二是区块图标与吉祥物都在插件资源里，走 `_res_path`；表情包原图在 144～3004px 之间，
+            必须锁进 `.hb-ic` 的方框，否则按原尺寸铺开盖住文字。
+            三是 `hidden` 为 0 时页脚那句不印 —— 印「另有 0 项已关闭」只会让人去找。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'MIHOYO GAME PLUGIN',
+  title: title,
+  sub: subtitle + ' · ' + total + ' 条命令',
+  who: {face: hero, fromRes: true, name: hash}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<section class="hb-start">
+  <b>第一次用</b>
+  {{each start one i}}
+  <span class="hb-step"><i>{{i + 1}}</i><em>{{one.cmd}}</em>{{one.desc}}</span>
+  {{/each}}
+</section>
+
+{{each sections sec}}
+<section class="p-sec hb-sec">
+  <div class="hb-h">
+    <div class="hb-ic"><img src="{{_res_path}}{{sec.icon}}" onerror="whenError(this)" alt=""></div>
+    <h4>{{sec.name}}</h4>
+    <span>{{sec.note}}</span>
+  </div>
+  <div class="hb">
+    {{each sec.items it}}
+    <div class="hb-i">
+      <b>{{it.cmd}}{{if it.tag}}<i class="hb-tag">{{it.tag}}</i>{{/if}}</b>
+      <span>{{it.desc}}</span>
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/each}}
+
+<section class="p-sec hb-guides">
+  <div class="hb-h"><h4>细分帮助</h4><span>讲先后与取舍，比这张更细</span></div>
+  <div class="hb-g">
+    {{each guides g}}
+    <div><b>{{g.cmd}}</b><span>{{g.desc}}</span></div>
+    {{/each}}
+  </div>
+</section>
+
+<% include(_tpl_path + '/skin/foot.html', [{
+  tips: tips,
+  note: hidden ? ('另有 ' + hidden + ' 项已被主人关闭') : ''
+}]) %>
+{{/block}}

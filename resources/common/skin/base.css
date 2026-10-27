@@ -1,0 +1,6873 @@
+/*
+  模块职责：全插件共用的版式骨架 —— 只用设计变量，不写任何一套皮肤的具体配色
+  依赖方向：被 templates/layout/skin.html 第一个加载，随后四份皮肤 css 覆写变量
+  生命周期：静态资源
+  注意事项：三处判据。一是本文件内**不得出现具体颜色**，颜色全部取 `--p-*` 变量，
+            否则换皮时改不到它；元素色表是例外，那是跨皮肤共享的一份。
+            二是 `body` 的基准倍率写在本文件（见 `template-scale-lives-in-css` 的约定），
+            行内 `sys.scale` 会把它压掉，故除图鉴那几张外都不要给 dress.scale。
+            三是字体相对路径是相对本文件解析的（`../font/`），挪动本文件要同时改那几行。
+*/
+
+/* ========== 字体 ========== */
+@font-face {
+  font-family: "YS";
+  src: url("../font/HYWH-65W.woff") format("woff");
+}
+@font-face {
+  font-family: "YSBold";
+  src: url("../font/HYWJ-85W.woff") format("woff");
+}
+@font-face {
+  font-family: "NZBZ";
+  src: url("../font/NZBZ.woff") format("woff");
+}
+@font-face {
+  font-family: "Number";
+  src: url("../font/tttgbnumber.woff") format("woff"), url("../font/tttgbnumber.ttf") format("truetype");
+}
+/* 三个游戏战绩页自己用的正文字体，各皮肤的 `--p-disp` / `--p-body` 取它。各只有一个字重，
+   `font-weight` 写成区间是为了让粗体不再被浏览器假加粗（那样笔画糊成一团）。不预加载：
+   三份合计九兆，每张图只用其中一份 */
+@font-face {
+  font-family: "mhy-gs";
+  src: url("../font/GS.woff2") format("woff2");
+  font-weight: 100 900;
+}
+@font-face {
+  font-family: "mhy-sr";
+  src: url("../font/SR.woff2") format("woff2");
+  font-weight: 100 900;
+}
+@font-face {
+  font-family: "mhy-zzz";
+  src: url("../font/ZZZ.woff2") format("woff2");
+  font-weight: 100 900;
+}
+/* 札记那几张的 g2plot 脚本按 `tttgbnumber` 取字体，没有这个名字时饼图里的字回落成衬线体 */
+@font-face {
+  font-family: "tttgbnumber";
+  src: url("../font/tttgbnumber.woff") format("woff"), url("../font/tttgbnumber.ttf") format("truetype");
+}
+
+/* ========== 基底 ========== */
+:root {
+  --p-pad: 18px;
+  --p-gap: 12px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+body {
+  /* 整族模板按 640px 排版，2 倍即出图约 1280px 宽；改这一处等于改整族的清晰度 */
+  width: 640px;
+  transform: scale(2);
+  transform-origin: 0 0;
+  font-family: var(--p-body);
+  font-size: 12.5px;
+  line-height: 1.5;
+  background: var(--p-bg);
+  color: var(--p-ink);
+}
+
+/* 截图锚点：渲染器按它裁剪，去掉就只能截整页 */
+.pic {
+  position: relative;
+  overflow: hidden;
+  width: 640px;
+  padding: var(--p-pad);
+  display: flex;
+  flex-direction: column;
+  gap: var(--p-gap);
+  background: var(--p-bg);
+  color: var(--p-ink);
+  font-variant-numeric: tabular-nums;
+}
+/* 内容少的图收窄一档（原神札记）：按 640px 排两侧大片留空。渲染器按 #container 裁剪，
+   body 一并收窄只为不在右侧多出一条底色 */
+body.pic-narrow,
+body.pic-narrow > .pic {
+  width: 520px;
+}
+/* 一行就是一队的战绩图（星铁挑战、绝区零战绩）：整卡定宽 70px（与 `%信息` 常用角色同尺寸，不随格放大），
+   四格 298px 加两层卡片内边距正好 384px，也刚够页头标题与账号块并排。按 640px 排则右侧空出近一半 */
+body.pic-team,
+body.pic-team > .pic {
+  width: 384px;
+}
+
+/* ========== 页头 ========== */
+.p-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  position: relative;
+}
+/* 带背景的页头（`#信息`）：图铺满整条、出血到卡片两侧，字一律白色压在暗层上。三个皮肤共用这一套，
+   各皮肤只改图的取景位置 —— 原神星铁的壁纸人物都在上部，居中截就只剩下半截的暗色 */
+.p-head.has-bg {
+  isolation: isolate;
+  min-height: 150px;
+  margin: calc(-1 * var(--p-pad)) calc(-1 * var(--p-pad)) 6px;
+  padding: 18px var(--p-pad) 16px;
+  align-items: flex-end;
+  color: #fff;
+}
+.p-head-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+.p-head.has-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 30%, rgba(0, 0, 0, 0.62));
+}
+.p-head.has-bg h3,
+.p-head.has-bg .p-sub,
+.p-head.has-bg .p-who b,
+.p-head.has-bg .p-who span {
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+.p-badge {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(90deg, var(--t1), var(--t2));
+  border-radius: 2px;
+}
+.p-ttl {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.p-kick {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--p-acc);
+  line-height: 1.3;
+}
+.p-head h3 {
+  font-family: var(--p-disp);
+  font-size: 23px;
+  line-height: 1.15;
+  font-weight: 400;
+}
+.p-sub {
+  font-size: 11px;
+  color: var(--p-mute);
+}
+.p-who {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.p-who b {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.p-who span {
+  font-size: 10.5px;
+  color: var(--p-mute);
+  font-family: var(--p-num);
+}
+.p-face {
+  position: relative;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  font-style: normal;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--p-on-e);
+  background: var(--e, var(--p-card));
+  background-size: cover;
+  background-position: center top;
+}
+/* 同 .cr-ic img：绝对定位才铺得满 grid 盒；立绘取上部，与底图的 center top 一致 */
+.p-face img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+.p-face.mini {
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+}
+
+/* ========== 摘要格 ========== */
+.p-stats {
+  display: grid;
+  grid-template-columns: repeat(var(--n, 4), 1fr);
+  gap: 6px;
+}
+.st {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 8px 4px;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+  min-width: 0;
+  text-align: center;
+}
+.st b {
+  font-family: var(--p-num);
+  font-size: 16px;
+  line-height: 1.25;
+  white-space: nowrap;
+  font-weight: 400;
+}
+.st span {
+  font-size: 10px;
+  color: var(--p-mute);
+}
+
+/* ========== 分节 ========== */
+.p-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+}
+.p-sec-h {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.p-sec-h h4 {
+  font-family: var(--p-disp);
+  font-size: 14px;
+  font-weight: 400;
+}
+.p-sec-h > span {
+  font-size: 11px;
+  color: var(--p-mute);
+}
+
+/* ========== 页脚 ========== */
+.p-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 10px;
+  color: var(--p-mute);
+}
+.p-foot .tips {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+/* 署名的结构与装饰见 sign.css，这里只给外层字色 */
+.p-copyright {
+  color: var(--p-mute);
+}
+
+/* ========== 标签与星数 ========== */
+.tag {
+  display: inline-block;
+  font-size: 10.5px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.stars {
+  letter-spacing: 1px;
+  font-size: 11px;
+  color: var(--p-acc);
+}
+.stars s {
+  text-decoration: none;
+  color: var(--p-line);
+}
+
+/* ========== 角色头像 ========== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(62px, 1fr));
+  gap: 8px;
+}
+.av {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+.av-img {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  /* `--av-fg` 是格子内联给的前景图（武器），叠在稀有度底之上；不给时为 none、只剩底 */
+  background: var(--av-fg, none) var(--av-fg-pos, center) / var(--av-fg-size, contain) no-repeat, var(--rar-bg, var(--p-card));
+  overflow: hidden;
+}
+.av-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.av-img span {
+  position: relative;
+  font-family: var(--p-disp);
+  font-size: 21px;
+  font-weight: 700;
+  color: var(--p-on-e);
+}
+.av-img em {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  font-style: normal;
+  font-size: 9px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+.av-img u {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  z-index: 3;
+  text-decoration: none;
+  font-size: 9px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+/* 新/变标与评分档位都在左上，**只在确有档位时**才让到左下（`~` 认得出：`<s>` 紧随 `<u>`）。
+   无条件让位会与左下的元素图标撞 —— 幽境危战那张图给 `elemIcon` 与 `mark` 而不给 `rate` */
+.av-img u:has(~ .av-rate) {
+  top: auto;
+  bottom: 3px;
+}
+.av-img .el {
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+}
+/* 评分档位：`<s>` 自带删除线，不去掉则每个档位都被划一道。
+   **放左上并压过排名框**：排名框是覆盖整格的 116% 底图（z-index 2），
+   放右下会被它的绶带盖住、放哪一角都要抬 z-index 才看得见 */
+.av-rate {
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  z-index: 3;
+  border-radius: 3px;
+  text-decoration: none;
+  font-size: 9px;
+  line-height: 1.4;
+  padding: 0 3px;
+  /* 档位是字母（SS / ACE），数字字体里 S 与 5 几乎同形、「SS」读成「55」，故取正文粗体 */
+  font-family: var(--p-body);
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.55);
+  color: var(--p-ink);
+}
+.av-rate.rate-ACE,
+.av-rate.rate-MAX {
+  color: #ffd76a;
+}
+.av-rate.rate-SSS,
+.av-rate.rate-SS,
+.av-rate.rate-S {
+  color: #ff9f6a;
+}
+.av-rate.rate-A,
+.av-rate.rate-B {
+  color: #9ad2ff;
+}
+/* 名字可折成两行：「姬子•启行」一类带后缀的名字截掉后缀就分不清是哪个形态 */
+.av b {
+  font-size: 10.5px;
+  font-weight: 500;
+  max-width: 100%;
+  line-height: 1.25;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.av i {
+  font-style: normal;
+  font-size: 9.5px;
+  color: var(--p-mute);
+  font-family: var(--p-num);
+}
+.av.sm .av-img span {
+  font-size: 13px;
+}
+.av.sm .av-img em {
+  font-size: 8px;
+  padding: 1px 3px;
+  top: 1px;
+  right: 1px;
+}
+.av.sm b {
+  font-size: 9px;
+}
+.av.sm i {
+  display: none;
+}
+/* 群内排名框：一张五格精灵图套在头像外，
+   格 0 为垫底那档（rank-10）、格 1~3 为前三、格 4 为第四名起并印名次。
+   练度排名用 dmg-rank-bg，圣遗物评分排名换 mark-rank-bg。 */
+.av {
+  position: relative;
+}
+.av i.av-rank {
+  position: absolute;
+  top: -6%;
+  left: -8%;
+  width: 116%;
+  aspect-ratio: 1;
+  background: url("../../character/imgs/dmg-rank-bg.png") 0 0 / auto 100% no-repeat;
+  pointer-events: none;
+  z-index: 2;
+}
+.av.sm i.av-rank {
+  display: block;
+}
+.av i.av-rank.rank-type-mark {
+  background-image: url("../../character/imgs/mark-rank-bg.png");
+}
+.av i.av-rank.rank-1 {
+  background-position: 25% 0;
+}
+.av i.av-rank.rank-2 {
+  background-position: 50% 0;
+}
+.av i.av-rank.rank-3 {
+  background-position: 75% 0;
+}
+.av i.av-rank.rank-4 {
+  background-position: 100% 0;
+}
+.av i.av-rank span {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 2%;
+  text-align: center;
+  font-size: 9px;
+  color: #fff;
+  text-shadow: 0 0 2px #b26f08;
+}
+.av i.av-rank.rank-4 span {
+  display: block;
+}
+/* ========== 面板列表 ==========
+   光打在 `.pl-ring` 上而不是 `.av-img` 上：星铁的 `.av-img` 带 clip-path，光会被一并裁掉 */
+.pl-grid {
+  gap: 12px 10px;
+  padding-top: 4px;
+}
+.pl-ring {
+  position: relative;
+  width: 100%;
+}
+.pl-chg .pl-ring {
+  filter: drop-shadow(0 0 2px #ff9a1f) drop-shadow(0 0 5px #ffb23e) drop-shadow(0 0 9px rgba(255, 154, 31, 0.7));
+}
+.pl-new .pl-ring {
+  filter: drop-shadow(0 0 2px #2fcf6a) drop-shadow(0 0 5px #45d97a) drop-shadow(0 0 9px rgba(69, 217, 122, 0.7));
+}
+/* 档位挪到右上并压过排名框（理由见上面 `.av-rate`） */
+.pl-av .av-rate {
+  left: auto;
+  right: -3px;
+  top: -4px;
+  font-size: 8.5px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+.pl-av b {
+  margin-top: 2px;
+}
+.pl-cons {
+  display: inline-block;
+  margin-right: 3px;
+  padding: 0 3px;
+  border-radius: 3px;
+  font-style: normal;
+  font-family: var(--p-num);
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 12px;
+  vertical-align: 1px;
+  color: #fff;
+  background: #8b93a5;
+}
+.pl-cons.c1 {
+  background: #5b7fd1;
+}
+.pl-cons.c6 {
+  background: linear-gradient(90deg, #d9962a, #f0bf55);
+}
+.pl-legend {
+  display: flex;
+  gap: 14px;
+  margin-top: 10px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--p-line);
+  font-size: 9px;
+  color: var(--p-mute);
+}
+.pl-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.pl-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  background: var(--p-line);
+}
+.pl-dot.chg {
+  background: #ffb23e;
+  box-shadow: 0 0 5px #ffb23e;
+}
+.pl-dot.new {
+  background: #45d97a;
+  box-shadow: 0 0 5px #45d97a;
+}
+/* 排名图例那两枚小图标（mark-icon.png 两格，右格为圣遗物评分） */
+.rank-ic {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 3px;
+  vertical-align: -2px;
+  background: url("../../character/imgs/mark-icon.png") 0 0 / auto 100% no-repeat;
+}
+.rank-ic.mark {
+  background-position: 100% 0;
+}
+.team {
+  display: grid;
+  grid-template-columns: repeat(var(--n, 4), 34px);
+  gap: 4px;
+}
+
+/* ========== 角色横行：排行榜一行一角色，逐块排开 ==========
+   六列依次为名次、角色、天赋、武器、套装、分值，与 rank-profile-list.html 的块序一一对应；
+   漏了列宽则每块各占一行、不报错。 */
+.cr {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1.2fr) auto minmax(0, 1.1fr) minmax(0, 1.3fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding-top: 9px;
+  border-top: 1px solid var(--p-line);
+}
+.cr:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+.cr-idx {
+  font-family: var(--p-num);
+  font-size: 15px;
+  color: var(--p-mute);
+  text-align: center;
+  min-width: 18px;
+}
+.cr-idx.top1 {
+  color: #ffd76a;
+}
+.cr-idx.top2 {
+  color: #d8d8de;
+}
+.cr-idx.top3 {
+  color: #e0a070;
+}
+/* 名次徽章：评分一族（mark / crit / valid）取精灵图右半 */
+.cr-idx[class*="mode-"] {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  line-height: 22px;
+  font-size: 11px;
+  color: #fff;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8);
+  background: url("../../character/imgs/mark-icon.png") 0 0 / auto 100% no-repeat;
+}
+.cr-idx.mode-mark {
+  background-position: 100% 0;
+}
+/* 双爆紫、有效词条青绿：mark-icon3/4.png 与 1/2 同版式，左格双爆、右格有效词条 */
+.cr-idx.mode-crit,
+.cr-idx.mode-valid {
+  background-image: url("../../character/imgs/mark-icon3.png");
+}
+.cr-idx.mode-valid {
+  background-position: 100% 0;
+}
+/* mark-icon2.png 是左右两帧（左伤害、右评分），只能取 0 或 100%，取 center 会印出两帧各半 */
+.cr-idx.idx-1.mode-mark,
+.cr-idx.idx-1.mode-dmg {
+  width: 44px;
+  background: url("../../character/imgs/mark-icon2.png") 0 0 / auto 100% no-repeat;
+  color: transparent;
+  text-shadow: none;
+}
+.cr-idx.idx-1.mode-mark {
+  background-position: 100% 0;
+}
+.cr-idx.idx-1.mode-crit,
+.cr-idx.idx-1.mode-valid {
+  width: 44px;
+  background: url("../../character/imgs/mark-icon4.png") 0 0 / auto 100% no-repeat;
+  color: transparent;
+  text-shadow: none;
+}
+.cr-idx.idx-1.mode-valid {
+  background-position: 100% 0;
+}
+/* 一块：图标加两行字，天赋、武器、套装都用它 */
+.cr-blk {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.cr-ic {
+  position: relative;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  overflow: hidden;
+  /* `--av-fg` 同 .av-img：内联给的前景图（武器）叠在稀有度底之上 */
+  background: var(--av-fg, none) var(--av-fg-pos, center) / var(--av-fg-size, contain) no-repeat, var(--rar-bg, var(--p-card));
+  display: grid;
+  place-items: center;
+}
+/* 绝对定位铺满：grid 子项上的 height:100% 不生效，图会按原比例撑出盒外再被裁，而不是缩进盒内 */
+.cr-ic img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cr-ic span {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  font-size: 9px;
+  line-height: 1.3;
+  padding: 0 3px;
+  font-family: var(--p-num);
+  background: rgba(0, 0, 0, 0.6);
+  /* 底恒为半透明黑，字色不能取 --p-ink：原神这类浅色皮肤里它是深色，精炼数字整个看不见 */
+  color: #fff;
+}
+.cr-txt {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.cr-txt b {
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cr-txt span {
+  font-size: 9.5px;
+  color: var(--p-mute);
+  white-space: nowrap;
+}
+/* 天赋等级一排：满级与超级各有记号，两者都只是颜色差别、丢了不报错 */
+.cr-talents {
+  display: flex;
+  gap: 4px;
+}
+.cr-tal {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+}
+.cr-tal img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.85;
+}
+.cr-tal span {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  font-size: 9px;
+  line-height: 1.3;
+  padding: 0 2px;
+  font-family: var(--p-num);
+  background: var(--p-card);
+  color: var(--p-ink);
+  border: 1px solid var(--p-line);
+}
+.cr-tal.plus span {
+  color: var(--ok);
+}
+.cr-tal.crown span {
+  color: var(--p-acc);
+  border-color: var(--p-acc);
+}
+/* 多枚套装图叠在一格里 */
+.cr-sets {
+  display: flex;
+  gap: 2px;
+  flex: none;
+}
+.cr-sets .cr-ic {
+  width: 24px;
+  height: 24px;
+}
+.cr-val {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 0;
+}
+.cr-val b {
+  font-family: var(--p-num);
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--p-acc);
+  line-height: 1.2;
+}
+.cr-val span {
+  font-size: 9.5px;
+  color: var(--p-mute);
+  white-space: nowrap;
+}
+
+/* ========== 说明条目：排行规则、参与条件一类的成段文字 ========== */
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 10.5px;
+  line-height: 1.6;
+  color: var(--p-mute);
+}
+.notes b {
+  color: var(--p-ink);
+  font-weight: 500;
+}
+/* 警示那一档：扫码图里「扫错会怎样」的两条，与其余说明不是一个量级，照原模板取语义红 */
+.notes p.warn {
+  color: var(--bad);
+}
+
+/* ========== 群排行：一行一张卡 ==========
+   六列依次为名次、玩家、天赋圈、武器、套装、分值，与 rank-profile-list.html 的块序一一对应。
+   列宽由整张表统一按内容定（行是 subgrid），剩下的宽度均摊进列间距：给死比例则短的那几列右边空出一截。
+   玩家那列不收（uid 截断就认不出是谁），挤时只省略武器名与套装名。 */
+.rk-list {
+  display: grid;
+  grid-template-columns: 34px max-content max-content minmax(0, max-content) minmax(0, max-content) max-content;
+  justify-content: space-between;
+  column-gap: 6px;
+  row-gap: 6px;
+}
+.rk {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+  min-height: 46px;
+  padding: 6px 8px 6px 2px;
+  background: var(--p-bg);
+  border: 1px solid var(--p-line);
+  border-radius: 8px;
+}
+/* 发起者自己名下的那一位 */
+.rk.self {
+  border-color: var(--p-acc);
+  box-shadow: inset 0 0 0 1px var(--p-acc);
+}
+.rk .cr-idx {
+  justify-self: center;
+}
+.rk .cr-idx[class*="mode-"] {
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  font-size: 10px;
+}
+.rk .cr-idx.idx-1[class*="mode-"] {
+  width: 34px;
+  height: 17px;
+}
+/* 武器、套装、分值三块左侧一道竖线，两端淡出 */
+.rk-blk,
+.rk-val {
+  position: relative;
+  padding-left: 7px;
+}
+.rk-blk::before,
+.rk-val::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 2px;
+  bottom: 2px;
+  width: 1px;
+  background: linear-gradient(transparent, color-mix(in srgb, var(--p-mute) 70%, transparent) 20%, color-mix(in srgb, var(--p-mute) 70%, transparent) 80%, transparent);
+}
+.rk-who,
+.rk-blk {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.rk-face {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1.5px solid var(--p-acc);
+  background: var(--rar-bg, var(--p-card));
+}
+.rk-face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.rk .cr-txt b {
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+.rk .cr-txt span {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  line-height: 1.35;
+  overflow: hidden;
+}
+/* 命座 / 星魂 / 影画小方块，配色同角色卡 */
+.rk-cons {
+  display: inline-block;
+  min-width: 12px;
+  margin-right: 3px;
+  padding: 0 2px;
+  border-radius: 3px;
+  font-family: var(--p-num);
+  font-size: 8.5px;
+  font-style: normal;
+  line-height: 12px;
+  text-align: center;
+  vertical-align: 1px;
+  color: #fff;
+  background: #666;
+}
+.rk-cons.cons-1 {
+  background: #5cbac2;
+}
+.rk-cons.cons-2 {
+  background: #339d61;
+}
+.rk-cons.cons-3 {
+  background: #3e95b9;
+}
+.rk-cons.cons-4 {
+  background: #3955b7;
+}
+.rk-cons.cons-5 {
+  background: #531ba9cf;
+}
+.rk-cons.cons-6 {
+  background: #ff5722;
+}
+/* 天赋圈：元素框垫底、图标居中，等级是圈下的小牌；有加成换深底金字，原始等级满级戴冠。
+   冠图按游戏换（`--crown`）：星铁用自己的，绝区零是「仓鼠笼」访问器、由模板按元数据内联给，取不到时不画 */
+.rk-list,
+.cc-tals {
+  --crown: url("../../character/imgs/crown.png");
+}
+.skin-sr .rk-list,
+.skin-sr .cc-tals {
+  --crown: url("../../character/imgs/crown-sr.webp");
+}
+.skin-zzz .rk-list {
+  --crown: none;
+}
+/* 角色卡片的天赋圈：同一套样式，单卡里地方宽，圈大一档 */
+.cc-tals {
+  gap: 8px;
+}
+.cc-tals .rk-tal {
+  width: 38px;
+  height: 38px;
+}
+.cc-tals .rk-tal span {
+  font-size: 8px;
+  line-height: 10px;
+  min-width: 13px;
+}
+.rk-tals {
+  display: flex;
+  gap: 2px;
+}
+.rk-tal {
+  position: relative;
+  width: 31px;
+  height: 31px;
+  margin-bottom: 2px;
+  border-radius: 50%;
+  background: center / contain no-repeat, rgba(0, 0, 0, 0.6);
+}
+.rk-tal[style] {
+  background-color: transparent;
+}
+.rk.t4 .rk-tal {
+  width: 28px;
+  height: 28px;
+}
+.rk.many .rk-tal {
+  width: 25px;
+  height: 25px;
+}
+.rk.many .rk-tals {
+  gap: 1px;
+}
+/* 绝区零的字体宽一号、技能又有六项，整行再紧一档 */
+.skin-zzz .rk .cr-txt b {
+  font-size: 10px;
+}
+.skin-zzz .rk .cr-txt span {
+  font-size: 8.5px;
+}
+.skin-zzz .rk-list {
+  column-gap: 5px;
+}
+.skin-zzz .rk-val b {
+  font-size: 14px;
+}
+.rk-tal img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 70%;
+  height: 70%;
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+}
+.rk-tal span {
+  position: absolute;
+  left: 50%;
+  bottom: -2px;
+  min-width: 10px;
+  padding: 0 1.5px;
+  transform: translateX(-50%);
+  border-radius: 2px;
+  font-family: var(--p-num);
+  font-size: 6.5px;
+  line-height: 8px;
+  text-align: center;
+  color: #222;
+  background: #fff;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.4);
+}
+.rk-tal.plus span {
+  color: #ffdfa0;
+  background: #2e353e;
+  box-shadow: 0 0 1px #d3bc8e;
+}
+.rk-tal.crown::after {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  width: 11px;
+  height: 9px;
+  transform: translateX(-50%);
+  background: var(--crown) center / contain no-repeat;
+}
+/* 绝区零没有元素框、图标是纯白线稿，放大一档；练满不戴冠，而是右上角一枚「仓鼠笼」访问器小徽 */
+.skin-zzz .rk-tal img {
+  width: 76%;
+  height: 76%;
+}
+.skin-zzz .rk-tal.crown::after {
+  top: -2px;
+  left: auto;
+  right: -3px;
+  width: 10px;
+  height: 10px;
+  transform: none;
+  border-radius: 50%;
+  background: var(--crown) center / 100% no-repeat, #141414;
+}
+/* 武器与套装格；武器图不是方的，按高度放进格子、宽度随比例（同活动日历的 `.ec-wp`） */
+.rk .cr-ic {
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+}
+.rk-wp {
+  --av-fg-size: auto 100%;
+}
+/* 精炼 / 叠影与评级小牌 */
+.rk-pill {
+  display: inline-block;
+  padding: 0 3px;
+  border-radius: 3px;
+  font-size: 8.5px;
+  font-style: normal;
+  line-height: 12px;
+  color: #fff;
+  background: #339d61;
+}
+.rk-pill.mk-ACE,
+.rk-pill.mk-MAX {
+  background: #ff5722;
+}
+.rk-pill.mk-SSS,
+.rk-pill.mk-SS {
+  background: #531ba9cf;
+}
+.rk-pill.mk-S,
+.rk-pill.mk-A {
+  background: #3955b7;
+}
+.rk-pill.mk-B,
+.rk-pill.mk-C,
+.rk-pill.mk-D {
+  background: #999;
+}
+/* 分值：列宽只随大数字（小字宽 0、撑满列宽后省略），数字再长也不出框 */
+.rk-val {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 52px;
+}
+.rk-val span {
+  width: 0;
+  min-width: 100%;
+  font-size: 8.5px;
+  line-height: 1.3;
+  text-align: right;
+  color: var(--p-mute);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rk-val b {
+  font-family: var(--p-num);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.25;
+  color: var(--p-acc);
+  white-space: nowrap;
+}
+/* 说明：图标取四维各自的那一格（伤害红、评分金、双爆紫、有效词条青绿），当前排的那一维提亮 */
+.rk-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--p-mute);
+}
+.rk-notes b {
+  margin-right: 4px;
+  color: var(--p-ink);
+  font-weight: 500;
+}
+.rk-notes li.on b {
+  color: var(--p-acc);
+}
+.rk-notes i {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  margin-right: 4px;
+  vertical-align: -1px;
+  background: url("../../character/imgs/mark-icon.png") 100% 0 / auto 100% no-repeat;
+}
+.rk-notes i.dmg {
+  background-position: 0 0;
+}
+.rk-notes i.crit,
+.rk-notes i.valid {
+  background-image: url("../../character/imgs/mark-icon3.png");
+  background-position: 0 0;
+}
+.rk-notes i.valid {
+  background-position: 100% 0;
+}
+
+/* ========== 名目格：探索度、宝箱一类「一串数值加名目」，列数随内容折行 ========== */
+.kv {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+  gap: 6px;
+}
+.kv-i {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 6px 3px;
+  border: 1px solid var(--p-line);
+  min-width: 0;
+  text-align: center;
+}
+/* 「已开 / 总数」的总数那半截：<s> 浏览器缺省是删除线，不清掉就一道横线压在数字上 */
+.kv-i b s {
+  text-decoration: none;
+  font-size: 0.68em;
+  color: var(--p-mute);
+}
+.kv-i b {
+  font-family: var(--p-num);
+  font-size: 13px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+.kv-i span {
+  font-size: 9.5px;
+  color: var(--p-mute);
+}
+
+/* ========== 账号概况（profile.html） ==========
+   统计格固定四列，与官方主页同一排法 */
+.pf-kv {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.pf-kv .kv-i b.txt {
+  font-family: var(--p-body);
+  font-size: 12px;
+}
+/* 地区卡片：地区底色 + 右侧地区图 + 白色剪影图标，两列。卡片按接口给的地区逐个画，
+   底色表里没有的新地区走缺省色、图缺的那张图标位画虚线框 —— 版本更新后缺了哪张图一眼可见 */
+.pf-area-g {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.pf-area {
+  --area: rgb(84, 88, 104);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 84px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  color: #fff;
+  background-color: var(--area);
+  background-position: right center;
+  background-size: auto 100%;
+  background-repeat: no-repeat;
+}
+.pf-area-ic {
+  flex: 0 0 auto;
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
+}
+.pf-area-ic.miss {
+  border: 1px dashed rgba(255, 255, 255, 0.55);
+  border-radius: 4px;
+}
+.pf-area-t {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.pf-area-t b {
+  font-family: var(--p-disp);
+  font-size: 13px;
+  font-weight: 400;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+.pf-area-t span {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.78);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+.pf-area-t em {
+  margin-left: 4px;
+  font-family: var(--p-num);
+  font-style: normal;
+  color: #fff;
+}
+.pf-area[data-area="蒙德"],
+.re-area[data-area="蒙德"],
+.pf-area[data-area="风息山"],
+.re-area[data-area="风息山"] {
+  --area: rgb(74, 100, 92);
+}
+.pf-area[data-area="璃月"],
+.re-area[data-area="璃月"] {
+  --area: rgb(124, 99, 76);
+}
+.pf-area[data-area="雪山"],
+.re-area[data-area="雪山"],
+.pf-area[data-area="远古圣山"],
+.re-area[data-area="远古圣山"] {
+  --area: rgb(82, 97, 129);
+}
+.pf-area[data-area="稻妻"],
+.re-area[data-area="稻妻"] {
+  --area: rgb(85, 79, 89);
+}
+.pf-area[data-area="渊下宫"],
+.re-area[data-area="渊下宫"],
+.pf-area[data-area="沉玉谷"],
+.re-area[data-area="沉玉谷"] {
+  --area: rgb(74, 83, 102);
+}
+.pf-area[data-area="层岩巨渊"],
+.re-area[data-area="层岩巨渊"] {
+  --area: rgb(86, 79, 73);
+}
+.pf-area[data-area="须弥"],
+.re-area[data-area="须弥"] {
+  --area: rgb(94, 100, 77);
+}
+.pf-area[data-area="枫丹"],
+.re-area[data-area="枫丹"],
+.pf-area[data-area="空之神殿"],
+.re-area[data-area="空之神殿"] {
+  --area: rgb(68, 82, 111);
+}
+.pf-area[data-area="旧日之海"],
+.re-area[data-area="旧日之海"] {
+  --area: rgb(72, 85, 115);
+}
+.pf-area[data-area="纳塔"],
+.re-area[data-area="纳塔"] {
+  --area: rgb(103, 80, 75);
+}
+.pf-area[data-area="挪德卡莱"],
+.re-area[data-area="挪德卡莱"] {
+  --area: rgb(75, 86, 129);
+}
+.pf-kv .kv-i span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* ========== 整卡：角色列表那一格，头像加天赋、武器与套装 ========== */
+.acs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 8px;
+}
+.ac {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 7px;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+  min-width: 0;
+}
+.ac-top {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 7px;
+  align-items: center;
+}
+.ac-txt {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.ac-txt b {
+  font-size: 11.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ac-txt span {
+  font-size: 9.5px;
+  color: var(--p-mute);
+  font-family: var(--p-num);
+}
+/* 天赋行：等级印在图标右下，取不到图时仍留等级 */
+.ac-tal {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+/* 天赋等级块：没有图标可取时只印等级，`plus` 为升过的、`crown` 为满级 */
+.tl {
+  font-size: 9.5px;
+  line-height: 1.5;
+  padding: 0 5px;
+  font-family: var(--p-num);
+  background: var(--p-bg);
+  color: var(--p-ink);
+  border: 1px solid var(--p-line);
+}
+.tl.plus {
+  color: var(--ok);
+}
+.tl.crown {
+  color: var(--p-acc);
+  border-color: var(--p-acc);
+}
+.ac-gear {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  min-width: 0;
+}
+.ac-gear .cr-ic {
+  width: 22px;
+  height: 22px;
+}
+.ac-gear .cr-ic span {
+  font-size: 8px;
+  padding: 0 2px;
+}
+.ac-none {
+  font-size: 9.5px;
+  color: var(--p-mute);
+}
+
+/* ========== 面板详情：立绘头图 ========== */
+.hero {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+.hero-pic {
+  width: 150px;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background: var(--p-line);
+}
+.hero-pic img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+.hero-b {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.hero-name {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.hero-name h3 {
+  font-family: var(--p-disp);
+  font-size: 22px;
+  font-weight: 400;
+}
+.hero-name span {
+  font-size: 10.5px;
+  color: var(--p-mute);
+  font-family: var(--p-num);
+}
+.hero-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* ========== 属性行：面板详情左栏那十余行 ========== */
+.attrs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.at {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: baseline;
+  gap: 6px;
+  padding: 2px 0;
+  border-bottom: 1px solid var(--p-line);
+}
+.at:last-child {
+  border-bottom: 0;
+}
+.at > span {
+  font-size: 11px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.at b {
+  font-family: var(--p-num);
+  font-size: 12.5px;
+  font-weight: 400;
+}
+.at i {
+  font-style: normal;
+  font-size: 9px;
+  color: var(--p-mute);
+  font-family: var(--p-num);
+}
+/* 权重高的那几行用强调色，评分规则看重它们 */
+.at.key > span,
+.at.key b {
+  color: var(--p-acc);
+}
+
+/* ========== 天赋与行迹图标行 ========== */
+.tals {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.tal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  width: 30px;
+}
+.tal-ic {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+}
+.tal-ic img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.9;
+}
+.tal-ic.off img {
+  opacity: 0.25;
+}
+.tal b {
+  font-family: var(--p-num);
+  font-size: 10px;
+  font-weight: 400;
+}
+.tal.plus b {
+  color: var(--ok);
+}
+.tal.crown b {
+  color: var(--p-acc);
+}
+.tal span {
+  font-size: 8.5px;
+  color: var(--p-mute);
+}
+
+/* ========== 装备块：武器 / 光锥 / 音擎 ========== */
+.gear {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+.gear-ic {
+  width: 54px;
+  height: 54px;
+  overflow: hidden;
+  background: var(--rar-bg, var(--p-card));
+  display: grid;
+  place-items: center;
+}
+.gear-ic img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.gear-b {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.gear-t {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.gear-t b {
+  font-size: 13px;
+  font-weight: 500;
+}
+.gear-t span {
+  font-size: 10px;
+  color: var(--p-mute);
+  font-family: var(--p-num);
+}
+.gear-attrs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 10.5px;
+}
+.gear-attrs span {
+  color: var(--p-mute);
+  margin-right: 3px;
+}
+.gear-desc {
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--p-mute);
+}
+
+/* ========== 圣遗物 / 遗器 / 驱动盘：逐件一格 ========== */
+.arts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 8px;
+}
+.art {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+  min-width: 0;
+}
+.art-h {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 7px;
+  align-items: center;
+}
+.art-ic {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  overflow: hidden;
+  background: var(--rar-bg, var(--p-line));
+  display: grid;
+  place-items: center;
+}
+.art-ic img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.art-ic span {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  font-size: 8px;
+  line-height: 1.3;
+  padding: 0 2px;
+  font-family: var(--p-num);
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+}
+.art-t {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.art-t b {
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.art-t span {
+  font-size: 9.5px;
+  color: var(--p-mute);
+  font-family: var(--p-num);
+}
+.art-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 10.5px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--p-line);
+}
+.art-main b {
+  font-family: var(--p-num);
+  font-weight: 400;
+  color: var(--p-acc);
+}
+.art-subs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sub {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--p-mute);
+}
+.sub b {
+  font-family: var(--p-num);
+  font-weight: 400;
+}
+/* 三档配色：权重高的、算分的、不算分的 */
+.sub.great {
+  color: var(--p-acc);
+}
+.sub.useful {
+  color: var(--p-ink);
+}
+.sub .eff {
+  font-style: normal;
+  font-size: 8.5px;
+  font-family: var(--p-num);
+  margin-right: 3px;
+  opacity: 0.8;
+}
+
+/* 圣遗物列表那张图上「这件属于谁」的小头像，靠右 */
+.pd-arti-who {
+  margin-left: auto;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--p-line);
+}
+.pd-arti-who img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ========== 伤害表与 buff 表 ========== */
+.tbl {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  font-size: 10.5px;
+}
+.tbl .tr {
+  display: grid;
+  grid-template-columns: var(--cols, 22px minmax(0, 1fr) 72px 72px);
+  gap: 6px;
+  align-items: baseline;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--p-line);
+}
+.tbl .tr:last-child {
+  border-bottom: 0;
+}
+.tbl .th {
+  color: var(--p-mute);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+}
+.tbl .tr > b {
+  font-family: var(--p-num);
+  font-weight: 400;
+  text-align: right;
+}
+.tbl .tr > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 伤害那一列算不出暴击时合成一格，故跨两列；不跨则期望伤害被挤出表外 */
+.tbl .tr > b.wide {
+  grid-column: span 2;
+}
+.tbl .tr > .wide {
+  white-space: normal;
+  color: var(--p-mute);
+  line-height: 1.6;
+}
+/* 词条伤害那张表列数随词条数变，故按 `--n` 等分而非固定四列 */
+.tbl.grid-n .tr {
+  grid-template-columns: minmax(0, 1.4fr) repeat(calc(var(--n) - 1), minmax(0, 1fr));
+}
+.tbl.grid-n .tr > b {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 12px;
+}
+.tbl.grid-n .tr > b s {
+  text-decoration: none;
+  font-size: 9px;
+  color: var(--p-mute);
+  font-family: var(--p-body);
+}
+.tbl .tr > b.up {
+  color: var(--ok);
+}
+.tbl .tr > b.down {
+  color: var(--bad);
+}
+.tbl .tr > b.na {
+  color: var(--p-mute);
+}
+
+/* ========== 列表行 ========== */
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-top: 9px;
+  border-top: 1px solid var(--p-line);
+}
+.row:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+.row-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.row-h b {
+  font-weight: 700;
+  font-size: 12.5px;
+}
+.row-h .rt {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--p-mute);
+  font-family: var(--p-num);
+}
+.halves {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  gap: 8px;
+}
+.half {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.half small {
+  font-size: 10px;
+  color: var(--p-mute);
+}
+
+/* ========== 记录行与首领行 ========== */
+.recs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rec {
+  display: grid;
+  grid-template-columns: 60px 22px 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+.rec > span {
+  font-size: 10.5px;
+  color: var(--p-mute);
+}
+.rec b {
+  font-weight: 500;
+  font-size: 11px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rec em {
+  font-style: normal;
+  font-family: var(--p-num);
+  color: var(--p-acc);
+  font-weight: 600;
+}
+.boss {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding-top: 9px;
+  border-top: 1px solid var(--p-line);
+}
+.boss:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+.boss-ic {
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: var(--p-on-e);
+  background: var(--p-line);
+}
+.boss-ic img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.boss-b {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.bigline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.bigline > b {
+  font-family: var(--p-num);
+  font-size: 32px;
+  line-height: 1;
+  color: var(--p-acc);
+  margin-right: 4px;
+  font-weight: 400;
+}
+
+/* ========== uid 行 ========== */
+.u-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.u-row {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+}
+/* 行底名片（图由模板逐行内联给）：左段用卡片色渐隐盖住名片、
+   字落在卡片色上，右段露出名片 —— 整行压一层黑会让原神那种深色字压在深底上而读不清。
+   渐隐层是绝对定位的伪元素（不占 grid 格），正文抬到它之上；星铁的卡片色是半透明的，
+   故渐隐色单独给 `--u-fade`，见 sr.css。 */
+.u-row.u-bn {
+  --u-fade: var(--p-card);
+  position: relative;
+  background-color: var(--p-card);
+  background-position: right center;
+  background-size: auto 100%;
+  background-repeat: no-repeat;
+}
+.u-row.u-bn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--u-fade) 38%, rgba(0, 0, 0, 0) 85%);
+  pointer-events: none;
+}
+.u-row.u-bn > * {
+  position: relative;
+}
+/* 标记落在名片上，垫实底才读得清 */
+.u-row.u-bn .flag {
+  background: var(--u-fade);
+}
+/* 当前那一行的勾（user/imgs/check.webp） */
+.u-check {
+  width: 10px;
+  height: 10px;
+  margin-right: 2px;
+  vertical-align: -1px;
+  object-fit: contain;
+}
+.u-idx {
+  font-family: var(--p-num);
+  font-size: 13px;
+  color: var(--p-mute);
+  min-width: 12px;
+  text-align: center;
+}
+.u-face {
+  width: 38px;
+  height: 38px;
+}
+.u-main {
+  min-width: 0;
+}
+.u-id {
+  font-family: var(--p-num);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+/* 区服与「当前」标都是中文，不跟 uid 取数字字体：绝区零的数字字体是斜体、中文落进去被裁 */
+.u-id small,
+.u-id .tag {
+  font-family: var(--p-body);
+  font-size: 10px;
+  color: var(--p-mute);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.u-name {
+  font-size: 11px;
+  color: var(--p-ink);
+  opacity: 0.85;
+}
+.u-name.none {
+  color: var(--p-mute);
+  opacity: 1;
+}
+.u-flags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 146px;
+}
+.flag {
+  font-size: 10px;
+  line-height: 1.5;
+  padding: 0 6px;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+  color: var(--p-mute);
+}
+.flag.ok {
+  color: var(--ok);
+}
+.flag.bad {
+  color: var(--bad);
+}
+.flag.off {
+  border-style: dashed;
+}
+.u-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border: 1px dashed var(--p-line);
+  align-items: flex-start;
+}
+.u-empty b {
+  font-size: 13px;
+  font-weight: 500;
+}
+.u-empty span {
+  font-size: 11px;
+  color: var(--p-mute);
+}
+
+/* ========== 中性外框：一张图里并列多个游戏时用 ========== */
+.hub {
+  display: flex;
+  flex-direction: column;
+  gap: var(--p-gap);
+}
+.hub .pic {
+  --p-pad: 14px;
+  width: auto;
+}
+.hub-h {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.hub-h h3 {
+  font-family: var(--p-disp);
+  font-size: 20px;
+  font-weight: 400;
+}
+.hub-h span {
+  font-size: 11px;
+  color: var(--p-mute);
+}
+.hub-tips {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 4px 14px;
+  font-size: 10.5px;
+  color: var(--p-mute);
+  line-height: 1.7;
+}
+.hub-tips b {
+  color: var(--p-ink);
+  font-weight: 500;
+}
+
+/* ========== 面板详情：立绘头 ==========
+   立绘按高度铺满、宽度裁切：原图是竖构图，按宽度铺会把人物顶出框外。 */
+.pd-hero {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+.pd-splash {
+  width: 170px;
+  height: 230px;
+  overflow: hidden;
+  background: var(--p-line);
+}
+.pd-splash img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+.pd-side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* 天赋 / 技能格：等级压在图上，满级与超级各自换色 */
+.pd-tals {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.pd-tal {
+  position: relative;
+  width: 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+.pd-tal img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  opacity: 0.9;
+}
+.pd-tal b {
+  font-family: var(--p-num);
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.2;
+}
+.pd-tal span {
+  font-size: 8.5px;
+  color: var(--p-mute);
+  white-space: nowrap;
+}
+.pd-tal.plus b {
+  color: var(--ok);
+}
+.pd-tal.crown b {
+  color: var(--p-acc);
+}
+
+/* 属性栏：名目、权重、总值、白值加加成四格一行 */
+.pd-attrs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 12px;
+  list-style: none;
+}
+.pd-attrs li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: baseline;
+  gap: 5px;
+  padding: 2px 0;
+  border-bottom: 1px solid var(--p-line);
+}
+.pa-t {
+  font-size: 10.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pa-w {
+  font-style: normal;
+  font-size: 8.5px;
+  color: var(--p-mute);
+  font-family: var(--p-num);
+}
+.pa-w.hi {
+  color: var(--p-acc);
+}
+.pa-v {
+  font-family: var(--p-num);
+  font-size: 11.5px;
+  font-weight: 400;
+}
+.pa-b {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 4px;
+  font-size: 8.5px;
+  color: var(--p-mute);
+  font-family: var(--p-num);
+}
+.pa-b s {
+  text-decoration: none;
+}
+.pa-b s.zero {
+  opacity: 0.4;
+}
+.pa-b em {
+  font-style: normal;
+  color: var(--ok);
+}
+
+/* 命座 / 行迹：未解锁的压暗 */
+.pd-cons,
+.pd-tree {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.pd-tree-g {
+  display: flex;
+  gap: 2px;
+}
+.pd-con {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+}
+.pd-con.sm {
+  width: 17px;
+  height: 17px;
+}
+.pd-con img {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+}
+.pd-con.off {
+  opacity: 0.3;
+}
+
+/* 武器 / 光锥 / 音擎那一块 */
+.pd-wp,
+.pd-gear {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+}
+.pd-wp .cr-ic,
+.pd-gear .cr-ic {
+  width: 44px;
+  height: 44px;
+}
+.pd-gear-b {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.pd-gear-b > b {
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.pd-gear-a {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-family: var(--p-num);
+  font-size: 11px;
+}
+.pd-gear-a s {
+  text-decoration: none;
+  color: var(--p-mute);
+  font-family: var(--p-body);
+  font-size: 9.5px;
+  margin-right: 3px;
+}
+.pd-desc {
+  font-size: 9.5px;
+  line-height: 1.6;
+  color: var(--p-mute);
+}
+
+/* 词条汇总九格：权重分三档配色，补位的空格只留边框 */
+.pd-subs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 3px 8px;
+  list-style: none;
+}
+.pd-subs li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
+  padding: 2px 5px;
+  font-size: 10px;
+  background: var(--p-bg);
+  border: 1px solid var(--p-line);
+  min-width: 0;
+}
+.pd-subs li.hole {
+  opacity: 0.25;
+}
+.pd-subs li > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pd-subs li i {
+  font-style: normal;
+  font-family: var(--p-num);
+  font-size: 8.5px;
+  color: var(--p-mute);
+  margin-right: 4px;
+}
+.pd-subs li b {
+  font-family: var(--p-num);
+  font-weight: 400;
+  white-space: nowrap;
+}
+.pd-subs li.great b,
+.pd-rows li.great b {
+  color: var(--p-acc);
+}
+.pd-subs li.nouse,
+.pd-rows li.nouse {
+  opacity: 0.45;
+}
+
+/* 逐件圣遗物 / 遗器 / 驱动盘 */
+.pd-artis {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 7px;
+}
+.pd-arti {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 7px;
+  background: var(--p-bg);
+  border: 1px solid var(--p-line);
+  min-width: 0;
+}
+.pd-arti-h {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 6px;
+  align-items: center;
+}
+.pd-arti-h .cr-ic {
+  width: 30px;
+  height: 30px;
+}
+.pd-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  list-style: none;
+}
+.pd-rows li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 10px;
+  min-width: 0;
+}
+.pd-rows li.main {
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--p-line);
+  margin-bottom: 1px;
+}
+.pd-rows li > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pd-rows li i {
+  font-style: normal;
+  font-family: var(--p-num);
+  font-size: 8.5px;
+  color: var(--p-mute);
+  margin-right: 4px;
+}
+.pd-rows li b {
+  font-family: var(--p-num);
+  font-weight: 400;
+  white-space: nowrap;
+}
+/* 第三列是该词条的得分，评分详情那张才有；`<s>` 自带删除线，不去掉则每个分数被划一道 */
+.pd-rows li s {
+  flex: none;
+  width: 30px;
+  text-align: right;
+  text-decoration: none;
+  font-family: var(--p-num);
+  font-size: 9.5px;
+  color: var(--p-acc);
+}
+/* 得分拆解那一组：与词条列表之间留一道分隔，末行是最终得分 */
+.pd-rows.calc {
+  padding-top: 4px;
+  border-top: 1px dashed var(--p-line);
+  color: var(--p-mute);
+}
+.pd-rows.calc li.sum {
+  color: var(--p-ink);
+}
+.pd-rows.calc li.sum b {
+  font-size: 12px;
+  color: var(--p-acc);
+}
+/* 副词条强化次数标记：精灵图五行、每行 8px，
+   `up-N` 取第几行；有效词条换 up-num-icon2、无效词条换 up-num-icon0 */
+.pd-rows li .up-num {
+  display: inline-block;
+  width: 50px;
+  height: 8px;
+  margin-left: 4px;
+  vertical-align: 1px;
+  background: url("../../character/imgs/up-num-icon1.png") 0 0 / auto 500% no-repeat;
+}
+.pd-rows li .up-num.up-5 {
+  background-position: 0 -8px;
+}
+.pd-rows li .up-num.up-4 {
+  background-position: 0 -16px;
+}
+.pd-rows li .up-num.up-3 {
+  background-position: 0 -24px;
+}
+.pd-rows li .up-num.up-2 {
+  background-position: 0 -32px;
+}
+.pd-rows li.great .up-num {
+  background-image: url("../../character/imgs/up-num-icon2.png");
+}
+.pd-rows li.nouse .up-num {
+  background-image: url("../../character/imgs/up-num-icon0.png");
+}
+
+/* ========== 练度统计那张宽表 ==========
+   技能格收在 `.st-tals` 一列里（个数随游戏 3/4/6），其余列宽由模板以 `--cols` 给；
+   等级档 `lv1`~`lv5` 决定技能格的配色，档位由视图给的 `original` 折算。 */
+.st-tbl {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 10px;
+}
+.st-tbl .tr {
+  display: grid;
+  grid-template-columns: var(--cols);
+  gap: 6px;
+  align-items: center;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--p-line);
+  min-width: 0;
+}
+.st-tbl .tr:last-child {
+  border-bottom: 0;
+}
+.st-tbl .th {
+  color: var(--p-mute);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+.st-tbl .th .nm {
+  text-align: left;
+}
+.st-nm {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.st-nm .cr-ic {
+  width: 24px;
+  height: 24px;
+}
+.st-nm b {
+  font-weight: 500;
+  font-size: 10.5px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.st-tbl .num {
+  font-family: var(--p-num);
+  text-align: center;
+}
+.st-tals {
+  display: flex;
+  gap: 4px;
+}
+/* 表头的 A/E/Q 与下面的天赋圈同宽，否则表头与各行错开 */
+.st-tals > span,
+.st-tals > .rk-tal {
+  width: 31px;
+  flex: none;
+  text-align: center;
+}
+.st-tals > .rk-tal {
+  height: 31px;
+}
+.st-tals > .st-notal {
+  width: auto;
+  font-size: 9px;
+  color: var(--p-mute);
+  white-space: nowrap;
+}
+/* 技能格：按练度档位加深底色，满级一档用强调色 */
+.st-tal {
+  position: relative;
+  font-family: var(--p-num);
+  text-align: center;
+  padding: 1px 0;
+  border-radius: 3px;
+  background: var(--p-line);
+  color: var(--p-ink);
+}
+.st-tal.lv1 {
+  background: transparent;
+  color: var(--p-mute);
+}
+.st-tal.lv2 {
+  opacity: 0.8;
+}
+/* 满级那一档：强调色底，右上角一枚小冠（原神 crown、星铁 crown-sr、绝区零「仓鼠笼」访问器由模板内联给）。
+   冠垫在数字底下会糊成一片，故挂在角上 */
+.st-tbl {
+  --crown: url("../../character/imgs/crown.png");
+}
+.skin-sr .st-tbl {
+  --crown: url("../../character/imgs/crown-sr.webp");
+}
+.skin-zzz .st-tbl {
+  --crown: none;
+}
+.st-tal.lv5 {
+  background: var(--p-acc);
+  color: var(--p-bg);
+}
+.st-tal.lv5::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  right: -4px;
+  width: 10px;
+  height: 9px;
+  background: var(--crown) center / contain no-repeat;
+}
+.skin-zzz .st-tal.lv5::before {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--crown) center / 90% no-repeat, #141414;
+}
+/* 命座 / 星魂加成：左下角一枚三角，不改底色（底色是练度档） */
+.st-tal.plus::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  border-left: 5px solid var(--ok);
+  border-top: 5px solid transparent;
+  border-bottom-left-radius: 3px;
+}
+/* 卡池复刻单张里角色池与武器池之间那道分隔线（gacha/imgs/line.png） */
+.gp-line {
+  display: block;
+  width: 100%;
+  height: auto;
+  opacity: 0.8;
+}
+.st-gear {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.st-gear .cr-ic {
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+}
+.st-gear .cr-ic span {
+  font-size: 7.5px;
+  line-height: 1.2;
+  padding: 0 2px;
+}
+.st-gear > .mk {
+  flex: none;
+  font-family: var(--p-num);
+}
+.st-gear span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 9.5px;
+}
+/* 等级单独一格且不收缩：与名字同 span 时长名会把 Lv 一并省略掉 */
+.st-gear > .lv {
+  flex: none;
+  color: var(--p-mute);
+}
+.st-gear .sets,
+.ac-gear .sets {
+  display: flex;
+  gap: 2px;
+  flex: none;
+}
+/* 今日可刷的天赋材料那两格，不是今天的压暗 */
+.st-mat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  font-size: 9.5px;
+}
+.st-mat.off {
+  opacity: 0.4;
+}
+.st-mat img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex: none;
+}
+
+/* ========== 单角色卡（`#雷神卡片`）========== */
+.cc {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-height: 150px;
+}
+.cc-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+.cc-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  opacity: 0.4;
+}
+.cc-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.cc-rows {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.cc-artis {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.cc-arti {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  overflow: hidden;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+}
+.cc-arti.none {
+  opacity: 0.3;
+}
+.cc-arti img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.cc-arti span {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  font-size: 8px;
+  line-height: 1.3;
+  padding: 0 2px;
+  font-family: var(--p-num);
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+}
+
+/* 摘要格里带一张小图标：武器类型统计那一行 */
+.kv-ic {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  opacity: 0.85;
+}
+/* 武器列表（avatar/weapon）：小圆角统一 6px（原神皮肤的右下 16px 大圆角在这里不要），武器图按高铺满；
+   右上角是佩戴者的圆头像，精炼 / 叠影让到左上 */
+.wl .av-img,
+.skin-gs .wl .av-img {
+  border-radius: 6px;
+  --av-fg-size: auto 92%;
+}
+.wl .av-img em {
+  left: 3px;
+  right: auto;
+}
+.wl .av-img i.who {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: center / cover no-repeat, var(--p-bg);
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.85);
+}
+/* 武器 / 邦布 / 深渊头像上那层光泽（common/item/fill.png），压在图上、不挡角标 */
+.av-img img.fill {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+}
+.av-img .who {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px var(--p-bg);
+}
+
+/* ========== 角色列表：宝箱图标 ==========
+   `chest.webp` 横排宝箱图标的精灵图，逐格偏移在模板内联 style 里，这里只给图与格子尺寸。 */
+.al-chest {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background: url("../../character/imgs/chest.webp") 0 0 / auto 100% no-repeat;
+}
+/* ========== 关卡卡：深渊 / 忘却之庭 / 式舆防卫战逐层逐间 ========== */
+.fl {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-top: 9px;
+  border-top: 1px solid var(--p-line);
+}
+.fl:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+.fl-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.fl-h b {
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.fl-h .sub {
+  font-size: 10px;
+  color: var(--p-mute);
+}
+.fl-h .rt {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--p-mute);
+  font-family: var(--p-num);
+}
+/* 星格：有几颗画几颗，视图层给的是长度等于星数的数组 */
+.fl-stars {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+.fl-stars img {
+  width: 13px;
+  height: 13px;
+}
+.fl-stars .sep {
+  width: 1px;
+  height: 11px;
+  background: var(--p-line);
+  margin: 0 3px;
+}
+/* 一个节点：队伍加积分，上下半或节点一二共用 */
+.nd {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 7px 8px;
+  background: var(--p-bg);
+  border: 1px solid var(--p-line);
+  min-width: 0;
+}
+.nd-h {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--p-mute);
+}
+.nd-h b {
+  color: var(--p-ink);
+  font-size: 10.5px;
+  font-weight: 500;
+}
+.nd-h .rt {
+  margin-left: auto;
+  font-family: var(--p-num);
+}
+/* 关卡祝福与机制说明 */
+.buff {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 7px;
+  align-items: start;
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--p-mute);
+}
+.buff img {
+  width: 22px;
+  height: 22px;
+  flex: none;
+}
+.buff b {
+  color: var(--p-ink);
+  font-weight: 500;
+}
+
+/* ========== 使用率档位：深渊 / 幽境危战的角色使用率 ========== */
+.tier {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding-top: 8px;
+  border-top: 1px solid var(--p-line);
+}
+.tier:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+.tier-k {
+  font-family: var(--p-num);
+  font-size: 17px;
+  color: var(--p-acc);
+  text-align: center;
+  padding: 2px 0;
+  background: var(--p-bg);
+  border: 1px solid var(--p-line);
+}
+
+/* ========== 战绩角色卡 ==========
+   按 640px 排版再整体放大 2 倍。天赋格宽按格数取档（t3 / t4）：行宽只有 90px，不取档则三格起溢出、
+   星铁四格压到 12px。记忆 / 欢愉多出来的技能不进这一行，画成头像右下的 .mc-x 角标。 */
+/* 长名单（角色列表）：定宽轨道 + space-between，把一行排不满的那点宽度摊进间距。
+   flex 排法会把余量全堆在右边；末行仍对齐上面的轨道，不会被拉开 */
+.mcs.is-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 70px);
+  justify-content: space-between;
+  row-gap: 8px;
+}
+/* 一队卡与「这队打的是什么」并排（首领 / 增益 / 讨伐列表 / 首领图）：
+   卡按内容宽、旁边那块吃剩下的。上下叠时一队至多 298px 的卡在 578px 宽的一行里只占一半，右边空出一大块 */
+.mc-pair {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+.mc-side {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  align-self: stretch;
+  padding-left: 10px;
+  border-left: 1px solid var(--p-line);
+}
+/* 同一行拉成等高：没有面板数据的那张少了装备行，不拉齐则一排卡高低错落 */
+.mcs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: stretch;
+  /* 只拉齐同一行的卡，不随父级撑高（见 .zt.is-card 那条） */
+  align-content: flex-start;
+}
+.mc {
+  display: flex;
+  flex-direction: column;
+  width: 70px;
+  border-radius: 7px;
+  overflow: hidden;
+  background: #e7e5d9;
+  color: #333;
+  box-shadow: 0 0 1.5px 0 rgba(0, 0, 0, 0.8), 0 1.5px 6px 0 rgba(132, 93, 90, 0.3);
+}
+.mc-face {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  overflow: hidden;
+  border-radius: 7px 7px 15px 0;
+  box-shadow: 0 0 1.5px 0 rgba(0, 0, 0, 0.5);
+  background: url("../item/bg5.png") center / cover no-repeat, #c5874a;
+  color: #fff;
+}
+.mc-face.r4 {
+  background: url("../item/bg4.png") center / cover no-repeat, #8f6ac4;
+}
+.mc-face > img:first-child {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center bottom;
+}
+.mc-face .mc-el {
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 12px;
+  height: 12px;
+}
+.mc-face .mc-cons {
+  position: absolute;
+  right: 0;
+  top: 0;
+  padding: 2px 5px;
+  border-radius: 0 0 0 5px;
+  font-size: 10.5px;
+  text-shadow: 0 0 1px #000, 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+.mc-face .mc-lv {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  max-width: 100%;
+  padding: 2px 5px 2px 3px;
+  border-radius: 0 4px 0 0;
+  background: rgba(0, 0, 0, 0.6);
+  font-size: 10.5px;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 0 1px #000;
+}
+.mc-face .mc-lv span {
+  font-size: 8px;
+}
+/* 名字比等级小一号：四字名（阿格莱雅）跟在「Lv80」后面，同号时要被省略号截掉 */
+.mc-face .mc-lv b {
+  font-weight: normal;
+  font-size: 9px;
+}
+/* 额外技能角标：叠在等级条上方。等级条约 17px 高、且带名字时横贯整个头像，
+   故只能靠竖向让开，17px 正好擦边 */
+.mc-x {
+  position: absolute;
+  right: 2px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1.5px;
+}
+.mc-x i {
+  font-style: normal;
+  font-size: 7.5px;
+  line-height: 1.35;
+  padding: 0 3px;
+  border-radius: 3px;
+  color: #fff;
+  text-shadow: 0 0 1px #000;
+  background: rgba(108, 86, 196, 0.9);
+}
+.mc-x i.x-j {
+  background: rgba(196, 72, 110, 0.9);
+}
+.mc-x i.crown {
+  box-shadow: 0 0 0 1px #ffd76a inset;
+}
+.mc-info {
+  display: flex;
+  flex-direction: column;
+}
+.mc-tal {
+  display: flex;
+  justify-content: center;
+  height: 20px;
+  padding: 3px 2px 2px;
+  font-size: 12px;
+  color: #222;
+}
+.mc-tal span {
+  height: 16px;
+  line-height: 17px;
+  text-align: center;
+  border-radius: 3px;
+  opacity: 0.8;
+  box-shadow: 0 0 1px 0 rgba(0, 0, 0, 0.5);
+  flex: 0 0 auto;
+}
+.mc-tal.t3 span {
+  width: 18px;
+  margin: 0 1.5px;
+}
+.mc-tal.t4 span {
+  width: 14.5px;
+  margin: 0 0.5px;
+  font-size: 11px;
+}
+/* 绝区零六个技能：两行三格，次序即 ZZZ_SKILL_NAMES（普攻 特殊 闪避 / 连携 核心 支援） */
+.mc-tal.t6 {
+  flex-wrap: wrap;
+  height: auto;
+  row-gap: 2px;
+}
+.mc-tal.t6 span {
+  width: 18px;
+  margin: 0 1.5px;
+}
+.mc-tal span.crown {
+  background: #d3bc8e;
+  color: #3a2702;
+  box-shadow: 0 0 2px 0 #000;
+}
+/* 含命座 / 星魂加成的那几级换成蓝字加粗，与没加成的同级数区分开 */
+.mc-tal span.plus {
+  font-weight: 700;
+  color: #0263a0;
+}
+.mc-x i.plus {
+  font-weight: 700;
+}
+.mc-tal.none {
+  flex: 1;
+  height: auto;
+  min-height: 20px;
+  font-size: 9px;
+  color: rgba(100, 100, 100, 0.6);
+  align-items: center;
+  white-space: nowrap;
+}
+/* 提示语不是天赋格：不去掉格子的阴影与圆角，它看着像一个按钮 */
+.mc-tal.none span {
+  height: auto;
+  line-height: 1.4;
+  box-shadow: none;
+  opacity: 1;
+}
+.mc-mini .mc-info {
+  flex: 1;
+}
+.mc-gear {
+  display: flex;
+  padding: 0 1px 2px 2px;
+}
+/* 稀有度底换成变量：r4/r3 若直接改 background-image，会把 `--av-fg` 那层武器图一并冲掉 */
+.mc-item {
+  --mc-bg: url("../item/bg5.png");
+  position: relative;
+  width: 31px;
+  height: 31px;
+  margin: 1px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--av-fg, none) var(--av-fg-pos, center) / var(--av-fg-size, contain) no-repeat, var(--mc-bg) center / cover no-repeat;
+}
+.mc-item.r4 {
+  --mc-bg: url("../item/bg4.png");
+}
+.mc-item.r3 {
+  --mc-bg: url("../item/bg3.png");
+}
+.mc-item.empty {
+  background: rgba(0, 0, 0, 0.15);
+}
+.mc-item img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.mc-item > span {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding: 1px 3px;
+  border-radius: 3px 0 0 0;
+  font-size: 8.5px;
+  color: #fff;
+  text-shadow: 0 0 1px #000;
+}
+.mc-set {
+  background: rgba(0, 0, 0, 0.4);
+}
+.mc-set img {
+  width: 84%;
+  height: 84%;
+  margin: 8%;
+}
+.mc-set.n0 {
+  background: url("../item/artifact-icon.webp") center / auto 80% no-repeat, rgba(0, 0, 0, 0.3);
+}
+/* 两套叠一格：左上、右下各缩 0.7 */
+.mc-set.n2 img {
+  position: absolute;
+  width: 92%;
+  height: 92%;
+  margin: 4%;
+  transform: scale(0.7);
+}
+.mc-set.n2 img:first-child {
+  transform-origin: left top;
+}
+.mc-set.n2 img:last-child {
+  transform-origin: right bottom;
+}
+/* 宽卡：左立绘右信息栏，名字挪进右栏 */
+.mc .only-wide {
+  display: none;
+}
+.mc-wide {
+  flex-direction: row;
+  width: 146px;
+  max-width: 100%;
+}
+.mc-wide .only-mini {
+  display: none;
+}
+.mc-wide .only-wide {
+  display: block;
+}
+.mc-wide .mc-face {
+  width: 76px;
+  height: 126px;
+  border-radius: 7px 0 0 7px;
+}
+.mc-wide .mc-face.is-big > img:first-child {
+  object-position: center 10%;
+}
+.mc-wide .mc-info {
+  width: 70px;
+  justify-content: center;
+}
+.mc-name {
+  padding: 6px 0 0 5px;
+}
+.mc-name strong {
+  display: block;
+  font-size: 17px;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mc-name .mc-cons {
+  position: static;
+  padding: 1px 3px;
+  margin-right: 3px;
+  border-radius: 3px;
+  font-size: 9.5px;
+  color: #fff;
+}
+.mc-name .mc-lv2 {
+  font-size: 10px;
+  color: #555;
+}
+.mc-wide.wide2 {
+  width: 298px;
+}
+.mc-wide.wide2 .mc-face {
+  width: 146px;
+}
+/* 抽卡立绘是 320×1024 的全身竖条，单人卡按宽铺时放大近一倍，取 10% 只剩下巴以下；22% 落在头顶 */
+.mc-wide.wide2 .mc-face.is-big > img:first-child {
+  object-position: center 22%;
+}
+.mc-wide.wide2 .mc-info {
+  width: 152px;
+  padding-left: 5px;
+}
+.mc-wide.wide2 .mc-tal,
+.mc-wide.wide2 .mc-gear {
+  justify-content: flex-start;
+}
+/* 剧诗的试用 / 助演标 */
+.mc .mk-试用 {
+  background: #d9767c;
+}
+.mc .mk-助演 {
+  background: #4889bf;
+}
+/* 命座底色 */
+.mc .cons-0 {
+  background: #666;
+}
+.mc .cons-1 {
+  background: #5cbac2;
+}
+.mc .cons-2 {
+  background: #339d61;
+}
+.mc .cons-3 {
+  background: #3e95b9;
+}
+.mc .cons-4 {
+  background: #3955b7;
+}
+.mc .cons-5 {
+  background: #531ba9cf;
+}
+.mc .cons-6 {
+  background: #ff5722;
+}
+
+/* ========== 绝区零：一队与一场首领战 ========== */
+.zt {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+/* 接了面板库时每格是整卡（common/avatar-card，定宽 70px），与原神星铁同排法；
+   不用网格 —— 自适应列会把定宽卡拉开、卡与卡之间留出不等的空 */
+/* 底对齐：邦布与退回的小头像比整卡矮，贴底才与卡底齐平；stretch 会把小头像拉成与卡同高的空框 */
+.zt.is-card {
+  gap: 6px;
+  align-items: flex-end;
+  align-content: flex-start;
+}
+/* 整卡自己拉齐同排最高那张：没面板的那张天赋行只有一句提示、比六格天赋矮，底对齐时顶上错开一截；
+   多出来的高度由 `.mc-tal.none`（flex:1）吃掉。邦布与小头像仍按上面那条贴底 */
+.zt.is-card > .mc,
+.zt.is-card > .zt-slot {
+  align-self: stretch;
+}
+.zt.is-card > .zt-slot > .mc {
+  flex: 1;
+}
+/* 同排里没进面板库的那位退回小头像、空位是一个空格子：二者都没有自己的宽度，
+   不钉宽则小头像撑满剩余宽、连带整排变高，空位缩成一条缝而让后面的卡错位 */
+.zt.is-card > .av,
+.zt.is-card > .zt-slot {
+  flex: 0 0 70px;
+  width: 70px;
+}
+/* 整卡下再挂一行伤害占比：苗圃那一路独有，另几族不给这一项 */
+.zt-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.zt-slot > small {
+  font-size: 9px;
+  color: var(--p-mute);
+  font-family: var(--p-num);
+  text-align: center;
+}
+.zb {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+}
+.zb-cover {
+  position: relative;
+  width: 78px;
+  height: 78px;
+  overflow: hidden;
+  background: var(--p-line);
+}
+/* 放进 .mc-side 时铺满那一栏（防卫战首领图），定宽 78px 会在右栏里缩成一角 */
+.zb-cover.is-fill {
+  width: 100%;
+  height: auto;
+  flex: 1;
+  min-height: 78px;
+}
+.zb-cover .bg,
+.zb-cover .boss {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.zb-cover .race,
+.zb-cover .medal {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+.zb-cover .race {
+  top: 2px;
+  left: 2px;
+}
+.zb-cover .medal {
+  bottom: 2px;
+  right: 2px;
+  width: 28px;
+  height: 28px;
+}
+/* 整卡那一路：队伍｜首领图｜信息 三栏 */
+.zb.is-card {
+  grid-template-columns: max-content 78px minmax(0, 1fr);
+  gap: 10px;
+}
+.zb-body {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.zb-score {
+  font-family: var(--p-num);
+  font-size: 18px;
+  line-height: 1.1;
+  color: var(--p-acc);
+}
+/* 星格：有几颗画几颗，灭掉的那些留位 */
+.zs {
+  display: flex;
+  gap: 2px;
+}
+.zs i {
+  width: 9px;
+  height: 9px;
+  background: var(--p-acc);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+.zs i.off {
+  background: var(--p-line);
+}
+
+/* ========== 卡面格：七圣召唤的角色牌与行动牌 ==========
+   卡面是米游社给的竖图（3:5），底框与费用图标在插件资源里。角标三处：
+   左下战绩、右上张数、左侧费用竖排。 */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  gap: 6px;
+}
+.cd {
+  position: relative;
+  aspect-ratio: 3 / 5;
+  overflow: hidden;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+}
+.cd > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cd b,
+.cd em {
+  position: absolute;
+  font-family: var(--p-num);
+  font-size: 9px;
+  font-weight: 400;
+  line-height: 1.4;
+  padding: 0 3px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+}
+.cd b {
+  left: 0;
+  bottom: 0;
+}
+.cd em {
+  right: 0;
+  top: 0;
+  font-style: normal;
+}
+/* 牌名压在卡面底部一条半透明带上：卡面本身不带名字，不印则未解锁那些只是一片灰 */
+.cd-nm {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  font-size: 8.5px;
+  line-height: 1.5;
+  text-align: center;
+  padding: 0 2px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 未解锁压暗：官方那张统一背面图本插件不带，故改用遮罩加牌名 */
+.cd.off > img {
+  opacity: 0.25;
+}
+/* 费用：图标叠值，竖着排在左上 */
+.cd-cost {
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+/* 底图（骰子 / 血滴）铺满格子，数字只占中间约一半 —— 两张图等大叠放时数字把底图整个盖住，
+   血滴与骰子的轮廓都看不出来 */
+.cd-cost span {
+  position: relative;
+  width: 20px;
+  height: 20px;
+}
+.cd-cost img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.cd-cost img + img {
+  inset: 22%;
+  width: 56%;
+  height: 56%;
+}
+/* 血量：血滴底图叠数字，压在卡面左上；血滴的圆肚在下半，数字跟着往下挪 */
+.cd-hp {
+  position: absolute;
+  left: 1px;
+  top: 1px;
+  width: 22px;
+  height: 22px;
+}
+.cd-hp img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.cd-hp img + img {
+  top: 32%;
+  left: 22%;
+  width: 56%;
+  height: 56%;
+}
+
+/* ========== 收集格：圣牌、绘想游迹一类「已完成 / 未解锁」的图册 ========== */
+/* 方形小图标一行：祝福、诗筹、增益一类接口给的方图，不走卡牌比例 */
+.ics {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.ic {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  overflow: hidden;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+  display: grid;
+  place-items: center;
+}
+/* 数量角标：只有大于一件才画，一件也印「1」会让一排物资满是数字 */
+.ic i {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  font-style: normal;
+  font-family: var(--p-num);
+  font-size: 8.5px;
+  line-height: 1.4;
+  padding: 0 2px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+}
+.ic img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.coll {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 7px;
+}
+.co {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+.co-pic {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+  display: grid;
+  place-items: center;
+}
+.co-pic img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.co-pic span {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  font-family: var(--p-num);
+  font-size: 9px;
+  line-height: 1.4;
+  padding: 0 3px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+}
+.co-pic s {
+  position: absolute;
+  inset: 0;
+  text-decoration: none;
+  display: grid;
+  place-items: center;
+  font-size: 9.5px;
+  background: rgba(0, 0, 0, 0.55);
+  color: var(--p-mute);
+}
+/* 未解锁压一层灰，已完成不压 —— 两档一眼可分 */
+.co.off .co-pic img {
+  opacity: 0.3;
+}
+.co b {
+  font-size: 9.5px;
+  font-weight: 400;
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ========== 材料格：养成计算与尘歌壶模数的「图 + 名 x 数」 ==========
+   第三列给缺口标记（养成计算要，尘歌壶模数不给）—— 取 auto，不给那一格时塌缩成零宽，
+   两处共用同一份网格。 */
+.mats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 6px;
+}
+.mat {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+  padding: 5px;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+  min-width: 0;
+}
+/* 缺口：差多少印多少，够了印对勾 —— 两者互换会让使用者按错的数去刷 */
+.mat-l {
+  font-style: normal;
+  font-family: var(--p-num);
+  font-size: 9.5px;
+  color: var(--bad);
+  white-space: nowrap;
+}
+.mat-l.ok {
+  color: var(--ok);
+}
+.mat-ic {
+  width: 28px;
+  height: 28px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+.mat-ic img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+/* 图鉴材料格的稀有度底：半透明那套 bgN-o.png */
+.mat-ic.s1 {
+  background: url("../item/bg1-o.png") center / cover no-repeat;
+}
+.mat-ic.s2 {
+  background: url("../item/bg2-o.png") center / cover no-repeat;
+}
+.mat-ic.s3 {
+  background: url("../item/bg3-o.png") center / cover no-repeat;
+}
+.mat-ic.s4 {
+  background: url("../item/bg4-o.png") center / cover no-repeat;
+}
+.mat-ic.s5 {
+  background: url("../item/bg5-o.png") center / cover no-repeat;
+}
+.mat-t {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+/* 材料名允许折行：截成「诡计…」就分不清是哪一本 */
+.mat-t b {
+  font-size: 9.5px;
+  font-weight: 400;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.mat-t span {
+  font-family: var(--p-num);
+  font-size: 10.5px;
+  color: var(--p-acc);
+}
+
+/* ========== 进度条：探索度、收集度一类 ========== */
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.bar {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.bar-h {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 10.5px;
+}
+.bar-h b {
+  font-family: var(--p-num);
+  font-weight: 400;
+  color: var(--p-acc);
+}
+.bar-t {
+  height: 5px;
+  background: var(--p-line);
+  overflow: hidden;
+}
+.bar-t i {
+  display: block;
+  height: 100%;
+  background: var(--p-acc);
+}
+
+/* ========== 记录卡：模拟宇宙、不可知域、货币战争那种「一次通关」的大卡 ==========
+   一卡之内分若干小节（阵容、祝福、奇物、羁绊），小节左侧一个窄标签、右侧成组内容。
+   品阶色由 `.q1`~`.q5` 给（接口的 rank / quality 直接拼进类名），认不出时取描边色。 */
+.recs-g {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.rec-c {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 9px;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+}
+.rec-h {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.rec-h > b {
+  font-family: var(--p-disp);
+  font-size: 12.5px;
+  font-weight: 400;
+}
+.rec-h .tags {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  font-size: 9.5px;
+  color: var(--p-mute);
+}
+.rec-h .tags span {
+  white-space: nowrap;
+}
+/* 小节：左窄标签右内容，标签宽度统一才对得齐 */
+.sec-r {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+}
+.sec-r > small {
+  font-size: 9.5px;
+  color: var(--p-mute);
+  line-height: 1.6;
+  padding-top: 1px;
+}
+/* 成组的「图 + 名」小块，祝福 / 奇物 / 羁绊 / 策略共用 */
+.chips {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px 1px 2px;
+  font-size: 9.5px;
+  background: var(--p-bg);
+  border: 1px solid var(--p-line);
+  max-width: 100%;
+  min-width: 0;
+}
+.chip img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex: none;
+}
+.chip span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip em {
+  font-style: normal;
+  font-family: var(--p-num);
+  color: var(--p-mute);
+}
+.chip.up {
+  border-style: dashed;
+}
+.q5 {
+  border-color: #e0b353;
+  color: #e0b353;
+}
+.q4 {
+  border-color: #b48ae6;
+  color: #b48ae6;
+}
+.q3 {
+  border-color: #6f9ed8;
+  color: #6f9ed8;
+}
+/* 奇物只有图：一行平铺，名字靠 title 属性 */
+.ics-q {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+.ics-q img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  background: var(--p-bg);
+  border: 1px solid var(--p-line);
+}
+/* 阵容：头像加等级名字，比 `.team` 宽松一档，放得下「Lv80 花火」整句 */
+.line-up {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.lu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 42px;
+}
+.lu-f {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  overflow: hidden;
+  background: var(--p-bg);
+  border: 1px solid var(--p-line);
+}
+.lu-f img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.lu-f span {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  font-family: var(--p-num);
+  font-size: 8.5px;
+  line-height: 1.3;
+  padding: 0 2px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+}
+.lu-f s {
+  position: absolute;
+  left: 1px;
+  top: 1px;
+  text-decoration: none;
+  font-size: 8px;
+  line-height: 1.3;
+  padding: 0 2px;
+  background: var(--p-acc);
+  color: var(--p-on-e);
+}
+.lu > i {
+  font-style: normal;
+  font-family: var(--p-num);
+  font-size: 8.5px;
+  color: var(--p-mute);
+}
+.lu > b {
+  font-size: 9px;
+  font-weight: 400;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 装备小图一排，挂在阵容格下方 */
+.lu-eq {
+  display: flex;
+  gap: 1px;
+}
+.lu-eq img {
+  width: 13px;
+  height: 13px;
+  object-fit: contain;
+}
+/* 伤害占比：名字、条、数值三列 */
+.dmgs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dmg-r {
+  display: grid;
+  grid-template-columns: minmax(0, 62px) minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+  font-size: 9.5px;
+}
+.dmg-r > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dmg-r .bar-t {
+  height: 6px;
+}
+.dmg-r > b {
+  font-family: var(--p-num);
+  font-weight: 400;
+  color: var(--p-mute);
+  white-space: nowrap;
+}
+/* ========== 临界推演的一关：主关内嵌若干子关 ==========
+   子关靠左侧一道竖线表示隶属，缩进比主关浅一档 —— 做成同级并列会看不出主子关系。 */
+.vs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.vs-subs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-left: 8px;
+  padding-left: 8px;
+  border-left: 2px solid var(--p-line);
+}
+.vs-sub {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+/* ========== 爬塔赛季：几格数值加前三名角色 ========== */
+.tw-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  gap: 6px;
+}
+.tw-c {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 6px 4px;
+  background: var(--p-bg);
+  border: 1px solid var(--p-line);
+}
+.tw-c em {
+  font-style: normal;
+  font-size: 9.5px;
+  color: var(--p-mute);
+}
+.tw-c b {
+  font-family: var(--p-num);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.2;
+}
+.tw-rank {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 6px;
+}
+.tw-one {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+/* 稀有度是一枚 64×60 的角标（S/A 字样），压在头像左上，不是横贯的丝带；
+   tower.html 须按 .tw-rank > .tw-one > .tw-face 的结构写，对不上时头像按 width:100% 撑满整行 */
+.tw-face {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+}
+.tw-face > img.face {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.tw-face > img.rarity {
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+.tw-one b {
+  font-size: 9.5px;
+  font-weight: 400;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tw-one span {
+  font-family: var(--p-num);
+  font-size: 9px;
+  color: var(--p-mute);
+}
+
+/* ========== 日常清单：体力、委托、派遣一类「图标 + 名目 + 说明 + 右侧数值」 ==========
+   每条都可能带一句时刻说明（「将于 xx 全部恢复」），故名目下留一行小字。
+   右侧数值吃紧时（`.warn`）换成告警色。 */
+.nts {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.nt {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--p-line);
+}
+.nt:last-child {
+  border-bottom: 0;
+}
+.nt-ic {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.nt-ic img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.nt-t {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.nt-t b {
+  font-size: 11.5px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nt-t span {
+  font-size: 9.5px;
+  color: var(--p-mute);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nt-v {
+  font-family: var(--p-num);
+  font-size: 15px;
+  line-height: 1.2;
+  color: var(--p-acc);
+  white-space: nowrap;
+  text-align: right;
+}
+.nt-v.warn {
+  color: var(--bad);
+}
+.nt-v small {
+  font-size: 10px;
+  color: var(--p-mute);
+}
+/* 便笺一族：值得此刻处理的那项（满了、可领、可用）换强调色加粗；没有图标的清单去掉图标那一栏 */
+.nt.hot .nt-v {
+  color: var(--bad);
+  font-weight: 600;
+}
+.nts.bare .nt {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.nts.bare .nt-t span {
+  white-space: normal;
+}
+/* 值是文字（尚未开启、冷却中）时不用数字字体：几套数字字体都不含汉字，落上去会变形 */
+.nt-v.txt {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+}
+.nt-ic.lg {
+  width: 36px;
+  height: 36px;
+}
+.nt.lg {
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+}
+/* 一行里的一排小格（委托四格、历练点四格）：历练点外套一圈进度环，`--r` 是 0~100 */
+.nt-marks {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+  font-size: 9.5px;
+  color: var(--p-mute);
+}
+.nt-marks > em {
+  font-style: normal;
+  width: 40px;
+}
+.nt-mark {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+}
+.nt-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.nt-mark.ring::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: conic-gradient(#c5a9ff calc(var(--r) * 1%), #f0eae0 0);
+  -webkit-mask: radial-gradient(circle, transparent 9.4px, #000 9.6px);
+  mask: radial-gradient(circle, transparent 9.4px, #000 9.6px);
+}
+/* 本周七天的点：打勾那几天与今天各垫一张图 */
+.nt-week {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+  padding: 4px 8px;
+  border: 1px solid var(--p-line);
+  border-radius: 6px;
+  font-size: 9.5px;
+  color: var(--p-mute);
+}
+.nt-week b {
+  font-family: var(--p-num);
+  font-weight: 400;
+  color: var(--p-ink);
+}
+.nt-dots {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: var(--p-line);
+}
+.nt-dot {
+  position: relative;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #fff;
+}
+.nt-dot img {
+  position: absolute;
+  left: -5px;
+  top: -5px;
+  width: 15px;
+  height: 15px;
+}
+/* 一行下面附带的一条小字（长效历练点） */
+.nt-sub {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: -1px;
+  padding: 0 6px 6px 44px;
+  border-bottom: 1px solid var(--p-line);
+  font-size: 9.5px;
+  color: var(--p-mute);
+}
+.nt:has(+ .nt-sub) {
+  border-bottom: 0;
+}
+.nt-sub b {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--p-card);
+  font-family: var(--p-num);
+  font-weight: 400;
+  color: #8f6fe6;
+}
+.nt-sub b img {
+  width: 12px;
+  height: 12px;
+}
+/* 派遣：侧脸头像加一句状态，两列 */
+.nt-exps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.nt-exp {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px 3px 3px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--p-line), transparent);
+  font-size: 10px;
+}
+.nt-exp img {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--p-mute);
+  object-fit: cover;
+  background: var(--p-card);
+}
+.nt-exp.done {
+  color: var(--ok);
+}
+.nt-exp.done img {
+  border-color: var(--ok);
+}
+
+/* ========== 图表容器与图例：札记那两张的 g2plot 饼图与柱图 ==========
+   高度必须写死：g2plot 按容器尺寸画，容器高度为 auto 时它量到 0 而整块空白。 */
+.chart {
+  width: 100%;
+  height: 230px;
+}
+.chart.tall {
+  height: 300px;
+}
+/* 当月没有任何收入时不起 g2plot，画一个空环代替（g2plot 拿到空数据整块空白） */
+.chart.pie-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pie-empty .ring {
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  border: 28px solid var(--p-line);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--p-mute);
+}
+.pie-empty .ring b {
+  font-family: var(--p-num);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--p-ink, inherit);
+}
+/* ========== 札记正文（原神星铁共用 common/ledger-body） ========== */
+.lb-hero {
+  display: block;
+}
+.lb-main {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.lb-total {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.lb-tag {
+  align-self: flex-start;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  color: var(--p-on-e, #fff);
+  background: var(--p-acc);
+}
+.lb-big {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lb-big img {
+  width: 30px;
+  height: 30px;
+}
+.lb-big b {
+  font-family: var(--p-num);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+}
+.lb-big span {
+  font-size: 9.5px;
+  line-height: 1.35;
+  color: var(--p-mute);
+}
+.lb-today {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--p-bg);
+  font-size: 10px;
+}
+.lb-today em {
+  font-style: normal;
+  color: var(--p-mute);
+}
+.lb-today span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--p-num);
+}
+.lb-today img {
+  width: 14px;
+  height: 14px;
+}
+.lb-cmp {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lb-row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) 42px;
+  gap: 8px;
+  align-items: center;
+}
+.lb-ic {
+  width: 22px;
+  height: 22px;
+}
+.lb-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.lb-bar {
+  position: relative;
+  height: 14px;
+  border-radius: 7px;
+  overflow: hidden;
+  background: var(--p-bg);
+}
+.lb-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 7px;
+}
+/* 本月条是亮金色，条上的字一律压深色：跟皮肤的正文色走时，星铁暗皮肤的白字落在亮金条上看不见 */
+.lb-bar.now i {
+  background: linear-gradient(90deg, var(--p-acc), color-mix(in srgb, var(--p-acc) 75%, #fff));
+}
+.lb-bar.now span {
+  color: #2a2213;
+}
+.lb-bar.last i {
+  background: color-mix(in srgb, var(--p-mute) 45%, transparent);
+}
+.lb-bar span {
+  position: absolute;
+  inset: 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 8.5px;
+  color: var(--p-ink);
+}
+.lb-bar span b {
+  font-family: var(--p-num);
+  font-size: 9.5px;
+}
+/* 本月比上月：增红减绿，与面板替换的伤害增减同一口径 */
+.lb-rate {
+  font-family: var(--p-num);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: right;
+  color: var(--p-mute);
+}
+.lb-rate.up {
+  color: #e5483b;
+}
+.lb-rate.dn {
+  color: #1f9d55;
+}
+.lb-src {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+}
+.chart.lb-pie {
+  height: 180px;
+  background: url("../item/chart.png") center / 180px 180px no-repeat;
+}
+.lb-pie.pie-empty .ring {
+  width: 150px;
+  height: 150px;
+  border-width: 22px;
+}
+.lb-lgd {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+}
+.lb-lgd li {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto 32px;
+  grid-template-rows: auto 4px;
+  column-gap: 6px;
+  row-gap: 2px;
+  align-items: center;
+  font-size: 10px;
+}
+.lb-lgd i {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+.lb-lgd span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lb-lgd b {
+  font-family: var(--p-num);
+  font-weight: 700;
+}
+.lb-lgd em {
+  font-family: var(--p-num);
+  font-style: normal;
+  text-align: right;
+  color: var(--p-mute);
+}
+.lb-lgd s {
+  grid-column: 2 / 5;
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--p-bg);
+  overflow: hidden;
+}
+.lb-lgd s u {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+}
+/* 菲林月报：只有收入，借 lb-* 那套，另加货币小格与 conic-gradient 环 */
+.zl-hero {
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+.zl-others {
+  display: flex;
+  gap: 8px;
+}
+.zl-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 74px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--p-bg);
+  border: 1px solid var(--p-line);
+}
+.zl-chip b {
+  font-family: var(--p-num);
+  font-size: 18px;
+  color: var(--p-acc);
+}
+.zl-chip span {
+  font-size: 8.5px;
+  color: var(--p-mute);
+  white-space: nowrap;
+}
+.zl-ring {
+  justify-self: center;
+  display: grid;
+  place-items: center;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+}
+.zl-ring > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 108px;
+  height: 108px;
+  border-radius: 50%;
+  background: var(--p-card);
+}
+.zl-ring span {
+  font-size: 10px;
+  color: var(--p-mute);
+}
+.zl-ring b {
+  font-family: var(--p-num);
+  font-size: 22px;
+}
+/* 已满那一档压暗：今日材料里天赋/精炼已拉满的角色与武器仍列出来，只是不再醒目 */
+.ac.off {
+  opacity: 0.45;
+}
+/* ========== 抽卡：出金记录行与卡池块 ==========
+   一行一次出金：日期、名字、头像、保底条。条长按「这一抽用了几发 / 该池上限」算，
+   档位色由 `.g1`~`.g4` 给（十连内出、半数内、八成内、临界），视图不参与判档。 */
+.gl {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.gl-y {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 6px 0 3px;
+  font-family: var(--p-num);
+  font-size: 10.5px;
+  color: var(--p-mute);
+}
+.gl-y::before,
+.gl-y::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--p-line);
+}
+.gr {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 112px) minmax(0, 1fr) 20px;
+  gap: 7px;
+  align-items: center;
+  padding: 3px 4px;
+  border-radius: 6px;
+}
+/* 欧非：整行底色淡淡一层，一眼扫过去哪几发是欧哪几发是非 */
+.gr.ou {
+  background: linear-gradient(90deg, rgba(76, 175, 120, 0.14), transparent 70%);
+}
+.gr.fei {
+  background: linear-gradient(90deg, rgba(214, 74, 74, 0.14), transparent 70%);
+}
+.gr .cr-ic {
+  width: 28px;
+  height: 28px;
+}
+.gr-nm {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+.gr-nm b {
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gr-nm .dt {
+  font-family: var(--p-num);
+  font-size: 8.5px;
+  color: var(--p-mute);
+}
+/* 歪了的名字压暗，UP 与歪靠标签区分而不只靠颜色 */
+.gr.wai .gr-nm b {
+  color: var(--p-mute);
+}
+.gr-tag,
+.gr-legend i {
+  display: inline-block;
+  width: max-content;
+  margin: 1px 0;
+  padding: 0 4px;
+  border-radius: 3px;
+  font-style: normal;
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 12px;
+  letter-spacing: 0.02em;
+}
+.t-up {
+  color: #fff;
+  background: linear-gradient(90deg, #e0a32b, #f3c457);
+}
+.t-wai {
+  color: #fff;
+  background: #8b93a5;
+}
+.gr-bar {
+  position: relative;
+  height: 15px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(120, 100, 70, 0.14);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+.gr-bar > i {
+  display: block;
+  height: 100%;
+  border-radius: 8px;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.12), 0 0 6px rgba(0, 0, 0, 0.08);
+}
+/* 软保底刻度 */
+.gr-bar > s {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  width: 1px;
+  background: rgba(60, 40, 20, 0.35);
+}
+.gr-bar > b {
+  position: absolute;
+  left: 7px;
+  top: 0;
+  font-family: var(--p-num);
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 15px;
+  color: #fff;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.55);
+}
+.gr-bar > b small {
+  margin-left: 1px;
+  font-size: 7.5px;
+  font-weight: 400;
+}
+.gr-bar.g1 > i {
+  background: linear-gradient(90deg, #3fa86f, #6fd39a);
+}
+.gr-bar.g2 > i {
+  background: linear-gradient(90deg, #4c8fd6, #7fb5ee);
+}
+.gr-bar.g3 > i {
+  background: linear-gradient(90deg, #d6912f, #f0b860);
+}
+.gr-bar.g4 > i {
+  background: linear-gradient(90deg, #c94a4a, #ee7a6a);
+}
+.gr.pending .gr-bar > i {
+  background: repeating-linear-gradient(135deg, #b9a27a 0 6px, #cdb892 6px 12px);
+}
+.gr-luck {
+  font-family: var(--p-disp, inherit);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
+.gr.ou .gr-luck,
+.lk-ou {
+  color: #2f9a5f;
+}
+.gr.fei .gr-luck,
+.lk-fei {
+  color: #c94a4a;
+}
+.gr.pending .gr-luck {
+  font-size: 9px;
+  font-weight: 400;
+  color: var(--p-mute);
+}
+.gr-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--p-line);
+  font-size: 8.5px;
+  color: var(--p-mute);
+}
+.gr-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.gr-legend b {
+  font-size: 10px;
+}
+.gr-legend s {
+  display: inline-block;
+  width: 1px;
+  height: 9px;
+  background: rgba(60, 40, 20, 0.45);
+}
+/* 卡池块：复刻统计里逐期一块，角色与武器各一排 */
+.gp {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 9px;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+}
+.gp-h {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.gp-h > b {
+  font-family: var(--p-disp);
+  font-size: 12px;
+  font-weight: 400;
+}
+.gp-s {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.gp-s > small {
+  font-size: 9.5px;
+  color: var(--p-mute);
+}
+/* 出金格：按卡池统计里那一排金紫卡，角标印的是第几抽出的 */
+.gi {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  gap: 6px;
+}
+.gi-one {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+.gi-one .cr-ic {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+}
+.gi-one b {
+  font-size: 9px;
+  font-weight: 400;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* UP 的那些描一道金边，歪的不描 —— 两档一眼可分 */
+.gi-one.up .cr-ic {
+  border: 1px solid var(--p-acc);
+}
+
+/* ========== 图鉴：头图、属性清单、材料、技能段与倍率表 ==========
+   角色 / 武器 / 套装 / 邦布四类图鉴共用一套：头图左边一张立绘或图标、右边名目与描述，
+   下面若干 `.p-sec`。立绘按宽高比自适应，不写死高度 —— 四类的图尺寸差得远。 */
+.wk-hero {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 11px;
+  align-items: start;
+}
+/* 武器与套装那两类的主图是方的，占的位窄一些 */
+.wk-hero.icon {
+  grid-template-columns: 132px minmax(0, 1fr);
+}
+.wk-pic {
+  width: 100%;
+  overflow: hidden;
+  background: var(--p-bg);
+  border: 1px solid var(--p-line);
+}
+.wk-pic img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.wk-side {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+.wk-ttl {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.wk-ttl > b {
+  font-family: var(--p-disp);
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.25;
+}
+.wk-ttl > small {
+  font-size: 9.5px;
+  color: var(--p-mute);
+}
+/* 角色描述那段是接口给的整句，可能很长，压一档字号 */
+.wk-desc {
+  font-size: 10px;
+  line-height: 1.75;
+  color: var(--p-mute);
+}
+.wk-desc p {
+  margin: 0 0 3px;
+}
+/* 属性清单：一行「名目 — 值」，两列折行 */
+.wk-attrs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 2px 10px;
+  list-style: none;
+}
+.wk-attrs li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 10px;
+  min-width: 0;
+  padding: 2px 0;
+  border-bottom: 1px solid var(--p-line);
+}
+.wk-attrs li > span:first-child {
+  color: var(--p-mute);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wk-attrs li > b {
+  font-family: var(--p-num);
+  font-weight: 400;
+  white-space: nowrap;
+}
+/* ========== 角色图鉴（`#胡桃图鉴`）==========
+   头图：立绘作背景压在右侧，左侧一层渐隐垫底放身份栏；立绘按高度铺满、宽度随比例，三个游戏的长宽比差得远也不裁。
+   下面的图标一律是背景图（contain 居中），方框里放 4:3 的武器图也不会被截掉下半。 */
+.cw-hero {
+  position: relative;
+  min-height: 300px;
+  margin: -4px -4px 10px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+}
+/* 立绘按高铺满、整张往右推出一截：人物在立绘中间，不推则落在身份栏渐隐那一段、被盖住半边；
+   推出去的是立绘右侧的空背景，裁掉不可惜 */
+.cw-pic {
+  position: absolute;
+  inset: 0 0 0 30%;
+  background: left center / auto 100% no-repeat;
+}
+/* 原神立绘是横幅（约 16:9，按 300px 高约 533px 宽），人物在正中：左缘钉在 170px，人物中线落在约 436px、
+   整个人在身份栏右侧；右边多出的是立绘的空背景，按卡宽裁掉 */
+.cw-hero.g-gs .cw-pic {
+  inset: 0;
+  background-position: 170px center;
+}
+.cw-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(90deg, var(--p-bg) 0%, var(--p-bg) 30%, transparent 56%);
+  opacity: 0.94;
+}
+.cw-info {
+  position: relative;
+  z-index: 2;
+  width: 56%;
+  padding: 16px 0 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cw-kick {
+  font-size: 8px;
+  letter-spacing: 0.24em;
+  color: var(--p-acc);
+}
+.cw-title {
+  font-size: 10px;
+  color: var(--p-mute);
+}
+.cw-name {
+  margin: 0;
+  font-family: var(--p-disp);
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1.1;
+}
+.cw-stars {
+  display: flex;
+  gap: 2px;
+}
+.cw-stars i {
+  width: 10px;
+  height: 10px;
+  background: var(--p-acc);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+.cw-desc {
+  margin-top: 4px;
+  font-size: 9.5px;
+  line-height: 1.7;
+  color: var(--p-mute);
+}
+.cw-desc p {
+  margin: 0 0 2px;
+}
+.cw-facts {
+  margin-top: 6px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px 10px;
+  list-style: none;
+}
+.cw-facts li {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+  padding: 2px 0;
+  font-size: 9.5px;
+  border-bottom: 1px solid var(--p-line);
+}
+.cw-facts li > span {
+  color: var(--p-mute);
+  white-space: nowrap;
+}
+.cw-facts li > b {
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 满级属性：四格一行的数值卡 */
+.cw-attrs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+.cw-attr {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 7px;
+  border-radius: 6px;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+}
+.cw-attr > span {
+  font-size: 8.5px;
+  color: var(--p-mute);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cw-attr > b {
+  font-family: var(--p-num);
+  font-size: 13px;
+  font-weight: 400;
+}
+.cw-attr.grow > b {
+  color: var(--p-acc);
+}
+/* 材料：图标在上、名字与总量在下，一行六格 */
+.cw-mats {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+}
+.cw-mat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  text-align: center;
+}
+.cw-mat-ic {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: center / 82% no-repeat, var(--p-card);
+}
+.cw-mat-ic.s1 { background-color: #737373; }
+.cw-mat-ic.s2 { background-color: #4d8f6a; }
+.cw-mat-ic.s3 { background-color: #4d78a8; }
+.cw-mat-ic.s4 { background-color: #8565b4; }
+.cw-mat-ic.s5 { background-color: #c08843; }
+.cw-mat > b {
+  max-width: 100%;
+  font-size: 8.5px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cw-mat > span {
+  font-family: var(--p-num);
+  font-size: 10.5px;
+  color: var(--p-acc);
+}
+/* 持有率：七格等宽，命座图标在上 */
+.cw-hold {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+.cw-hold-i {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.cw-hold-ic {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: center / 70% no-repeat, rgba(0, 0, 0, 0.55);
+  box-shadow: inset 0 0 0 1px var(--p-line);
+}
+.cw-hold-i > b {
+  font-family: var(--p-num);
+  font-size: 11px;
+  font-weight: 400;
+}
+.cw-hold-i > span {
+  font-size: 8.5px;
+  color: var(--p-mute);
+}
+/* 常用装备：一行七格 */
+.cw-use {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+  margin-bottom: 6px;
+}
+.cw-use-i {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+.cw-use-ic {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: center / contain no-repeat, var(--rar-bg, var(--p-card));
+}
+.cw-use-ic.r5 { --rar-bg: linear-gradient(160deg, #a46e3c, #c79a59); }
+.cw-use-ic.r4 { --rar-bg: linear-gradient(160deg, #5f4b8b, #9175c4); }
+.cw-use-ic.r3 { --rar-bg: linear-gradient(160deg, #3f5a86, #5b84c0); }
+.cw-use-ic > i {
+  position: absolute;
+  inset: 4px;
+  background: center / contain no-repeat;
+}
+.cw-use-ic.duo > i:first-child { inset: 2px 12px 12px 2px; }
+.cw-use-ic.duo > i:last-child { inset: 12px 2px 2px 12px; }
+.cw-use-i > b {
+  max-width: 100%;
+  font-size: 8.5px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cw-use-i > span {
+  font-family: var(--p-num);
+  font-size: 10px;
+  color: var(--p-acc);
+}
+
+/* ========== 武器图鉴 ==========
+   立绘是竖长条，左栏定高 contain；右栏把属性、效果、介绍竖排填满，不留大块空白 */
+.ww-hero {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 14px;
+  --ww-glow: rgba(201, 141, 78, 0.35);
+}
+.ww-hero.s4 {
+  --ww-glow: rgba(157, 129, 196, 0.35);
+}
+.ww-hero.s3 {
+  --ww-glow: rgba(86, 128, 165, 0.35);
+}
+.ww-art {
+  display: grid;
+  place-items: center;
+  height: 300px;
+  border-radius: 8px;
+  background: radial-gradient(ellipse at 50% 55%, var(--ww-glow), transparent 70%), var(--p-bg);
+  border: 1px solid var(--p-line);
+  overflow: hidden;
+}
+/* 立绘放在子元素的背景上、`contain` 整张放进格子：三个游戏的武器图长宽比各异（原神横、星铁竖、绝区零方），
+   按高或按宽铺满总有一种被裁掉；写在 .ww-art 自己的 background-image 上会顶掉那层光晕 */
+.ww-art {
+  position: relative;
+}
+.ww-art i {
+  position: absolute;
+  inset: 8px;
+  background: center / contain no-repeat;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.25));
+}
+.ww-side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.ww-ttl > b {
+  display: block;
+  font-family: var(--p-disp);
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.25;
+}
+.ww-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 3px;
+  font-size: 10px;
+  color: var(--p-mute);
+}
+.ww-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+/* 原神那套类型图标是白色的，浅色皮肤上要垫一层底才看得见 */
+.ww-type img {
+  width: 16px;
+  height: 16px;
+  padding: 1px;
+  border-radius: 50%;
+  background: rgba(44, 51, 70, 0.75);
+}
+.ww-stars {
+  color: #e3a93b;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+.ww-attrs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 6px;
+}
+.ww-attr {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 9px;
+  border-radius: 6px;
+  background: var(--p-bg);
+  border: 1px solid var(--p-line);
+}
+.ww-attr span {
+  font-size: 9px;
+  color: var(--p-mute);
+}
+.ww-attr b {
+  font-family: var(--p-num);
+  font-size: 16px;
+  font-weight: 700;
+}
+.ww-affix {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border-left: 3px solid var(--p-acc);
+  background: var(--p-bg);
+}
+.ww-affix-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.ww-affix-h b {
+  font-family: var(--p-disp);
+  font-size: 12.5px;
+  font-weight: 400;
+}
+.ww-affix-h small {
+  font-size: 8.5px;
+  color: var(--p-mute);
+}
+.ww-affix-d {
+  font-size: 10.5px;
+  line-height: 1.8;
+}
+/* 五档数值：说明里唯一要一眼找到的东西 */
+.ww-affix-d nobr {
+  padding: 0 2px;
+  font-family: var(--p-num);
+  font-weight: 700;
+  color: var(--p-acc);
+}
+.ww-desc {
+  font-size: 9.5px;
+  line-height: 1.75;
+  color: var(--p-mute);
+  font-style: italic;
+}
+.ww-mats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.ww-mat {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--p-bg);
+  border: 1px solid var(--p-line);
+}
+.ww-mat .mat-ic {
+  grid-row: span 2;
+  width: 34px;
+  height: 34px;
+}
+.ww-mat b {
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ww-mat span {
+  font-family: var(--p-num);
+  font-size: 10px;
+  color: var(--p-acc);
+}
+/* 技能 / 套装效果一段：小标题加正文 */
+.wk-skill {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--p-line);
+}
+.wk-skill:last-child {
+  border-bottom: 0;
+}
+.wk-skill > b {
+  font-family: var(--p-disp);
+  font-size: 11.5px;
+  font-weight: 400;
+}
+.wk-skill > div {
+  font-size: 10px;
+  line-height: 1.75;
+  color: var(--p-mute);
+}
+.wk-skill > div p {
+  margin: 0 0 3px;
+}
+/* 天赋那一块：图标在左，名目与正文在右，倍率表另起一行占满 */
+.wk-tal {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 9px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--p-line);
+}
+.wk-tal:last-child {
+  border-bottom: 0;
+}
+.wk-tal.no-icon {
+  grid-template-columns: minmax(0, 1fr);
+}
+.wk-tal-ic {
+  width: 40px;
+  height: 40px;
+}
+.wk-tal-ic img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+/* 垫元素框时：框图 144×156，图标占中间约一半，框要比裸图标大一圈才看得出 */
+.wk-tal.is-framed {
+  grid-template-columns: 54px minmax(0, 1fr);
+}
+.wk-tal.is-framed .wk-tal-ic {
+  width: 54px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  background: center / contain no-repeat;
+}
+.wk-tal.is-framed .wk-tal-ic img {
+  width: 48%;
+  height: 48%;
+}
+.wk-tal-b {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+/* 天赋正文用墨色，与页首那句介绍、技能故事拉开；小标题与 `<nobr>` 高亮取强调色，元素词取元素色 */
+.wk-tal .wk-desc {
+  color: var(--p-ink);
+}
+.wk-tal .wk-desc h3 {
+  margin: 6px 0 2px;
+  font-size: 10.5px;
+  color: var(--p-acc);
+}
+.wk-tal .wk-desc h3:first-child {
+  margin-top: 0;
+}
+.wk-tal .wk-desc nobr {
+  color: var(--p-acc);
+}
+.wk-tal .wk-desc .wk-el {
+  color: var(--e);
+}
+.wk-tal .wk-desc i {
+  display: block;
+  margin-top: 5px;
+  color: var(--p-mute);
+}
+/* 绝区零按键图标随正文一行高，不设则按原图尺寸铺开、把那一行撑成数倍高 */
+.wk-tal .wk-desc .skill-key {
+  height: 1.5em;
+  width: auto;
+  vertical-align: middle;
+}
+/* 故事文案排得淡一些 —— 与效果正文分作两段 */
+.wk-story {
+  font-size: 9.5px;
+  line-height: 1.7;
+  color: var(--p-mute);
+  opacity: 0.8;
+}
+/* 恒定项：不随等级变的那几行，不占表格 */
+.wk-fix {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  font-size: 9.5px;
+  color: var(--p-mute);
+}
+.wk-fix > span {
+  padding: 1px 5px;
+  border: 1px solid var(--p-line);
+  white-space: nowrap;
+}
+.wk-fix b {
+  font-weight: 400;
+  color: var(--p-ink);
+  margin-left: 3px;
+}
+/* 倍率表：逐级一列，列数由等级区间定，窄字号让十三列也放得下 */
+.wk-tbl {
+  display: flex;
+  flex-direction: column;
+  font-size: 8.5px;
+  overflow: hidden;
+}
+.wk-tbl .tr {
+  display: grid;
+  grid-template-columns: var(--cols, 86px repeat(auto-fit, minmax(0, 1fr)));
+  gap: 3px;
+  align-items: baseline;
+  padding: 2px 0;
+  border-bottom: 1px solid var(--p-line);
+}
+.wk-tbl .tr:last-child {
+  border-bottom: 0;
+}
+.wk-tbl .th {
+  color: var(--p-mute);
+}
+.wk-tbl .tr > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wk-tbl .tr > b {
+  font-family: var(--p-num);
+  font-weight: 400;
+  text-align: right;
+}
+/* 命座持有率：一排命座图标加占比 */
+.wk-hold {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  gap: 6px;
+}
+.wk-hold-i {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.wk-hold-i .pd-con {
+  width: 30px;
+  height: 30px;
+}
+.wk-hold-i b {
+  font-family: var(--p-num);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--p-acc);
+}
+.wk-hold-i span {
+  font-size: 9px;
+  color: var(--p-mute);
+}
+
+/* ========== 日历：日期轴加活动条 ==========
+   这是一张**甘特式时间轴**：日期一格一天横着排，活动条按视图算好的 `left` / `width`
+   百分比压在下方。故两者的宽度基准必须一致 —— 日期格用等分 flex、活动条容器满宽，
+   任一侧改成定宽都会让条与日期错开（不报错、只是对不上日子）。 */
+.cal {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cal-days {
+  display: flex;
+  border-bottom: 1px solid var(--p-line);
+}
+.cal-d {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 3px 0;
+  position: relative;
+}
+.cal-d + .cal-d {
+  border-left: 1px solid var(--p-line);
+}
+.cal-d > b {
+  font-family: var(--p-num);
+  font-size: 10px;
+  font-weight: 400;
+}
+.cal-d > span {
+  font-size: 8px;
+  color: var(--p-mute);
+}
+/* 月份只在该月首日那一格印，压在格子上沿 */
+.cal-d > em {
+  position: absolute;
+  top: -11px;
+  left: 0;
+  font-style: normal;
+  font-size: 8.5px;
+  color: var(--p-mute);
+  white-space: nowrap;
+}
+.cal-d.now {
+  background: var(--p-card);
+}
+.cal-d.now > b {
+  color: var(--p-acc);
+}
+/* 生日那一排：格子里是头像加名字，比日期格高 */
+.cal-birth {
+  border-bottom: 0;
+  align-items: flex-start;
+}
+.cal-birth .cal-d {
+  gap: 2px;
+}
+.cal-birth .cr-ic {
+  width: 26px;
+  height: 26px;
+}
+.cal-birth small {
+  font-size: 7.5px;
+  color: var(--p-mute);
+  text-align: center;
+  line-height: 1.3;
+}
+
+.cal-bars {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-top: 2px;
+}
+.cal-row {
+  display: flex;
+  min-width: 0;
+}
+/* 活动条：`margin-left` 与 `width` 由模板按百分比内联给，此处只管外观 */
+.cal-b {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 3px 5px;
+  overflow: hidden;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+  border-left: 2px solid var(--e, var(--p-acc));
+}
+.cal-b > img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex: none;
+}
+.cal-b > b {
+  font-size: 9.5px;
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cal-b > span {
+  font-size: 8.5px;
+  color: var(--p-mute);
+  white-space: nowrap;
+  margin-left: auto;
+}
+/* 窄条放不下副标题，藏掉它而不是让文字溢出到邻条上 */
+.cal-b.narrow > span {
+  display: none;
+}
+/* 卡池图：贴在条的右侧作底，压一层使文字仍读得清 */
+.cal-pics {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  opacity: 0.45;
+}
+.cal-pics img {
+  height: 100%;
+  width: auto;
+  object-fit: cover;
+}
+.cal-b > img.cal-face {
+  width: 20px;
+  height: 20px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+/* 当前时刻线：两道（日期轴上与活动条上）各一处，按 nowLeft 百分比定位 */
+.cal-now {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--bad);
+}
+/* 活动类型的色调：深渊一路取描边色，其余由 `.e-*` 给或退回强调色 */
+.t-abyss,
+.t-hard-challenge,
+.t-combat {
+  --e: var(--rar);
+}
+/* 深渊一路的活动条垫底图（贴右），左侧用同色渐变压住，文字仍读得清 */
+.cal-b.t-abyss {
+  background: linear-gradient(to right, #333465, #333465 80%, rgba(51, 52, 101, 0)), url("../../wiki/imgs/abyss.jpg") #333465 right top / auto 100% no-repeat;
+  color: #fff;
+}
+.cal-b.t-newAbyss {
+  background: linear-gradient(to right, #1a3061, #1a3061 80%, rgba(26, 48, 97, 0)), url("../../wiki/imgs/newAbyss.jpg") #1a3061 right top / auto 100% no-repeat;
+  color: #fff;
+}
+.cal-b.t-abyss-1 {
+  background: linear-gradient(to right, #0f0829, #0f0829 80%, rgba(15, 8, 41, 0)), url("../../wiki/imgs/abyss-1.jpg") #0f0829 right top / auto 100% no-repeat;
+  color: #fff;
+}
+.cal-b.t-abyss-2 {
+  background: linear-gradient(to right, #16202a, #16202a 80%, rgba(22, 32, 42, 0)), url("../../wiki/imgs/abyss-2.jpg") #16202a right top / auto 100% no-repeat;
+  color: #fff;
+}
+.cal-b.t-abyss-3 {
+  background: linear-gradient(to right, #2b2a37, #2b2a37 80%, rgba(43, 42, 55, 0)), url("../../wiki/imgs/abyss-3.jpg") #2b2a37 right top / auto 100% no-repeat;
+  color: #fff;
+}
+.cal-b.t-abyss > span,
+.cal-b.t-newAbyss > span,
+.cal-b.t-abyss-1 > span,
+.cal-b.t-abyss-2 > span,
+.cal-b.t-abyss-3 > span {
+  color: rgba(255, 255, 255, 0.75);
+}
+/* 天赋 / 命座详情每一块只用卡片色：`wiki/imgs/card-bg.png` 是一条深灰到浅灰的竖向渐变，
+   按 `auto 100%` 拉满这一节的高，在本族浅底上是一整块黑 */
+.wk-tcard {
+  background: var(--p-card);
+}
+/* 今日材料的材料格垫 item-bg.png */
+.ics.tm .ic {
+  background: url("../../wiki/imgs/item-bg.png") center / 100% no-repeat;
+}
+
+/* ========== 帮助：主帮助那张 ==========
+   说明一律全文印出、不截断（图上看不到的字没有别处可查），故两列而非三列。
+   区块图标原图在 144～3004px 之间，img 必须锁进 .hb-ic 的方框，否则按原尺寸铺开盖住文字。 */
+.hb-start {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 9px 12px;
+  background: var(--p-card);
+  border: 1px solid var(--p-acc);
+  font-size: 10.5px;
+}
+.hb-start > b {
+  font-weight: 500;
+  color: var(--p-acc);
+}
+.hb-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--p-mute);
+}
+.hb-step > i {
+  width: 15px;
+  height: 15px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-style: normal;
+  font-family: var(--p-num);
+  font-size: 9px;
+  background: var(--p-acc);
+  color: var(--p-bg);
+}
+.hb-step > em {
+  font-style: normal;
+  color: var(--p-ink);
+}
+.hb-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.hb-h > h4 {
+  font-family: var(--p-disp);
+  font-size: 14px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+.hb-h > span {
+  margin-left: auto;
+  font-size: 9.5px;
+  color: var(--p-mute);
+  text-align: right;
+}
+.hb-ic {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  overflow: hidden;
+}
+.hb-ic > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.hb {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+}
+.hb-i {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 8px;
+  background: var(--p-bg);
+  border-left: 2px solid var(--p-acc);
+  min-width: 0;
+}
+.hb-i > b {
+  font-size: 10.5px;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+.hb-i > span {
+  font-size: 9px;
+  line-height: 1.5;
+  color: var(--p-mute);
+  overflow-wrap: anywhere;
+}
+.hb-tag {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 0 4px;
+  font-style: normal;
+  font-size: 8.5px;
+  line-height: 1.5;
+  vertical-align: 1px;
+  border: 1px solid var(--p-acc);
+  color: var(--p-acc);
+}
+.hb-g {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+.hb-g > div {
+  display: flex;
+  flex-direction: column;
+  padding: 5px 8px;
+  border: 1px solid var(--p-line);
+  min-width: 0;
+}
+.hb-g b {
+  font-size: 10.5px;
+  font-weight: 400;
+}
+.hb-g span {
+  font-size: 9px;
+  color: var(--p-mute);
+}
+
+/* ========== 分步指引：导入导出帮助那张 ==========
+   讲的是先后顺序，故三步横排、序号成圈；`cmd` 存在时印成可照抄的一格。 */
+.sp {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+.sp-i {
+  position: relative;
+  padding-left: 24px;
+  min-width: 0;
+}
+.sp-n {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-family: var(--p-num);
+  font-size: 10px;
+  background: var(--p-acc);
+  color: var(--p-bg);
+}
+.sp-i > b {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 400;
+  line-height: 1.35;
+}
+.sp-i > span {
+  display: block;
+  margin-top: 3px;
+  font-size: 9px;
+  line-height: 1.5;
+  color: var(--p-mute);
+}
+.sp-i > em {
+  display: inline-block;
+  margin-top: 5px;
+  padding: 2px 7px;
+  font-family: var(--p-num);
+  font-style: normal;
+  font-size: 9.5px;
+  background: var(--p-bg);
+  border: 1px solid var(--p-acc);
+}
+
+/* ========== 扫码卡：二维码加标识码 ==========
+   二维码是视图画好的 SVG，宽度交给容器；标识码等宽字体，供扫的人逐位核对。 */
+.qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 12px;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+}
+.qr > svg {
+  width: 240px;
+  height: auto;
+  display: block;
+  /* 二维码必须是纯黑白：皮肤底色压上去会让扫码失败 */
+  background: #fff;
+  padding: 6px;
+}
+.qr-c {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+.qr-c > span {
+  font-size: 9.5px;
+  color: var(--p-mute);
+}
+.qr-c > b {
+  font-family: var(--p-num);
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: var(--p-acc);
+}
+
+/* ========== CK 列表：管理图那一片方格 ==========
+   一格一个 ltuid，格里一道底条表示今日已用的请求次数；超额那些标红。 */
+.ck {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 4px;
+}
+.ck-i {
+  position: relative;
+  overflow: hidden;
+  padding: 4px 6px;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+  font-size: 9px;
+  min-width: 0;
+}
+.ck-i > span {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  font-family: var(--p-num);
+}
+.ck-i > span > b {
+  font-weight: 400;
+  color: var(--p-acc);
+}
+.ck-i > i {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--p-acc);
+}
+.ck-i.over > span > b {
+  color: var(--bad);
+}
+.ck-i.over > i {
+  background: var(--bad);
+}
+
+/* ========== 套装格：两套套装叠在同一格里 ==========
+   对角排法：两张各缩到七成，一张贴左上、一张贴右下。并排两格会让「2+2 两套」看着像两件独立装备，
+   且把横行撑宽。一套都没有时（`.none`）垫圣遗物剪影图。 */
+.cr-ic.duo img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 92%;
+  height: 92%;
+  margin: 4%;
+  object-fit: contain;
+  transform: scale(0.7);
+}
+.cr-ic.duo img:first-of-type {
+  transform-origin: left top;
+}
+.cr-ic.duo img:last-of-type {
+  transform-origin: right bottom;
+}
+.cr-ic.none {
+  background: url("../item/artifact-icon.webp") center / auto 80% no-repeat, var(--p-card);
+}
+
+/* ========== 共用图标：稀有度底图与满级皇冠 ==========
+   头像格、武器格、套装格在皮肤渐变之上再垫一层 `common/item/bg1~5.png`（渐变作最末一层，取不到图时
+   仍有底色）。只给原神与星铁；绝区零走自己的稀有度丝带（`zzz/other/<S|A>.png`），由模板各自画。
+   `.none`（一套都没有）排除在外，它垫的是圣遗物剪影。 */
+.skin-gs .r5 > .av-img,
+.skin-sr .r5 > .av-img,
+.skin-gs .cr-ic.r5:not(.none),
+.skin-sr .cr-ic.r5:not(.none) {
+  background: var(--av-fg, none) var(--av-fg-pos, center) / var(--av-fg-size, contain) no-repeat, url("../item/bg5.png") center / cover no-repeat, var(--rar-bg, var(--p-card));
+}
+.skin-gs .r4 > .av-img,
+.skin-sr .r4 > .av-img,
+.skin-gs .cr-ic.r4:not(.none),
+.skin-sr .cr-ic.r4:not(.none) {
+  background: var(--av-fg, none) var(--av-fg-pos, center) / var(--av-fg-size, contain) no-repeat, url("../item/bg4.png") center / cover no-repeat, var(--rar-bg, var(--p-card));
+}
+.skin-gs .r3 > .av-img,
+.skin-sr .r3 > .av-img,
+.skin-gs .cr-ic.r3:not(.none),
+.skin-sr .cr-ic.r3:not(.none) {
+  background: var(--av-fg, none) var(--av-fg-pos, center) / var(--av-fg-size, contain) no-repeat, url("../item/bg3.png") center / cover no-repeat, var(--rar-bg, var(--p-card));
+}
+/* 满级天赋的皇冠角标：原神 `crown.png`、星铁 `crown-sr.webp` */
+.tl.crown,
+.pd-tal.crown {
+  position: relative;
+}
+.pd-tal.crown::after {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  width: 12px;
+  height: 9px;
+  margin-left: -6px;
+  background: url("../../character/imgs/crown.png") center / contain no-repeat;
+}
+/* 等级块上的冠挂右上角：居中压在数字上会挡住个位 */
+.tl.crown::after {
+  content: "";
+  position: absolute;
+  top: -5px;
+  right: -4px;
+  width: 10px;
+  height: 8px;
+  background: url("../../character/imgs/crown.png") center / contain no-repeat;
+}
+.skin-sr .tl.crown::after,
+.skin-sr .pd-tal.crown::after {
+  background-image: url("../../character/imgs/crown-sr.webp");
+}
+
+/* ========== 养成计算 / 尘歌壶图纸的装饰 ==========
+   图在 common/calculator/：技能行底 skill-row.png、技能图标底 skillbg.png、分节标题下的花线 sep-line.png、
+   材料图标底 mat-bg.png、当前 → 目标之间的箭头 arrow.png。三张模板只在既有容器上加 `calc` 修饰，不另起结构。 */
+.p-sec.calc > .p-sec-h {
+  padding-bottom: 6px;
+  background: url("../calculator/sep-line.png") center bottom / 100% auto no-repeat;
+}
+.tbl.calc .tr:not(.th) {
+  padding: 3px 6px;
+  border-bottom: 0;
+  margin-bottom: 3px;
+  background: url("../calculator/skill-row.png") center / 100% 100% no-repeat;
+  /* 行底图恒为浅色，字跟皮肤走则星铁那套近白、整行看不见 */
+  color: #3a4152;
+}
+.tbl.calc .tr:not(.th) > span:first-child {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  background: url("../calculator/skillbg.png") center / 100% 100% no-repeat;
+}
+.tbl.calc .tr:not(.th) > b:last-child::before {
+  content: "";
+  display: inline-block;
+  width: 14px;
+  height: 6px;
+  margin-right: 4px;
+  vertical-align: middle;
+  background: url("../calculator/arrow.png") center / contain no-repeat;
+}
+/* 养成计算多一格缺口标记，100px 的格子留给名字的不到三个字 */
+.mats.calc {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+.mats.calc .mat-ic {
+  background: url("../calculator/mat-bg.png") center / contain no-repeat;
+}
+
+/* 角色卡标题旁的好感徽章：fetter.png 横排十格，第 n 格偏移 (n-1)/9 */
+.cc-fetter {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  margin-left: 4px;
+  vertical-align: -4px;
+  background: url("../item/fetter.png") 0 0 / auto 100% no-repeat;
+}
+/* 一场首领战三行：首领名｜分数星级、增益｜时间、队伍；首领图压在右上角作弱透明背景，左下两边渐隐 */
+.zb2 {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px 10px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+}
+.zb2 + .zb2 {
+  margin-top: 8px;
+}
+.zb2-bg {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 52%;
+  height: 100%;
+  background: right top / cover no-repeat;
+  opacity: 0.35;
+  -webkit-mask-image: linear-gradient(to left, #000 45%, transparent), linear-gradient(to bottom, #000 60%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to left, #000 45%, transparent), linear-gradient(to bottom, #000 60%, transparent);
+  mask-composite: intersect;
+  pointer-events: none;
+}
+.zb2-r {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.zb2-boss {
+  font-family: var(--p-disp);
+  font-size: 14px;
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.zb2-rt {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.zb2-r.sub {
+  font-size: 10px;
+  color: var(--p-mute);
+}
+.zb2-buff {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.zb2-buff img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+.zb2-buff b {
+  color: var(--p-acc);
+  font-weight: 500;
+}
+.zb2 > .zt {
+  position: relative;
+}
+/* 模拟宇宙 / 不可知域：左侧一栏名目、右侧一队，按 640px 排则卡右侧空出近两百像素 */
+body.pic-lineup,
+body.pic-lineup > .pic {
+  width: 446px;
+}
+/* 临界推演的子关卡在框里再缩进一层会让一队折行，框内不再缩进 */
+.vs.zb2 .vs-subs {
+  margin-left: 0;
+  padding-left: 0;
+  border-left: 0;
+}
+/* 拟真鏖战试炼：前三位整卡在左，赛季数值竖排占满右侧 */
+.tw-team {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.tw-side {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  padding-left: 8px;
+  border-left: 1px solid var(--p-line);
+}
+.tw-side .tag {
+  display: block;
+  text-align: center;
+}
+/* 卡下那行固定两行高（分数 / 排名）：有的角色不给排名只剩一行，余下的高度会被整卡吃掉、那张卡就比旁边的长一截 */
+.tw-team .zt-slot > small {
+  min-height: 3em;
+  line-height: 1.5;
+}
+/* 右栏只有六十来宽，「名目 + 数值」并排会被裁，故数值在上、名目在下 */
+.tw-kv {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.2;
+}
+.tw-kv b {
+  font-family: var(--p-num);
+  font-size: 14px;
+  font-weight: 400;
+}
+.tw-kv.hi b {
+  color: var(--p-acc);
+}
+.tw-kv small {
+  font-size: 9px;
+  color: var(--p-mute);
+}
+/* 收窄的页（`.pic-team`）页头不折行：账号块折到标题下会多出一整行空白，改由长标题自己换行 */
+body.pic-team .p-head {
+  flex-wrap: nowrap;
+}
+body.pic-team .p-who {
+  flex-shrink: 0;
+}
+/* 「混沌回忆·挑战回顾」九个字按 23px 排要 207px，与账号块并排放不下 */
+body.pic-team.skin-sr .p-head h3 {
+  font-size: 20px;
+}
+/* 星铁挑战一关的框内宽 322px，比一队（298px）多 24：左右各补 12px 内边距，让四张小卡与「宽 + 小 + 小」
+   「宽 + 宽」「双宽」几种排法都正好贴满。改用 space-between 分掉余量则人数少时卡与卡之间空出一大截 */
+body.pic-team.skin-sr .sc-floor {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+body.pic-team.skin-sr .pk,
+body.pic-team.skin-sr .pk-boss,
+body.pic-team.skin-sr .pk-mob {
+  padding-left: 6px;
+  padding-right: 6px;
+}
+body.pic-team .zg-c > span {
+  white-space: normal;
+}
+.pk-time {
+  margin: 2px 0 4px;
+  text-align: right;
+}
+/* 关卡效果另起一条：图标在左、名字与说明在右 */
+.buff.row-buff {
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+/* 星铁战利品：星球总览三列、区域两列；已开数用强调色，开满整格高亮 */
+.ch-worlds {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.ch-w {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--p-line);
+}
+.ch-w > b {
+  font-size: 10.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ch-w > span,
+.ch-a > b {
+  font-family: var(--p-num);
+  font-size: 10px;
+  color: var(--p-mute);
+}
+.ch-w em,
+.ch-a em {
+  font-style: normal;
+  color: var(--p-acc);
+}
+.ch-w.full,
+.ch-a.full {
+  border-color: var(--p-acc);
+}
+.ch-areas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 8px;
+}
+.ch-a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 5px;
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid transparent;
+}
+.ch-a > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 绝区零区域收集：区域一条渐变进度、街区逐行（图标 + 名字 + 街区探索度，逐项收集靠右） */
+.zx-bar {
+  position: relative;
+  height: 14px;
+  border-radius: 7px;
+  background: #2a2a2a;
+  overflow: hidden;
+}
+.zx-bar > i {
+  display: block;
+  height: 100%;
+  border-radius: 7px;
+  background: linear-gradient(90deg, #3d6bf2, #28c6f0);
+}
+.zx-bar > b {
+  position: absolute;
+  left: 8px;
+  top: 0;
+  font-family: var(--p-num);
+  font-size: 10px;
+  line-height: 14px;
+  color: #fff;
+  text-shadow: 0 0 2px #000;
+}
+.zx-maps {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 6px;
+  border-radius: 10px;
+  background: #121212;
+}
+.zx-map {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #2b2b2b;
+}
+.zx-ic {
+  width: 44px;
+  height: 26px;
+  background: center / contain no-repeat;
+}
+.zx-t {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.zx-t > b {
+  font-size: 11px;
+  font-weight: 500;
+}
+.zx-t > span {
+  font-size: 9px;
+  color: var(--p-mute);
+}
+.zx-t em {
+  font-style: normal;
+  font-family: var(--p-num);
+  color: #ddd;
+}
+.zx-map.full .zx-t em {
+  color: var(--p-acc);
+}
+.zx-items {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.zx-items > span {
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 8.5px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--p-mute);
+}
+.zx-items > span.full {
+  color: var(--p-acc);
+}
+
+/* 零号空洞收集数据：一行等分铺满 */
+.zg-col {
+  display: grid;
+  grid-template-columns: repeat(var(--n, 5), minmax(0, 1fr));
+  gap: 6px;
+}
+.zg-c {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+  min-width: 0;
+}
+.zg-c > b {
+  font-family: var(--p-num);
+  font-size: 15px;
+  font-weight: 400;
+}
+.zg-c > b s {
+  text-decoration: none;
+  font-size: 10px;
+  color: var(--p-mute);
+}
+.zg-c > span {
+  font-size: 9px;
+  color: var(--p-mute);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.zg-c.full {
+  border-color: var(--p-acc);
+}
+.zg-c.full > b {
+  color: var(--p-acc);
+}
+
+/* 今日材料：天赋书那几格换成整卡（与角色列表同一张），练满的压暗 */
+.tm-cards {
+  margin-top: 6px;
+}
+.tm-cards:empty {
+  display: none;
+}
+.tm-card.off {
+  opacity: 0.45;
+  filter: grayscale(0.6);
+}
+/* 练度统计里那一枚跟在名字后面、不随名字一起被省略号截掉 */
+.st-fetter {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-left: 0;
+  vertical-align: middle;
+}
+.cc-fetter.f2 { background-position: 11.111% 0; }
+.cc-fetter.f3 { background-position: 22.222% 0; }
+.cc-fetter.f4 { background-position: 33.333% 0; }
+.cc-fetter.f5 { background-position: 44.444% 0; }
+.cc-fetter.f6 { background-position: 55.556% 0; }
+.cc-fetter.f7 { background-position: 66.667% 0; }
+.cc-fetter.f8 { background-position: 77.778% 0; }
+.cc-fetter.f9 { background-position: 88.889% 0; }
+.cc-fetter.f10 { background-position: 100% 0; }
+
+/* ========== 元素与属性色 ==========
+   三游戏共享一份：同名的（fire / ice / wind）取同一色，只在某游戏官方配色确实不同时
+   由那套皮肤覆盖（见 zzz.css 里的 physical）。缺省色给认不出的属性，免得 `--e` 取空。 */
+.e-pyro {
+  --e: #e86a4a;
+}
+.e-hydro {
+  --e: #3e9ff0;
+}
+.e-anemo {
+  --e: #3fbfa0;
+}
+.e-electro {
+  --e: #a46ad8;
+}
+.e-dendro {
+  --e: #7ab33b;
+}
+.e-cryo {
+  --e: #79c8de;
+}
+.e-geo {
+  --e: #d9a23a;
+}
+.e-fire {
+  --e: #e8573f;
+}
+.e-ice {
+  --e: #6fc0e6;
+}
+.e-wind {
+  --e: #4fc79b;
+}
+.e-lightning {
+  --e: #b46be0;
+}
+.e-quantum {
+  --e: #6c63d8;
+}
+.e-imaginary {
+  --e: #e2bd45;
+}
+.e-electric {
+  --e: #4aa8ff;
+}
+.e-ether {
+  --e: #ff4fa3;
+}
+.e-physical {
+  --e: #b9b9b9;
+}
+.e-multi,
+.e-none {
+  --e: #8b8b8b;
+}
+.e-bangboo {
+  --e: #9aa3ad;
+}
+
+/* ========== 活动日历（act-calendar.html） ==========
+   卡池与活动行三游戏共用一套骨架，配色全走皮肤变量。钟与锁画成 mask、颜色随所在那一句；
+   三个游戏的钟形不同，由各皮肤覆盖 `--ec-clock`，缺省取原神那一枚。 */
+.ec-gt {
+  font-size: 11px;
+  color: var(--p-mute);
+}
+.ec-pools,
+.ec-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+/* 进行中那一项底边的倒计时线：长度＝剩余占全程，绿是刚开始、主色是中段、橙是将结束 */
+.ec-bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--p-acc);
+}
+.ec-bar.fresh {
+  background: #5fb878;
+}
+.ec-bar.end {
+  background: #f48f01;
+}
+.ec-pool {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  background: var(--p-bg);
+  border: 1px solid var(--p-line);
+  overflow: hidden;
+}
+.ec-pool::before {
+  content: "";
+  flex: none;
+  width: 3px;
+  background: var(--p-acc);
+}
+.ec-pool.pending::before {
+  background: var(--p-mute);
+}
+.ec-pool-l {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ec-pool-h {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ec-pool-h b {
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ec-pool-h .ec-time {
+  margin-left: auto;
+}
+.ec-pool-n {
+  font-size: 9.5px;
+  color: var(--p-mute);
+}
+.ec-pool-s {
+  flex: none;
+  width: 60px;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  color: var(--p-acc);
+  background: var(--p-card);
+  border-left: 1px solid var(--p-line);
+}
+.ec-pool.pending .ec-pool-s {
+  color: var(--p-mute);
+}
+.ec-ver {
+  flex: none;
+  font-family: var(--p-num);
+  font-size: 9.5px;
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: 3px;
+  background: var(--p-acc);
+  color: var(--p-bg);
+}
+.ec-pool.pending .ec-ver {
+  background: var(--p-mute);
+}
+.ec-faces {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 46px);
+  gap: 6px;
+}
+/* 武器图不是方的，按 img 填满会裁掉两头：改作 .av-img 的最上一层背景（见上方 `--av-fg`），
+   高度顶满、宽度随比例，大小与位置只调这两个变量 */
+.ec-wp {
+  --av-fg-size: auto 100%;
+  --av-fg-pos: center;
+}
+.av-img img.ec-bd {
+  position: absolute;
+  z-index: 2;
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+.av-img img.ec-bd.bl {
+  bottom: 2px;
+  left: 2px;
+}
+.av-img img.ec-bd.br {
+  right: 2px;
+  bottom: 2px;
+}
+.ec-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  color: var(--p-mute);
+  white-space: nowrap;
+}
+.ec-time.hot {
+  color: #f48f01;
+}
+.ec-ic {
+  flex: none;
+  width: 11px;
+  height: 11px;
+}
+.ec-time .ec-ic {
+  margin-top: -1px;
+}
+/* 奖励与右侧两栏定宽：各行有的有奖励、有的没有，按内容撑开时数字就一行一个位置 */
+.ec-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px 76px;
+  align-items: center;
+  gap: 4px 10px;
+  min-height: 46px;
+  padding: 6px 10px 6px 13px;
+  background: var(--p-bg);
+  border: 1px solid var(--p-line);
+}
+.ec-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  background: var(--p-acc);
+}
+.ec-row.done::before {
+  background: var(--ok);
+}
+.ec-row.pending::before {
+  background: var(--p-mute);
+}
+.ec-row.dim {
+  opacity: 0.5;
+}
+.ec-row-l {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.ec-name {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.ec-name b {
+  font-size: 12px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ec-type {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+.ec-reward {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.ec-reward img {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+.ec-reward span {
+  font-family: var(--p-num);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+.ec-reward em {
+  font-style: normal;
+  font-size: 10px;
+  color: var(--p-mute);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ec-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  text-align: center;
+}
+.ec-v {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--p-num);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.ec-v b {
+  font-weight: 500;
+}
+.ec-v.light b {
+  color: var(--p-acc);
+}
+.ec-v small {
+  font-size: 10.5px;
+  color: var(--p-mute);
+}
+.ec-v img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+.ec-v .ec-ic.star {
+  width: 12px;
+  height: 12px;
+  color: var(--p-acc);
+}
+.ec-v.txt {
+  font-family: inherit;
+  font-size: 11.5px;
+}
+.ec-desc {
+  font-size: 9.5px;
+  color: var(--p-mute);
+  white-space: nowrap;
+}
+.ec-check {
+  position: relative;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ok);
+}
+.ec-check::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 6px;
+  width: 4px;
+  height: 8px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.ec-check.sm {
+  width: 12px;
+  height: 12px;
+}
+.ec-check.sm::after {
+  top: 2px;
+  left: 4px;
+  width: 2.5px;
+  height: 5.5px;
+  border-width: 0 1.5px 1.5px 0;
+}
+.ec-sub {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  font-size: 10px;
+  background: var(--p-card);
+}
+.ec-sub-v {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--p-num);
+}
+.ec-sub-v img {
+  width: 14px;
+  height: 14px;
+}
+.ec-sub-v b {
+  color: #f48f01;
+}
+/* 行下的详细奖励：方格里是稀有度底上的图与数量，名字在格下。图缺的那件只剩底色与名字 */
+.ec-items {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 44px);
+  gap: 6px 5px;
+  padding: 6px 8px 7px;
+  background: var(--p-card);
+}
+.ec-it {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+.ec-it-ic {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.ec-it-ic img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.ec-it-ic em {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  padding: 0 2px;
+  border-radius: 3px 0 3px 0;
+  font-family: var(--p-num);
+  font-size: 8.5px;
+  font-style: normal;
+  line-height: 11px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.5);
+}
+.ec-it span {
+  width: 100%;
+  font-size: 8px;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--p-mute);
+  overflow-wrap: anywhere;
+}
+.ec-it-ic.s1 {
+  background: url("../item/bg1-o.png") center / cover no-repeat;
+}
+.ec-it-ic.s2 {
+  background: url("../item/bg2-o.png") center / cover no-repeat;
+}
+.ec-it-ic.s3 {
+  background: url("../item/bg3-o.png") center / cover no-repeat;
+}
+.ec-it-ic.s4 {
+  background: url("../item/bg4-o.png") center / cover no-repeat;
+}
+.ec-it-ic.s5 {
+  background: url("../item/bg5-o.png") center / cover no-repeat;
+}
+
+/* ========== 复刻统计总表（gacha/banner-all）：两列小卡 ==========
+   图标按高铺满（武器图 4:3，img 宽 100% 会被方格裁掉下半）；当期 / 下期那几条整格高亮 */
+.ba-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.ba-it {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px 4px 4px;
+  border-radius: 6px;
+  background: var(--p-bg);
+  border: 1px solid var(--p-line);
+}
+.ba-it.now {
+  border-color: var(--p-acc);
+}
+.ba-ic {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--av-fg, none) center / contain no-repeat, var(--rar-bg, var(--p-card));
+}
+.ba-ic i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  min-width: 15px;
+  padding: 0 3px;
+  border-radius: 0 0 5px 0;
+  font-style: normal;
+  font-family: var(--p-num);
+  font-size: 9px;
+  line-height: 14px;
+  text-align: center;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+}
+.ba-t {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.ba-t b {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ba-t span {
+  font-size: 10px;
+  color: var(--p-mute);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ba-d {
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+}
+.ba-d b {
+  font-family: var(--p-num);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--p-acc);
+}
+.ba-d span {
+  font-size: 10px;
+  color: var(--p-mute);
+}
+.ba-d.txt {
+  max-width: 76px;
+  font-size: 10px;
+  line-height: 1.3;
+  text-align: right;
+  color: var(--p-acc);
+}

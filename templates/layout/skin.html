@@ -1,0 +1,37 @@
+<!--
+  模块职责：统一皮肤布局 —— 除面板详情外全部模板的布局，骨架加四套皮肤 css，主体留给 `main` 块
+  依赖方向：被各模板以 extend skinLayout 继承；别名由 core/render.ts 的 dress() 注入
+  生命周期：静态模板
+  注意事项：三处判据。一是四份皮肤 css **全部加载**，靠 body 上的皮肤 class 决定哪一套生效；
+            改成按游戏只加载一份就得在布局里判游戏，而判错的表现是整张图没有配色、不报错。
+            二是 sys.scale 留在 body 上但缺省是空串，基准倍率在 base.css 里，见
+            `template-scale-lives-in-css`。三是 #container 是渲染器的裁剪锚点，去掉只能截整页。
+            注释里不得出现模板语句：art-template 连注释一起编译。
+-->
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <link rel="shortcut icon" href="#"/>
+  <link rel="preload" href="{{_res_path}}common/font/HYWH-65W.woff" as="font" type="font/woff">
+  <link rel="preload" href="{{_res_path}}common/font/HYWJ-85W.woff" as="font" type="font/woff">
+  <link rel="preload" href="{{_res_path}}common/font/NZBZ.woff" as="font" type="font/woff">
+  <link rel="preload" href="{{_res_path}}common/font/tttgbnumber.woff" as="font" type="font/woff">
+  <link rel="stylesheet" type="text/css" href="{{_res_path}}common/skin/base.css"/>
+  <link rel="stylesheet" type="text/css" href="{{_res_path}}common/skin/gs.css"/>
+  <link rel="stylesheet" type="text/css" href="{{_res_path}}common/skin/sr.css"/>
+  <link rel="stylesheet" type="text/css" href="{{_res_path}}common/skin/zzz.css"/>
+  <link rel="stylesheet" type="text/css" href="{{_res_path}}common/skin/neutral.css"/>
+  <link rel="stylesheet" type="text/css" href="{{_res_path}}common/skin/sign.css"/>
+  <title>mhy-game</title>
+  {{block 'css'}}{{/block}}
+  <% include(_tpl_path + '/img-fallback.html') %>
+</head>
+<body class="{{_skin}} {{bodyClass}}" {{sys.scale}}>
+  <div class="pic" id="container">
+    {{block 'main'}}{{/block}}
+    <div class="p-copyright"><% include(_tpl_path + '/sign.html', [_sign]) %></div>
+  </div>
+</body>
+</html>

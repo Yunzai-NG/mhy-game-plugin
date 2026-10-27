@@ -1,0 +1,147 @@
+<!--
+  模块职责：角色图鉴（`#胡桃图鉴`，三个游戏）—— 立绘作底的头图、身份栏、满级属性、突破材料，加持有率与常用装备
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head；样式在 base.css 的「角色图鉴」一节
+  生命周期：静态模板
+  注意事项：一是立绘与各图标一律走背景图（尺寸与位置在 css），不用 img：立绘三个游戏长宽比差得远，img 宽 100% 时
+            原神那张会被方框裁掉下半。二是身份栏三个游戏各不相同（绝区零印属性/职业/阵营，原神印命之座与生日），
+            判错只是少几行、不报错。三是套装图按 `meta-` 前缀挑根（见 `template-img-two-roots`），0 命图恒在插件资源里。
+            四是「持有率、武器、圣遗物统计来自提瓦特小助手 / ArkApi，该数据非官方数据，统计结果仅供参考」一字不改；
+            常用装备两栏都只取前 7 项。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+{{set gear = game == 'gs' ? '武器' : game == 'zzz' ? '音擎' : '光锥' }}
+{{set arti = game == 'gs' ? '圣遗物' : game == 'zzz' ? '驱动盘' : '遗器' }}
+{{set consWord = game == 'zzz' ? '影画' : game == 'sr' ? '星魂' : '命座' }}
+{{set weapons = (usage && usage.weapons) || [] }}
+{{set artis = (usage && usage.artis) || [] }}
+{{set cNum = '零一二三四五满'.split('')}}
+{{set splash = imgs.splash || imgs.gacha || ''}}
+
+<div class="cw-hero g-{{game}}">
+  <div class="cw-pic" style="background-image:url('{{_meta_path}}{{splash}}')"></div>
+  <div class="cw-info">
+    <small class="cw-kick">CHARACTER ARCHIVE</small>
+    {{if data.title}}<span class="cw-title">{{data.title}}</span>{{/if}}
+    <h2 class="cw-name">{{data.name}}</h2>
+    {{set starList = [1, 2, 3, 4, 5]}}
+    <div class="cw-stars">{{each starList s}}{{if s <= (data.star || 4)}}<i></i>{{/if}}{{/each}}</div>
+    {{if data.desc}}<div class="cw-desc">{{@data.desc}}</div>{{/if}}
+    <ul class="cw-facts">
+      {{if game == 'zzz'}}
+      <li><span>属性</span><b>{{data.elemName}}</b></li>
+      <li><span>职业</span><b>{{data.prof}}</b></li>
+      {{if data.hit}}<li><span>伤害类型</span><b>{{data.hit}}</b></li>{{/if}}
+      {{if data.camp}}<li><span>阵营</span><b>{{data.camp}}</b></li>{{/if}}
+      {{if data.birthday}}<li><span>生日</span><b>{{data.birthday}}</b></li>{{/if}}
+      {{if data.stature}}<li><span>身高</span><b>{{data.stature}}</b></li>{{/if}}
+      {{else}}
+      <li><span>{{game == 'gs' ? '武器类型' : '命途'}}</span><b>{{data.weaponTypeName || data.weapon}}</b></li>
+      {{if game == 'gs'}}
+      <li><span>命之座</span><b>{{data.astro}}</b></li>
+      <li><span>生日</span><b>{{data.birthday}}</b></li>
+      {{/if}}
+      <li><span>归属</span><b>{{data.allegiance}}</b></li>
+      <li><span>中文CV</span><b>{{data.cncv}}</b></li>
+      <li><span>日文CV</span><b>{{data.jpcv}}</b></li>
+      {{/if}}
+    </ul>
+  </div>
+</div>
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{
+    title: (game == 'gs' ? 100 : game == 'zzz' ? 60 : 80) + '级基础属性',
+    note: game == 'sr' ? '另附满行迹加成' : ''
+  }]) %>
+  <div class="cw-attrs">
+    {{each attr.attr ds}}
+    <div class="cw-attr"><span>{{ds.title}}</span><b>{{ds.value}}</b></div>
+    {{/each}}
+    {{if game == 'sr'}}
+    {{each attr.growret ds}}
+    <div class="cw-attr grow"><span>行迹·{{ds.title}}</span><b>{{ds.value}}</b></div>
+    {{/each}}
+    {{/if}}
+  </div>
+</section>
+
+{{if materials.length}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '突破与升级材料', note: '练满要的总量'}]) %>
+  <div class="cw-mats">
+    {{each materials ds}}
+    <div class="cw-mat">
+      <div class="cw-mat-ic s{{ds.star}}" style="background-image:url('{{_meta_path}}{{ds.icon}}')"></div>
+      <b>{{ds.label}}</b>
+      <span>{{ds.num}}</span>
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/if}}
+
+{{if num}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: consWord + '持有率', note: '平均' + consWord + ' ' + num}]) %>
+  <div class="cw-hold">
+    {{each holding rate cons}}
+    {{set ci = cons > 0 ? '' + (imgs['cons' + cons] || '') : ''}}
+    <div class="cw-hold-i">
+      <div class="cw-hold-ic" style="background-image:url('{{cons > 0 ? _meta_path + ci : _res_path + 'common/item/cons0.webp'}}')"></div>
+      <b>{{rate}}</b>
+      <span>{{cNum[cons]}}{{game == 'zzz' ? '影' : game == 'sr' ? '魂' : '命'}}</span>
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/if}}
+
+{{if weapons.length > 0 || artis.length > 0}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '常用' + gear + '与' + arti}]) %>
+  {{if weapons.length > 0}}
+  <div class="cw-use">
+    {{each weapons weapon idx}}
+    {{if idx < 7}}
+    <div class="cw-use-i">
+      <!-- 图放子元素上：直接写在格子的 background-image 上会把稀有度那层渐变一并顶掉 -->
+      <div class="cw-use-ic r{{weapon.star == 4 ? 4 : (weapon.star == 3 ? 3 : 5)}}"><i style="background-image:url('{{_meta_path}}{{weapon.img}}')"></i></div>
+      <b>{{weapon.abbr}}</b>
+      <span>{{weapon.value}}</span>
+    </div>
+    {{/if}}
+    {{/each}}
+  </div>
+  {{/if}}
+  {{if artis.length > 0}}
+  <div class="cw-use">
+    {{each artis one idx}}
+    {{if idx < 7}}
+    <div class="cw-use-i">
+      <!-- 2+2 那一类两套叠在同一格（对角排） -->
+      <div class="cw-use-ic r5 {{one.imgs && one.imgs.length > 1 ? 'duo' : ''}}">
+        {{each one.imgs img sub}}
+        {{if sub < 2}}
+        {{set src = '' + (img || '')}}
+        <i style="background-image:url('{{src.indexOf('meta-') === 0 ? _meta_path : _res_path}}{{src}}')"></i>
+        {{/if}}
+        {{/each}}
+      </div>
+      <b>{{one.title}}</b>
+      <span>{{one.value}}</span>
+    </div>
+    {{/if}}
+    {{/each}}
+  </div>
+  {{/if}}
+  <div class="notes">
+    <p>持有率、{{gear}}、{{arti}}统计来自<b>{{game == 'gs' ? '提瓦特小助手' : 'ArkApi'}}</b>，该数据非官方数据，统计结果仅供参考</p>
+  </div>
+</section>
+{{/if}}
+
+<div class="notes">
+  <p>输入<b>{{_hash}}{{data.abbr}}{{game == 'sr' ? '行迹' : game == 'zzz' ? '技能' : '天赋'}}、{{_hash}}{{data.abbr}}{{consWord}}</b>可查看详细{{game == 'zzz' ? '技能/影画' : '天赋/' + consWord}}信息，<b>{{_hash}}{{data.abbr}}养成</b>按你的练度算还差多少</p>
+</div>
+{{/block}}

@@ -1,0 +1,18 @@
+<!--
+  模块职责：页脚署名 —— 内核名与版本、插件名与版本，两套布局都 include 它
+  依赖方向：被 layout/skin.html 与 layout/elem.html 引用；数据是 core/render.ts 补的 `_sign`；样式在 common/skin/sign.css
+  生命周期：静态片段
+  注意事项：装饰随皮肤走（原神菱形引线、星铁金线、绝区零斜切标签），全部靠 css 按 body 上的皮肤类开关，
+            这里只放一份结构：哪个皮肤不要哪一块就在 css 里藏掉，不要在这里按游戏分支。
+            内核版本取不到时整截不印，免得图上留一个孤零零的空格。
+-->
+{{set g = $data[0] || {} }}
+<div class="p-sign">
+  <i class="sg-line"></i><i class="sg-mark sg-lead"></i>
+  <b class="sg-tag"><span>POWERED BY</span></b>
+  <span class="sg-by">Created by</span>
+  <span class="sg-core">{{g.coreName}}{{if g.coreVersion}} <span class="sg-ver">{{g.coreVersion}}</span>{{/if}}</span>
+  <span class="sg-sep"></span>
+  <span class="sg-plugin">{{g.pluginName}} <span class="sg-ver">{{g.pluginVersion}}</span></span>
+  <i class="sg-mark"></i><i class="sg-line"></i>
+</div>

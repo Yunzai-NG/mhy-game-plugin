@@ -1,0 +1,48 @@
+<!--
+  模块职责：邦布图鉴（`%邦布艾莲`）—— 立绘、基础属性与邦布技能
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head
+  生命周期：静态模板
+  注意事项：三处判据。一是立绘在元数据里，要 `_meta_path`（见 `template-img-two-roots`）。
+            二是技能说明里嵌着 `<nobr>` 与按键图标（造包时就换好的），走原样输出 ——
+            转义输出会把这些标签印成文字。
+            三是 `skill` 整项可缺（包里没有那一段时），缺时整块不画。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'BANGBOO',
+  title: name,
+  sub: star + ' 星邦布'
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<section class="p-sec">
+  <div class="wk-hero icon">
+    <div class="wk-pic">
+      <img src="{{_meta_path}}{{mainImg}}" onerror="whenError(this)" alt="">
+    </div>
+    <div class="wk-side">
+      <div class="wk-ttl">
+        <b>{{name}}</b>
+        <small>{{star}} 星邦布</small>
+      </div>
+      {{if attr.length}}
+      <ul class="wk-attrs">
+        {{each attr one}}
+        <li><span>{{one.title}}</span><b>{{one.value}}</b></li>
+        {{/each}}
+      </ul>
+      {{/if}}
+    </div>
+  </div>
+</section>
+
+{{if skill}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '邦布技能'}]) %>
+  <div class="wk-skill">
+    <div>{{@skill}}</div>
+  </div>
+</section>
+{{/if}}
+{{/block}}

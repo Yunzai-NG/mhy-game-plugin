@@ -1,0 +1,53 @@
+<!--
+  模块职责：危局强袭战（`%危局强袭战`）—— 逐场首领战，绝境档另列一块
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / foot 与 common/zzz-battle.html
+  生命周期：静态模板
+  注意事项：四处判据。一是昵称与头像**这一条接口自带**（另两类战绩印不出），故页头给得出 `avatar`，
+            而它是米游社的绝对地址、一处根都不加（见 `template-img-two-roots`）。
+            二是满分由接口自己给（`total_max_score` / `room_max_score`），不写死。
+            三是绝境（`hard`）单列一块：它另有一个排名，与普通档不是一回事，混在一起会让人
+            以为那是总排名。四是「总分与排名同挑战详情并非同时刷新，详情约有两小时延迟」字句不改。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'DEADLY ASSAULT',
+  title: title,
+  sub: period + (begin ? '　' + begin + ' - ' + end : ''),
+  who: {face: avatar, fromMeta: false, name: nickname || '绳匠', uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<div class="bigline">
+  <b>{{score}}</b>
+  {{if full}}<span class="tag hi">满分</span>{{/if}}
+  <span class="tag">{{star}} 星</span>
+  {{if maxScore}}<span class="tag">满分 {{maxScore}}</span>{{/if}}
+  {{if rank}}<span class="tag">前 {{rank}}</span>{{/if}}
+</div>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '首领', note: rooms.length + ' 场'}]) %>
+  {{each rooms room}}
+  <div class="row">
+    <% include(_tpl_path + '/zzz-battle.html', [room, {_res_path, _meta_path, _tpl_path}]) %>
+  </div>
+  {{/each}}
+</section>
+
+{{if hasHard}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{
+    title: '绝境',
+    note: hardRank ? '前 ' + hardRank : ''
+  }]) %>
+  {{each hard room}}
+  <div class="row">
+    <% include(_tpl_path + '/zzz-battle.html', [room, {_res_path, _meta_path, _tpl_path}]) %>
+  </div>
+  {{/each}}
+</section>
+{{/if}}
+
+<% include(_tpl_path + '/skin/foot.html', [{note: '总分与排名同挑战详情并非同时刷新，详情约有两小时延迟'}]) %>
+{{/block}}

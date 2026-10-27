@@ -1,0 +1,142 @@
+<!--
+  模块职责：货币战争·零和博弈（`*货币战争` / `*货币战争N`）—— 段位摘要、一场存档详情、最近几场一览
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / avatar / foot
+  生命周期：静态模板
+  注意事项：三处判据。一是角色头像是元数据路径（`fromMeta` 为真），段位、羁绊、策略与传送门图是米游社的绝对地址、
+            一处根都不加（见 `template-img-two-roots`）。二是一张图只画 `one` 那一场（视图按序号挑好，缺省最新）；
+            `recent` 只是一行摘要，标出当前是第几场。三是伤害数值由视图折算成「6.6 亿」这类短串，模板只印不算。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'CURRENCY WAR',
+  title: title,
+  sub: period + '　第 ' + pick + ' 场 / 近 ' + archives.length + ' 场',
+  who: {name: nickname || '开拓者', uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '赛季', note: '赛季等级 ' + seasonLevel}]) %>
+  <div class="bigline">
+    {{if division.bg}}
+    <div class="ic"><img src="{{division.bg}}" onerror="whenError(this)" alt=""></div>
+    {{/if}}
+    <b>{{division.label}}</b>
+    <span class="p-sub">赛季等级 {{seasonLevel}}</span>
+  </div>
+  <div class="p-stats" style="--n:4">
+    <div class="st{{weekly.full ? ' hi' : ''}}"><b>{{weekly.cur}}/{{weekly.max}}</b><span>本周积分</span></div>
+    <div class="st"><b>{{quest.cur}}/{{quest.max}}</b><span>任务</span></div>
+    <div class="st"><b>{{handbook}}%</b><span>图鉴</span></div>
+    <div class="st"><b>{{trait}}%</b><span>羁绊</span></div>
+  </div>
+</section>
+
+<!-- 一场：照官方「货币战争战绩详情」—— 评级 + 段位 + 模式 + 时间，三项数值，前后台，羁绊，投资环境 / 策略，伤害统计 -->
+<section class="p-sec gw">
+  <div class="gw-h">
+    <span class="gw-rank r-{{one.rank || 'C'}}">{{one.rank || 'C'}}</span>
+    <div class="gw-t">
+      <b>{{one.division.label}}</b>
+      <span>{{one.typeName}}{{if one.time}}　{{one.time}}{{/if}}</span>
+    </div>
+  </div>
+  <div class="p-stats" style="--n:3">
+    <div class="st"><b>{{one.hp}}</b><span>小队生命值</span></div>
+    <div class="st"><b>{{one.coin}}</b><span>总经济</span></div>
+    <div class="st"><b>{{one.lineupCoin}}</b><span>阵容价值</span></div>
+  </div>
+
+  <div class="gw-team">
+    <div class="gw-side">
+      <small>前台</small>
+      <div class="team" style="--n:4">
+        {{each one.front r}}
+        <% include(_tpl_path + '/skin/avatar.html', [{
+          face: r.icon, fromMeta: true, name: r.name, star: r.star >= 5 ? 5 : 4,
+          mark: r.trial ? '试用' : (r.projection ? '投影' : '')
+        }, {_res_path, _meta_path, size: 'sm'}]) %>
+        {{/each}}
+      </div>
+    </div>
+    {{if one.back.length}}
+    <div class="gw-side">
+      <small>后台</small>
+      <div class="team" style="--n:4">
+        {{each one.back r}}
+        <% include(_tpl_path + '/skin/avatar.html', [{
+          face: r.icon, fromMeta: true, name: r.name, star: r.star >= 5 ? 5 : 4, mark: r.trial ? '试用' : ''
+        }, {_res_path, _meta_path, size: 'sm'}]) %>
+        {{/each}}
+      </div>
+    </div>
+    {{/if}}
+  </div>
+
+  {{if one.traits.length}}
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '羁绊信息'}]) %>
+  <div class="chips">
+    {{each one.traits t}}
+    <span class="chip q{{t.quality}}">
+      {{if t.icon}}<img src="{{t.icon}}" onerror="whenError(this)" alt="">{{/if}}
+      <span>{{t.name}}</span><em>{{t.count}}</em>
+    </span>
+    {{/each}}
+  </div>
+  {{/if}}
+
+  {{if one.portals.length || one.augments.length}}
+  <div class="gw-inv">
+    {{if one.portals.length}}
+    <div class="gw-side">
+      <small>投资环境</small>
+      <div class="chips">
+        {{each one.portals p}}<span class="chip">{{if p.icon}}<img src="{{p.icon}}" onerror="whenError(this)" alt="">{{/if}}<span>{{p.name}}</span></span>{{/each}}
+      </div>
+    </div>
+    {{/if}}
+    {{if one.augments.length}}
+    <div class="gw-side">
+      <small>投资策略</small>
+      <div class="chips">
+        {{each one.augments a}}<span class="chip q{{a.quality}}">{{if a.icon}}<img src="{{a.icon}}" onerror="whenError(this)" alt="">{{/if}}<span>{{a.name}}</span></span>{{/each}}
+      </div>
+    </div>
+    {{/if}}
+  </div>
+  {{/if}}
+
+  {{if one.damages.length}}
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '伤害统计', note: '总计 ' + one.damageTotal}]) %>
+  <div class="gw-dmgs">
+    {{each one.damages d}}
+    <div class="gw-dmg">
+      <i class="gw-dmg-ic" {{if d.icon}}style="background-image:url('{{_meta_path}}{{d.icon}}')"{{/if}}></i>
+      <span class="gw-dmg-nm">{{d.name || d.id}}</span>
+      <span class="bar-t"><i style="width:{{d.pct}}%"></i></span>
+      <b>{{d.text}}</b>
+    </div>
+    {{/each}}
+  </div>
+  {{/if}}
+</section>
+
+{{if recent.length > 1}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '最近 ' + recent.length + ' 场', note: '发送 *货币战争2 看第 2 场，最多到 ' + recent.length}]) %>
+  <div class="gw-recent">
+    {{each recent r}}
+    <div class="gw-rc {{r.on ? 'on' : ''}}">
+      <em>{{r.index}}</em>
+      <span class="gw-rank sm r-{{r.rank || 'C'}}">{{r.rank || 'C'}}</span>
+      <b>{{r.division}}</b>
+      <small>{{r.time}}</small>
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/if}}
+
+<% include(_tpl_path + '/skin/foot.html', [{note: '战绩展示最近 10 次挑战记录中的通关数据'}]) %>
+{{/block}}

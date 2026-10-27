@@ -1,0 +1,66 @@
+<!--
+  模块职责：开拓力（`*体力`）—— 开拓力与后备开拓力、每日实训 / 历战余响 / 周期积分 / 模拟宇宙、委托执行
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head
+  生命周期：静态模板
+  注意事项：各行出不出现、印哪句都由视图定（views/sr/note.ts），模板只画。一是派遣头像有两个根：视图给
+            字面量「派遣头像」时那是插件自带的图、要 `_res_path`，否则那是米游社给的绝对地址、一处根都不加
+            （见 `template-img-two-roots`）。二是 `staminaWidth` 与 `ex.width` 已带百分号，再补一个会让整条变 0 宽。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+{{set powers = [stamina, reserve]}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'TRAILBLAZE POWER',
+  title: '实时便笺',
+  sub: day,
+  who: {uid: uid, name: nickname, level: level ? 'Lv.' + level : ''}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+<div class="sr-uid"><span>UID</span><b>{{uid}}</b></div>
+
+<section class="p-sec sr-note">
+  <div class="sr-note-l">
+    {{each powers one i}}
+    <div class="nt lg {{one.hot ? 'hot' : ''}}">
+      <div class="nt-ic lg"><img src="{{_res_path}}{{one.icon}}" onerror="whenError(this)" alt=""></div>
+      <div class="nt-t"><b class="sr-note-n">{{one.value}}</b><span>{{one.desc}}</span></div>
+    </div>
+    {{if i === 0}}<div class="bar-t"><i style="width:{{staminaWidth}}"></i></div>{{/if}}
+    {{/each}}
+  </div>
+  <div class="nts bare sr-note-r">
+    {{each daily one}}
+    <div class="nt {{one.hot ? 'hot' : ''}}">
+      <div class="nt-t"><b>{{one.label}}</b></div>
+      <div class="nt-v {{one.text ? 'txt' : ''}}">{{one.value}}</div>
+    </div>
+    {{/each}}
+  </div>
+</section>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '委托执行', note: expeditionCount}]) %>
+  {{if expeditions.length}}
+  <div class="bars">
+    {{each expeditions ex}}
+    <div class="bar">
+      <div class="bar-h">
+        <span>{{ex.name}}</span>
+        <b>{{ex.done ? '已完成' : ex.left}}</b>
+      </div>
+      <div class="bar-t"><i style="width:{{ex.width}}"></i></div>
+      <div class="ics">
+        {{each ex.avatars one}}
+        <div class="ic">
+          <img src="{{one == '派遣头像' ? _res_path + 'sr/role/派遣头像.png' : one}}" onerror="whenError(this)" alt="">
+        </div>
+        {{/each}}
+      </div>
+    </div>
+    {{/each}}
+  </div>
+  {{else}}
+  <div class="p-sub">尚未进行委托执行</div>
+  {{/if}}
+</section>
+{{/block}}

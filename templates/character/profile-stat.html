@@ -1,0 +1,143 @@
+<!--
+  模块职责：面板练度统计（`#练度统计` / `#天赋统计`）—— 一行一名角色的宽表，三个游戏共用
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / foot
+  生命周期：静态模板
+  注意事项：一是天赋圈取视图给的 `avatar.tals`（键序、图标、满级冠都在 views/panel.ts 算好），模板不自带键名 ——
+            键取不到不报错、那一格恒空。二是技能格（3/4/6 个）在表头与各行都收进一个 `.st-tals` 占一列、按内容宽，
+            `--cols` 只管其余几列；拆回逐格一列时 `--cols` 与表头不同步就整表错位。表头每格宽要等于天赋圈宽。
+            三是数组字面量要先经 `set`（见 `art-template-each-needs-set`）。
+            五是「天赋数据每2小时最多更新一次」与「未绑定CK或CK失效」两句字句不改。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+{{set isSr = game === 'sr'}}
+{{set isZzz = game === 'zzz'}}
+{{set ut = updateTime || {} }}
+{{set tk = talentKeys || (isSr ? ['a', 'e', 'q', 't'] : ['a', 'e', 'q'])}}
+{{set zzzHeads = ['普', '特', '闪', '连', '核', '支']}}
+{{set gsHeads = isSr ? ['A', 'E', 'Q', 'T'] : ['A', 'E', 'Q']}}
+{{set heads = isZzz ? zzzHeads : gsHeads}}
+{{set travelers = ['空', '荧', '旅行者', '奇偶·男性', '奇偶·女性']}}
+{{set weekMap = {'周一/周四': 1, '周二/周五': 2, '周三/周六': 3} }}
+{{set weekText = ['1/4', '2/5', '3/6']}}
+{{set gearTitle = isSr ? '光锥' : (isZzz ? '音擎' : '武器')}}
+{{set artisTitle = isSr ? '遗器' : (isZzz ? '驱动盘' : '圣遗物')}}
+{{set consTitle = isSr ? '星魂' : (isZzz ? '影画' : '命座')}}
+{{set talCount = isZzz ? 6 : (isSr ? 4 : 3)}}
+<!-- 天赋列按圈数定宽（每圈 31px、间隔 4px）而不是 max-content：后者逐行各算各的，「暂无天赋数据」那一行就整行左移 -->
+{{set cols = 'minmax(0,1fr) 26px 26px'
+  + ' ' + (talCount * 31 + (talCount - 1) * 4) + 'px'
+  + (mode === 'talent' ? ' 34px minmax(0,1.4fr)' : ' minmax(0,1.3fr) minmax(0,1fr)')}}
+
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: mode === 'talent' ? 'TALENT OVERVIEW' : 'ROSTER OVERVIEW',
+  title: isRole ? '幻想角色列表' : '面板练度统计',
+  sub: '共 ' + avatars.length + ' 名角色',
+  who: {uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{
+    title: mode === 'talent' ? '天赋与材料' : '练度',
+    note: '按等级与星级排序'
+  }]) %>
+  <div class="st-tbl" style="--cols:{{cols}};{{if crownIcon}}--crown:url('{{_meta_path}}{{crownIcon}}'){{/if}}">
+    <div class="tr th">
+      <span class="nm">角色</span>
+      <span>Lv</span>
+      <span>{{consTitle}}</span>
+      <div class="st-tals th-tals">{{each heads one}}<span>{{one}}</span>{{/each}}</div>
+      {{if mode === 'talent'}}
+      <span>周本</span>
+      <span>天赋书</span>
+      {{else}}
+      <span>{{gearTitle}}</span>
+      <span>{{artisTitle}}</span>
+      {{/if}}
+    </div>
+
+    {{each avatars avatar}}
+    {{set weapon = avatar.weapon || {} }}
+    {{set amark = avatar.artisMark || false }}
+    {{set setImgs = (avatar.artisMark && avatar.artisMark.imgs) || (avatar.artisSet && avatar.artisSet.imgs) || []}}
+    <div class="tr">
+      <div class="st-nm">
+        <div class="cr-ic r{{avatar.star == 4 ? 4 : (avatar.star == 3 ? 3 : 5)}}">
+          <img src="{{_meta_path}}{{avatar.face}}" onerror="whenError(this)" alt="">
+        </div>
+        <b>{{avatar.abbr || avatar.name}}</b>
+        <!-- 好感印成徽章（common/item/fetter.png 十格精灵图），旅行者恒满；星铁绝区零没有这一项 -->
+        {{if !isSr && !isZzz}}{{set fet = travelers.indexOf(avatar.name) >= 0 ? 10 : avatar.fetter}}{{if fet}}<i class="cc-fetter st-fetter f{{fet}}"></i>{{/if}}{{/if}}
+      </div>
+      <span class="num">{{avatar.level}}</span>
+      <span class="num">{{avatar.cons}}</span>
+
+      <!-- 天赋圈与排行同一套（.rk-tal）：技能图标 + 等级牌 + 满级冠；没有天赋数据的那一行只印一句 -->
+      <div class="st-tals rk-tals">
+      {{if avatar.noTalent}}
+      <span class="st-notal">暂无天赋数据</span>
+      {{else}}
+      {{each avatar.tals t}}
+      {{set ico = '' + (t.icon || '')}}
+      <div class="rk-tal {{t.plus ? 'plus' : ''}} {{t.crown ? 'crown' : ''}}" {{if avatar.frame}}style="background-image:url('{{_res_path}}common/bg/talent-{{avatar.frame}}.webp')"{{/if}}>
+        {{if ico}}<img src="{{ico.indexOf('meta-') === 0 ? _meta_path : _res_path}}{{ico}}" onerror="whenError(this)" alt="">{{/if}}
+        <span>{{t.level}}</span>
+      </div>
+      {{/each}}
+      {{/if}}
+      </div>
+
+      {{if mode === 'talent'}}
+      {{set m = avatar.materials || {} }}
+      {{set w = weekMap[m.talent ? m.talent.num : '']}}
+      {{set isToday = (week === 6) || (week % 3 + 1 === w)}}
+      <div class="st-mat {{isToday ? '' : 'off'}}">
+        <img src="{{_meta_path}}{{m.weekly ? m.weekly.icon : ''}}" onerror="whenError(this)" alt="">
+      </div>
+      <div class="st-mat {{isToday ? '' : 'off'}}">
+        <img src="{{_meta_path}}{{m.talent ? m.talent.icon : ''}}" onerror="whenError(this)" alt="">
+        <span>{{(m.talent ? m.talent.label : '') || '-'}}（周{{weekText[w-1] || '-'}}）</span>
+      </div>
+      {{else}}
+      <div class="st-gear">
+        {{if weapon.name}}
+        <div class="cr-ic r{{weapon.star == 4 ? 4 : (weapon.star == 3 ? 3 : 5)}}" style="--av-fg:url('{{_meta_path}}{{isSr ? (weapon.imgs ? weapon.imgs.icon2 : weapon.img) : weapon.img}}')">
+          <span>{{weapon.affix}}</span>
+        </div>
+        <span>{{weapon.abbr || weapon.name}}</span><span class="lv">Lv{{weapon.level}}</span>
+        {{/if}}
+      </div>
+      <div class="st-gear">
+        <!-- 两套套装叠在同一格（对角排，见 base.css 的 `.cr-ic.duo`）；一套都没有时垫圣遗物剪影 -->
+        {{if setImgs.length}}
+        <div class="cr-ic r5 {{setImgs.length > 1 ? 'duo' : ''}}">
+          {{each setImgs img i}}{{if i < 2}}<img src="{{_meta_path}}{{img}}" onerror="whenError(this)" alt="">{{/if}}{{/each}}
+        </div>
+        {{else}}
+        <div class="cr-ic none"></div>
+        {{/if}}
+        {{if amark}}
+        <i class="rk-pill mk-{{amark.markClass}}">{{amark.markClass}}</i><span class="mk">{{amark.mark}}</span>
+        {{else}}
+        <span>暂无面板数据</span>
+        {{/if}}
+      </div>
+      {{/if}}
+    </div>
+    {{/each}}
+  </div>
+</section>
+
+{{if ut.profile || ut.mys}}
+<% include(_tpl_path + '/skin/foot.html', [{
+  tips: [(ut.profile ? _hash + '更新面板：' + ut.profile : ''), (ut.mys ? '米游社：' + ut.mys : '')],
+  note: ut.mys ? '天赋数据每2小时最多更新一次，可通过 ' + _hash + '刷新天赋 来强制刷新，需具备有效CK' : '数据更新时间'
+}]) %>
+{{else}}
+<% include(_tpl_path + '/skin/foot.html', [{
+  tips: [_hash + '体力帮助 查看CK绑定方法', _hash + '更新面板 更新角色展柜信息'],
+  note: '未绑定CK或CK失效，信息可能不完全'
+}]) %>
+{{/if}}
+{{/block}}

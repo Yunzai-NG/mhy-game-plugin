@@ -1,0 +1,126 @@
+<!--
+  模块职责：日历（`#日历`，三个游戏）—— 日期轴、活动条、当前时刻线，原神另有生日与今日天赋材料
+  依赖方向：extend skinLayout，include common/skin 下的 head
+  生命周期：静态模板
+  注意事项：一是图分三个根：元数据里的（`char.face`、`talent.icon`、`char.weekly`、`li.banner2` / `banner3`、
+            `li.face`）用 `_meta_path`，插件自带的（`type-icon`、兜底 `calendar-icon`）用 `_res_path`，
+            `li.banner` 与 `li.icon` 是公告给的绝对地址、不加根（见 `template-img-two-roots`）。
+            二是活动条的 `left` / `width` 与时刻线的 `nowLeft` 是视图算好的百分比，**必须留在内联 style**，
+            挪进 css 所有条会叠在一处。三是星铁卡池图是数组（`banner3` 光锥、`banner2` 角色），原神 `banner2`
+            是单张，判错那一格空白。四是「当前时间」一行与生日那句（名字满四字不加「生日」）字句不改。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+{{set weekName = '一二三四五六日'.split('')}}
+
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'CALENDAR',
+  title: '日历',
+  sub: '当前时间：' + nowTime
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<section class="p-sec">
+  <div class="cal">
+    <div class="cal-days">
+      {{each dateList d}}
+      {{each d.date dn di}}
+      <div class="cal-d {{dn === nowDate ? 'now' : ''}}">
+        <b>{{dn}}</b>
+        <span>周{{weekName[d.week[di]]}}</span>
+        {{if di === 0}}<em>{{d.month}}月</em>{{/if}}
+      </div>
+      {{/each}}
+      {{/each}}
+    </div>
+
+    {{if game === 'gs'}}
+    <div class="cal-days cal-birth">
+      {{each dateList d}}
+      {{each d.date dn}}
+      <div class="cal-d {{dn === nowDate ? 'now' : ''}}">
+        {{each charBirth[d.month + '-' + dn] char}}
+        <div class="cr-ic r{{char.star == 4 ? 4 : 5}}">
+          <img src="{{_meta_path}}{{char.face}}" onerror="whenError(this)" alt="">
+        </div>
+        <small>{{char.name.length >= 4 ? char.name : char.name + '生日'}}</small>
+        {{/each}}
+      </div>
+      {{/each}}
+      {{/each}}
+    </div>
+    {{/if}}
+
+    <div class="cal-bars">
+      {{each abyss li}}
+      <div class="cal-row">
+        <div class="cal-b t-{{li.type}}" style="margin-left:{{li.left}}%;width:{{li.width}}%">
+          <img src="{{_res_path}}wiki/imgs/{{li.type}}-icon.png" onerror="whenError(this)" alt="">
+          <b>{{li.title}}</b>
+          <span>{{li.label}}</span>
+        </div>
+      </div>
+      {{/each}}
+
+      {{each list lis}}
+      {{each lis li}}
+      <div class="cal-row">
+        <div class="cal-b t-{{li.type}} {{li.elem ? 'e-' + li.elem : ''}} {{li.width < 20 ? 'narrow' : ''}}"
+             style="margin-left:{{li.left}}%;width:{{li.width}}%">
+          {{if li.banner3}}
+          <div class="cal-pics">
+            {{each li.banner3 banner}}
+            <img src="{{_meta_path}}{{banner}}" onerror="whenError(this)" alt="">
+            {{/each}}
+          </div>
+          {{else if li.banner2}}
+          {{if game !== 'gs'}}
+          <div class="cal-pics">
+            {{each li.banner2 banner}}
+            <img src="{{_meta_path}}{{banner}}" onerror="whenError(this)" alt="">
+            {{/each}}
+          </div>
+          {{else}}
+          <div class="cal-pics"><img src="{{_meta_path}}{{li.banner2}}" onerror="whenError(this)" alt=""></div>
+          {{/if}}
+          {{else if li.banner}}
+          <div class="cal-pics"><img src="{{li.banner}}" onerror="whenError(this)" alt=""></div>
+          {{/if}}
+
+          {{if li.type === 'character' && game === 'gs'}}
+          <img class="cal-face" src="{{_meta_path}}{{li.face}}" onerror="whenError(this)" alt="">
+          {{else if li.icon}}
+          <img src="{{li.icon}}" onerror="whenError(this)" alt="">
+          {{else}}
+          <img src="{{_res_path}}wiki/imgs/calendar-icon.png" onerror="whenError(this)" alt="">
+          {{/if}}
+          <b>{{li.title}}</b>
+          <span>{{li.label}}</span>
+        </div>
+      </div>
+      {{/each}}
+      {{/each}}
+
+      <i class="cal-now" style="left:{{nowLeft}}%"></i>
+    </div>
+  </div>
+</section>
+
+{{if game === 'gs'}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '今日天赋材料'}]) %>
+  {{each charTalent talent}}
+  <div class="sec-r">
+    <small>{{talent.city}}·{{talent.abbr}}</small>
+    <div class="grid">
+      {{each talent.chars char}}
+      <% include(_tpl_path + '/skin/avatar.html', [{
+        face: char.face, star: char.star, name: char.name
+      }, {_res_path, _meta_path, size: 'sm'}]) %>
+      {{/each}}
+    </div>
+  </div>
+  {{/each}}
+</section>
+{{/if}}
+{{/block}}

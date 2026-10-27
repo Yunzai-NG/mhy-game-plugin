@@ -1,0 +1,78 @@
+<!--
+  模块职责：拟真鏖战试炼（`%鏖战`）—— 四个赛季各一卡，层数、总分与角色排行
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / foot
+  生命周期：静态模板
+  注意事项：三处判据。一是赛季徽章与角色头像**都是米游社给的绝对地址**，一处根都不加；
+            只有稀有度角标（`zzz/other/<rarity>.png`）在插件资源里、要 `_res_path`
+            （见 `template-img-two-roots`）。
+            二是一次返回四个赛季、**前两季与后两季形态不同**（层数与徽章一处在赛季对象上、
+            一处在 layer_info 里），差别已由视图抹平，此处只按同一份形状画。
+            三是这一条接口没有期次，故顶上不印「本期 / 上期」；角色排行只有第四赛季给，
+            且只印前三位 —— 那两点都已由视图判好。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'SIMULATED BATTLE',
+  title: title,
+  sub: '按赛季由新到旧',
+  who: {name: nickname || '绳匠', uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+{{each seasons one}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{
+    title: one.name,
+    note: one.rank ? '前 ' + one.rank : ''
+  }]) %>
+  {{if one.avatars.length && one.avatars[0].card}}
+  <!-- 面板库里有这几位时与另几张战绩图同一张整卡（只排前三、不带邦布），赛季数值竖排在右侧那一栏 -->
+  <div class="tw-team">
+    <div class="zt is-card">
+      {{each one.avatars a}}
+      <div class="zt-slot">
+        {{if a.card}}
+        <% include(_tpl_path + '/zzz-avatar-card.html', [a.card, {_res_path, _meta_path, _tpl_path, cardType: 'mini'}]) %>
+        {{else}}
+        <div class="tw-face"><img class="face" src="{{a.icon}}" onerror="whenError(this)" alt=""></div>
+        {{/if}}
+        <small>{{a.score}}{{if a.rank}}<br>前 {{a.rank}}{{/if}}</small>
+      </div>
+      {{/each}}
+    </div>
+    <div class="tw-side">
+      {{if one.medal}}<span class="ic"><img src="{{one.medal}}" onerror="whenError(this)" alt=""></span>{{/if}}
+      <span class="tw-kv hi"><b>{{one.layer}}</b><small>层数</small></span>
+      {{if one.score}}<span class="tw-kv"><b>{{one.score}}</b><small>总分</small></span>{{/if}}
+      {{if one.mvp}}<span class="tw-kv"><b>{{one.mvp}}</b><small>无伤通关</small></span>{{/if}}
+    </div>
+  </div>
+  {{else}}
+  <div class="row-h">
+    {{if one.medal}}<span class="ic"><img src="{{one.medal}}" onerror="whenError(this)" alt=""></span>{{/if}}
+    <span class="tag hi">层数 {{one.layer}}</span>
+    {{if one.score}}<span class="tag">总分 {{one.score}}</span>{{/if}}
+    {{if one.mvp}}<span class="tag">无伤通关 {{one.mvp}}</span>{{/if}}
+  </div>
+  {{/if}}
+
+  {{if one.avatars.length && !one.avatars[0].card}}
+  <div class="tw-rank">
+    {{each one.avatars a}}
+    <div class="tw-one">
+      <div class="tw-face">
+        <img class="face" src="{{a.icon}}" onerror="whenError(this)" alt="">
+        <img class="rarity" src="{{_res_path}}zzz/other/{{a.rarity}}.png" onerror="this.style.display='none'" alt="">
+      </div>
+      <b>{{a.name}}</b>
+      <span>{{a.score}}{{if a.rank}}　前 {{a.rank}}{{/if}}</span>
+    </div>
+    {{/each}}
+  </div>
+  {{/if}}
+</section>
+{{/each}}
+
+<% include(_tpl_path + '/skin/foot.html', [{note: '层数与无伤层数取自米游社，与游戏内一致'}]) %>
+{{/block}}

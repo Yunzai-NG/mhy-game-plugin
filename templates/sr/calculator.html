@@ -1,0 +1,129 @@
+<!--
+  模块职责：角色养成计算（星穹铁道，`*青雀养成`）—— 目标等级、行迹等级与逐项材料
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / avatar
+  生命周期：静态模板
+  注意事项：三处判据。一是图分三个根：角色头像 `role.face` 在元数据里（按 `meta-` 前缀判），
+            光锥与行迹图标都是米游社给的绝对地址、一处根都不加（见 `template-img-two-roots`）。
+            二是与原神那张的差别有两处：星铁的消耗接口**不给「还缺多少」**，故不画缺口标记；
+            免费材料那一格的判据是「信用点」而不是「摩拉」。
+            三是全部练满时只印「毕业了，下一位 ！」一句，文案不改。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'ASCENSION PLAN',
+  title: '角色养成计算',
+  sub: role.name + '　Lv.' + role.level + ' → Lv.' + role.target,
+  who: {uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<section class="p-sec calc">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '目标'}]) %>
+  <div class="acs">
+    <div class="ac">
+      <div class="ac-top">
+        <% include(_tpl_path + '/skin/avatar.html', [{
+          face: role.face, star: role.star, cons: role.cons > 0 ? role.cons : ''
+        }, {_res_path, _meta_path, size: 'sm'}]) %>
+        <div class="ac-txt">
+          <b>{{role.name}}</b>
+          <span>Lv{{role.level}} → Lv{{role.target}}</span>
+        </div>
+      </div>
+    </div>
+
+    {{if equip}}
+    <div class="ac">
+      <div class="ac-top">
+        <div class="cr-ic r{{equip.star == 4 ? 4 : (equip.star == 3 ? 3 : 5)}}" style="--av-fg:url('{{equip.icon}}')">
+        </div>
+        <div class="ac-txt">
+          <b>{{equip.name}}</b>
+          <span>Lv{{equip.level}} → Lv{{equip.target}}</span>
+        </div>
+      </div>
+    </div>
+    {{/if}}
+  </div>
+
+  {{if skills.length}}
+  <div class="tbl calc" style="--cols:28px minmax(0,1fr) 54px 54px">
+    <div class="tr th">
+      <span></span><span>行迹</span><b>当前</b><b>目标</b>
+    </div>
+    {{each skills skill}}
+    <div class="tr">
+      <span><img class="kv-ic" src="{{skill.icon}}" onerror="whenError(this)" alt=""></span>
+      <span>{{skill.name}}</span>
+      <b>{{skill.current}}</b>
+      <b>{{skill.target}}</b>
+    </div>
+    {{/each}}
+  </div>
+  {{/if}}
+</section>
+
+{{if done}}
+<div class="notes"><p>毕业了，下一位 ！</p></div>
+{{else}}
+
+{{if avatarConsume.length > 0}}
+<section class="p-sec calc">
+  <% include(_tpl_path + '/skin/sec-head.html', [{
+    title: '角色消耗',
+    note: role.name + '　Lv.' + role.level + ' → Lv.' + role.target
+  }]) %>
+  <div class="mats calc">
+    {{each avatarConsume one}}
+    <div class="mat">
+      <div class="mat-ic"><img src="{{one.icon}}" onerror="whenError(this)" alt=""></div>
+      <div class="mat-t">
+        <b>{{one.name}}</b>
+        <span>x {{one.num}}</span>
+      </div>
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/if}}
+
+{{if skillConsume.length > 0}}
+<section class="p-sec calc">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: skillTitle}]) %>
+  <div class="mats calc">
+    {{each skillConsume one}}
+    <div class="mat">
+      <div class="mat-ic"><img src="{{one.icon}}" onerror="whenError(this)" alt=""></div>
+      <div class="mat-t">
+        <b>{{one.name}}</b>
+        <span>x {{one.num}}</span>
+      </div>
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/if}}
+
+{{if equipConsume.length > 0 && equip}}
+<section class="p-sec calc">
+  <% include(_tpl_path + '/skin/sec-head.html', [{
+    title: '光锥消耗',
+    note: equip.name + '　Lv.' + equip.level + ' → Lv.' + equip.target
+  }]) %>
+  <div class="mats calc">
+    {{each equipConsume one}}
+    <div class="mat">
+      <div class="mat-ic"><img src="{{one.icon}}" onerror="whenError(this)" alt=""></div>
+      <div class="mat-t">
+        <b>{{one.name}}</b>
+        <span>x {{one.num}}</span>
+      </div>
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/if}}
+
+{{/if}}
+{{/block}}

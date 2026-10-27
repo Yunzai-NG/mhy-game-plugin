@@ -1,0 +1,100 @@
+<!--
+  模块职责：账号概况（`#信息`）—— 等级与统计、探索进度、常用角色
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / foot
+  生命周期：静态模板
+  注意事项：三处判据。一是角色图的根按 `meta-` 前缀挑（见 `template-img-two-roots`）：星铁是米游社的完整地址、
+            一处根都不能加，绝区零是元数据路径 —— 其接口不带代理人头像。二是探索进度只原神有（视图层给另两个游戏空数组），
+            整块按长度判。三是角色清单在此只放前几位（视图层 limit=8），故那句「完整清单发
+            {记号}角色列表」不可删 —— 少了它看着像只有八个角色。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'ACCOUNT',
+  title: '账号概况',
+  sub: region,
+  who: {face: icon, name: nickname || name, uid: uid, level: level ? 'Lv.' + level : ''},
+  bg: bg,
+  badge: title
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+{{if stats.length}}
+<div class="kv pf-kv">
+  {{each stats it}}
+  <div class="kv-i">
+    <b class="{{it.text ? 'txt' : ''}}">{{it.value}}</b>
+    <span>{{it.label}}</span>
+  </div>
+  {{/each}}
+</div>
+{{/if}}
+
+{{if home.length}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '尘歌壶', note: homeName}]) %>
+  <div class="kv pf-kv">
+    {{each home it}}
+    <div class="kv-i">
+      <b>{{it.value}}</b>
+      <span>{{it.label}}</span>
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/if}}
+
+{{if areas.length}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '世界探索'}]) %>
+  <% include(_tpl_path + '/gs-area-cards.html', [areas, {_res_path}]) %>
+</section>
+{{else if explore.length}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '探索进度'}]) %>
+  <div class="bars">
+    {{each explore it}}
+    <div class="bar">
+      <div class="bar-h">
+        <span>{{it.label}}{{if it.extra}}　{{it.extra}}{{/if}}</span>
+        <b>{{it.percent}}%</b>
+      </div>
+      <div class="bar-t"><i style="width:{{it.percent}}%"></i></div>
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/if}}
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{
+    title: '常用角色',
+    note: '完整清单发「' + _hash + '角色列表」'
+  }]) %>
+  {{if cards && cards.length}}
+  <div class="mcs is-list">
+    {{each cards c}}
+    {{if game === 'zzz'}}
+    <% include(_tpl_path + '/zzz-avatar-card.html', [c, {_res_path, _meta_path, _tpl_path, cardType: 'mini'}]) %>
+    {{else}}
+    <% include(_tpl_path + '/avatar-card.html', [c, {_res_path, _meta_path, cardType: 'mini'}]) %>
+    {{/if}}
+    {{/each}}
+  </div>
+  {{else if avatars.length}}
+  <div class="grid">
+    {{each avatars a}}
+    <% include(_tpl_path + '/skin/avatar.html', [{
+      face: a.icon, star: a.rarity, elem: a.element,
+      name: a.name, cons: a.cons, level: a.level
+    }, {_res_path, _meta_path, _face_path, who}]) %>
+    {{/each}}
+  </div>
+  {{else}}
+  <div class="u-empty">
+    <b>米游社没有公开角色数据</b>
+    <span>去 App 里打开「实时角色」</span>
+  </div>
+  {{/if}}
+</section>
+{{/block}}

@@ -1,0 +1,19 @@
+<!--
+  模块职责：旅行者札记（`#札记`）—— 页头加 common/ledger-body 那段正文
+  依赖方向：extend skinLayout，include common/skin/head 与 common/ledger-body
+  生命周期：静态模板
+  注意事项：正文与星铁月历共用一段（见 common/ledger-body 的文件头），这里只管页头与游戏标志。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'TRAVELER NOTES',
+  title: day + '札记',
+  sub: nowDay,
+  who: {uid: uid, name: nickname}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+<img class="game-logo" src="{{_res_path}}gs/other/原神.png" alt="">
+
+<% include(_tpl_path + '/ledger-body.html', [$data, {_res_path, _meta_path, _tpl_path}]) %>
+{{/block}}

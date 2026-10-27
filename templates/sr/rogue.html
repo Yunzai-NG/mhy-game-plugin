@@ -1,0 +1,117 @@
+<!--
+  模块职责：模拟宇宙（`*模拟宇宙`）—— 本期通关摘要与逐次通关记录
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / avatar
+  生命周期：静态模板
+  注意事项：三处判据。一是奇物与角色的图**都是米游社给的绝对地址**，一处根都不加，故
+            `fromMeta` 恒为假（见 `template-img-two-roots`）。
+            二是命途只印名字与数量：官方那张图上的命途图标取自页面自带的本地图，本插件没有那一套。
+            三是循环变量不可叫 `block` —— 那是模板引擎的关键字，取名 `block` 会编译成 `block(…)`。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'SIMULATED UNIVERSE',
+  title: title,
+  sub: '本期通关 ' + finishCnt + ' 次',
+  who: {name: nickname || '开拓者', uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<div class="p-stats" style="--n:4">
+  <div class="st hi"><b>{{finishCnt}}</b><span>本期通关</span></div>
+  <div class="st"><b>{{buffNum}}</b><span>已解锁祝福</span></div>
+  <div class="st"><b>{{miracleNum}}</b><span>已解锁奇物</span></div>
+  <div class="st"><b>{{skillPoints}}</b><span>技能点</span></div>
+</div>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '通关记录', note: records.length + ' 次'}]) %>
+  <div class="recs-g">
+    {{each records one}}
+    <div class="rec-c">
+      <div class="rec-h">
+        <b>{{one.name}}</b>
+        <span class="tags">
+          <span>难度 {{one.difficulty}}</span>
+          <span>进度 {{one.progress}}</span>
+          {{if one.fury}}<span>{{one.fury}}</span>{{/if}}
+          {{if one.time}}<span>{{one.time}}</span>{{/if}}
+        </span>
+      </div>
+
+      {{if one.lineup.length}}
+      <div class="sec-r">
+        <small>通关阵容</small>
+        <!-- 与忘却之庭同一张角色卡：面板库里有的出整卡（天赋、光锥、遗器），没有的退回接口头像 -->
+        <div class="mcs">
+          {{each one.lineup role}}
+          <% include(_tpl_path + '/sr-stat-avatar.html', [role, {av: (avatars || {})[role.id], mysFailed: false, _res_path, _meta_path, _tpl_path}]) %>
+          {{/each}}
+        </div>
+      </div>
+      {{/if}}
+
+      {{if one.paths.length}}
+      <div class="sec-r">
+        <small>命途祝福</small>
+        <div class="chips">
+          {{each one.paths path}}
+          <span class="chip"><span>{{path.name || path.id}} × {{path.cnt}}</span></span>
+          {{/each}}
+        </div>
+      </div>
+      {{/if}}
+
+      {{if one.buffs.length}}
+      {{each one.buffs buff}}
+      <div class="sec-r">
+        <small>{{buff.name}}</small>
+        <div class="chips">
+          {{each buff.items item}}
+          <span class="chip q{{item.rank}} {{item.upgraded ? 'up' : ''}}"><span>{{item.name}}</span></span>
+          {{/each}}
+        </div>
+      </div>
+      {{/each}}
+      {{/if}}
+
+      {{if one.miracles.length}}
+      <div class="sec-r">
+        <small>奇物 {{one.miracles.length}}</small>
+        <div class="ics">
+          {{each one.miracles it}}
+          <div class="ic"><img src="{{it.icon}}" title="{{it.name}}" onerror="whenError(this)" alt=""></div>
+          {{/each}}
+        </div>
+      </div>
+      {{/if}}
+
+      {{if one.blocks.length}}
+      <div class="sec-r">
+        <small>通过区域</small>
+        <div class="chips">
+          <!-- 循环变量不可叫 block：那是模板引擎的关键字，取名 block 会编译成 block(…) -->
+          {{each one.blocks area}}
+          <span class="chip"><span>{{area.name}}{{if area.num}} × {{area.num}}{{/if}}</span></span>
+          {{/each}}
+        </div>
+      </div>
+      {{/if}}
+
+      {{if one.bossEffect.length}}
+      <div class="sec-r">
+        <small>首领效果</small>
+        <div class="chips">
+          {{each one.bossEffect text}}
+          <span class="chip"><span>{{text}}</span></span>
+          {{/each}}
+        </div>
+      </div>
+      {{/if}}
+    </div>
+    {{/each}}
+  </div>
+</section>
+
+<% include(_tpl_path + '/skin/foot.html', [{note: '共 ' + records.length + ' 次通关记录'}]) %>
+{{/block}}

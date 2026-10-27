@@ -1,0 +1,72 @@
+<!--
+  模块职责：武器 / 光锥 / 音擎图鉴（`#护摩之杖`）—— 立绘、基础属性、技能说明与突破材料
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head
+  生命周期：静态模板
+  注意事项：类型图标两个游戏**不同根**：原神在插件资源里、星铁在元数据里，绝区零音擎没有、留空
+            （见 `template-img-two-roots`）。基础属性的键随游戏变：星铁 `hp`/`atk`/`def`，原神与绝区零
+            `atkBase` 加 `base.attr` —— 判错那几格全空。效果说明里的五档数值包在 `<nobr>` 里、css 据它
+            高亮，故走原样输出（转义会把标签印成文字）。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+{{set typeIcon = game === 'gs' ? _res_path + 'gs/atk/atk-' + type + '.webp' : (game === 'sr' ? _meta_path + 'meta-sr/public/icons/type-' + type + '.webp' : '')}}
+{{set baseKey = game === 'sr' ? ['hp', 'atk', 'def'] : ['atkBase', 'attr'] }}
+{{set stars = '★★★★★'.slice(0, star || 0)}}
+{{set word = game === 'zzz' ? '音擎' : (game === 'sr' ? '光锥' : '武器')}}
+
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'EQUIPMENT',
+  title: name,
+  sub: typeName + '　' + star + ' 星' + word
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<section class="p-sec">
+  <div class="ww-hero s{{star}} ww-{{game}}">
+    <!-- 立绘作背景（高度铺满、宽度随比例，见 base.css 的 .ww-art i）：img 宽 100% 时竖长的光锥图被压扁、横的武器图上下留白 -->
+    <div class="ww-art"><i style="background-image:url('{{_meta_path}}{{gacha}}')"></i></div>
+    <div class="ww-side">
+      <div class="ww-ttl">
+        <b>{{name}}</b>
+        <div class="ww-meta">
+          <span class="ww-type">{{if typeIcon}}<img src="{{typeIcon}}" onerror="whenError(this)" alt="">{{/if}}{{typeName}}</span>
+          <span class="ww-stars">{{stars}}</span>
+        </div>
+      </div>
+      <div class="ww-attrs">
+        {{each baseKey key}}
+        {{set val = key == 'attr' ? (base.attr && base.attr.value) : base[key]}}
+        {{if val}}
+        <div class="ww-attr">
+          <span>{{game === 'sr' ? {hp: '生命', atk: '攻击', def: '防御'}[key] : (key === 'atkBase' ? '基础攻击' : (base.attr && base.attr.key))}}</span>
+          <b>{{val}}</b>
+        </div>
+        {{/if}}
+        {{/each}}
+      </div>
+      {{if affixText.name || affixText.desc}}
+      <div class="ww-affix">
+        <div class="ww-affix-h"><b>{{affixText.name}}</b><small>{{game === 'gs' ? '精炼' : (game === 'sr' ? '叠影' : '星阶')}} 1~5</small></div>
+        <div class="ww-affix-d">{{@affixText.desc}}</div>
+      </div>
+      {{/if}}
+      {{if desc}}<div class="ww-desc">{{@desc}}</div>{{/if}}
+    </div>
+  </div>
+</section>
+
+{{if materials.length}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '突破材料', note: '数量按品阶由低到高'}]) %>
+  <div class="ww-mats">
+    {{each materials ds}}
+    <div class="ww-mat">
+      <div class="mat-ic s{{ds.star}}"><img src="{{_meta_path}}{{ds.icon}}" onerror="whenError(this)" alt=""></div>
+      <b>{{ds.label}}</b>
+      <span>{{ds.num}}</span>
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/if}}
+{{/block}}

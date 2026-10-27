@@ -1,0 +1,52 @@
+<!--
+  模块职责：迷宫诡域概览（`%迷宫诡域`）—— 进入与撤离次数、物资价值、排名与逐张地图的撤离率
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / foot
+  生命周期：静态模板
+  注意事项：三处判据。一是排名有两种形态（百分数或「TOP N」），**两种都由视图算成整句**
+            （见 views/zzz/zenkov.ts 的 `zenkovRank`），此处只印、不再判是哪一种。
+            二是撤离率同样由视图排好版 —— 接口给的是放大一百倍的整数，照印会变成「8900%」。
+            三是 `season` 是一个对象（`name` / `level` / `refresh`），整项印出来是
+            `[object Object]`，故逐字段取。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+{{set se = season || {} }}
+
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'ZENKOV MAZE',
+  title: title,
+  sub: (se.name ? se.name + (se.level ? ' Lv.' + se.level : '') : '')
+    + (se.refresh ? '　' + se.refresh + '后刷新' : ''),
+  who: {uid: uid, name: nickname || '绳匠'}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<div class="p-stats" style="--n:4">
+  <div class="st"><b>{{enter}}</b><span>进入次数</span></div>
+  <div class="st"><b>{{leave}}</b><span>撤离次数</span></div>
+  <div class="st hi"><b>{{value}}</b><span>物资价值</span></div>
+  <div class="st"><b>{{rank}}</b><span>最好排名</span></div>
+</div>
+
+{{if weekRefresh}}
+<div class="notes"><p>距本周刷新 <b>{{weekRefresh}}</b></p></div>
+{{/if}}
+
+{{if maps.length}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '地图记录', note: maps.length + ' 张'}]) %>
+  <div class="row">
+    {{each maps one}}
+    <div class="row-h">
+      <b>{{one.name || '未知地图'}}</b>
+      <span class="rt">进入 {{one.enter}}　撤离 {{one.leave}}{{if one.percent}}　{{one.percent}}{{/if}}</span>
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/if}}
+
+<% include(_tpl_path + '/skin/foot.html', [{
+  tips: [_hash + '迷宫诡域战绩 查看逐场明细']
+}]) %>
+{{/block}}

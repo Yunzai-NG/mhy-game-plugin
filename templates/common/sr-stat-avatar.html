@@ -1,0 +1,28 @@
+<!--
+  模块职责：星铁战绩图上的一个角色格 —— 把接口给的上场角色与面板库那份并成一张卡，交给 common/avatar-card 画
+  依赖方向：include common/avatar-card.html；被 common/sr-challenge.html 与 sr/peak-challenge.html include
+  生命周期：静态片段
+  注意事项：入参形态不可改：`$data[0]` 是接口给的那个上场角色、`$data[1]` 带面板库那份（`av`）与三个根，
+            三张战绩图都按这个形态传。**`_tpl_path` 必须由调用方传进来**：带第二参 include 时子模板不继承父数据，
+            漏了则里层那次 include 拼出 `undefined/avatar-card.html`、整格空白。
+            面板库里没有这个角色（或整个库为空）时，头像与等级退回接口给的，天赋与装备两行换成一句提示。
+            `cardType` 由调用方按一队人数挑（与 gs/abyss 同一张表），缺省小卡。
+-->
+{{set a = $data[0] || {} }}
+{{set {av, mysFailed, _res_path, _meta_path, _tpl_path, cardType} = $data[1] || {} }}
+{{set has = !mysFailed && av }}
+<% include(_tpl_path + '/avatar-card.html', [{
+  face: has ? av.face : (a.icon || ''),
+  preview: has ? (av.preview || '') : '',
+  star: has ? av.star : a.rarity,
+  cons: has ? av.cons : (a.rank || 0),
+  level: has ? av.level : (a.level || 80),
+  abbr: has ? av.abbr : (a.name || ''),
+  name: has ? av.name : (a.name || ''),
+  elemIcon: a.elemIcon || '',
+  tals: has ? av.tals : [],
+  xtals: has ? av.xtals : [],
+  weapon: has && av.weapon ? av.weapon : {},
+  artisSet: has && av.artisSet ? av.artisSet : {},
+  noData: has ? '' : '暂无面板数据'
+}, {_res_path, _meta_path, cardType: cardType || 'mini'}]) %>

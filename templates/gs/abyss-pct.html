@@ -1,0 +1,40 @@
+<!--
+  模块职责：角色使用率（`#深渊使用率` / `#幽境危战使用率`）—— 按站方档位分组的头像墙
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head
+  生命周期：静态模板
+  注意事项：三处判据。一是 `defs` 那两行定义不可省：接口给的 `use_rate` 是「出场数 ÷ 持有该角色
+            的记录数」而非「÷ 总记录数」，少了定义这个数会被读成「多少人在用」、结论正好相反。
+            二是头像来自元数据（视图层给的是 `meta-gs/…`），故加 `_meta_path`，取错是满屏空白。
+            三是查不到头像的角色仍留在图上、只是那一格不画头像 —— 新角色上线时站方先有数据而
+            元数据还没更新，丢掉它等于让最该看的那一个消失。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'USAGE RATE',
+  title: title,
+  sub: (version ? version + '　' : '') + (updated ? '更新于 ' + updated : '') + (total ? '　' + total + ' 份记录' : '')
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<div class="notes">
+  {{each defs one}}
+  <p>{{one}}</p>
+  {{/each}}
+</div>
+
+{{each tiers tier}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: tier.label, note: tier.chars.length + ' 位'}]) %>
+  <div class="grid">
+    {{each tier.chars one}}
+    <% include(_tpl_path + '/skin/avatar.html', [{
+      face: one.face, fromMeta: true, name: one.name, mark: one.rate
+    }, {_res_path, _meta_path, _face_path, who}]) %>
+    {{/each}}
+  </div>
+</section>
+{{/each}}
+
+<% include(_tpl_path + '/skin/foot.html', [{tips: tips}]) %>
+{{/block}}

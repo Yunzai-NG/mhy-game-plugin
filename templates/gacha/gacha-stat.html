@@ -1,0 +1,97 @@
+<!--
+  模块职责：抽卡统计（`#抽卡统计`）—— 逐版本逐卡池的抽数与出货，带总览摘要
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / foot
+  生命周期：静态模板
+  注意事项：四处判据。一是物品图在元数据里要加 `_meta_path`，查不到元数据（`img` 为空）时换资源根下的
+            `gacha/imgs/no-avatar.webp`（见 `template-img-two-roots`）。二是只画四星与五星（`item.star` 为 4 或 5）——
+            三星塞进来会把每一格挤成一条。三是 `vData.from` 为空的那条是「全部版本」的汇总行，
+            此时只印版本名、不印卡池名与起止时刻。四是三套游戏的命令提示各一份，文案字句不改。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+{{set statMap = {totalNum: '抽卡总数', star5Num: '金卡', c5UpNum: 'UP角色', w5UpNum: 'UP武器', star4Num: '紫卡', avgUpNum: '平均UP抽'} }}
+{{set keyMap = {totalNum: '总抽卡', star5Num: '金卡', upNum: 'UP金卡', c4Num: '紫角色', w4Num: '紫武器'} }}
+{{set face = face || {banner: '', face: '', name: uid} }}
+{{set stat = (gacha && gacha.totalStat) || {} }}
+
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'GACHA ANALYTICS',
+  title: '抽卡统计',
+  who: {face: face.face, fromMeta: true, name: face.name, uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+{{if gacha && gacha.totalStat}}
+<div class="kv">
+  {{each statMap title key}}
+  {{if stat[key]}}
+  <div class="kv-i">
+    <b>{{stat[key]}}</b>
+    <span>{{title}}</span>
+  </div>
+  {{/if}}
+  {{/each}}
+</div>
+{{/if}}
+
+{{each gacha.versionData vData}}
+{{set stats = vData.stats || {} }}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{
+    title: vData.from ? vData.version + ' ' + vData.half : vData.version,
+    note: vData.from ? vData.name + '　' + vData.from + ' ~ ' + vData.to : ''
+  }]) %>
+  <div class="kv">
+    {{each keyMap title key}}
+    {{if stats[key] > 0}}
+    <div class="kv-i">
+      <b>{{stats[key]}}</b>
+      <span>{{title}}</span>
+    </div>
+    {{/if}}
+    {{/each}}
+  </div>
+  <div class="gi">
+    {{each vData.items ds}}
+    {{set item = gacha.itemMap[ds.id] || {} }}
+    {{if item.star === 4 || item.star === 5}}
+    <div class="gi-one {{ds.isUp ? 'up' : ''}}">
+      <div class="cr-ic r{{item.star == 4 ? 4 : 5}}" style="--av-fg:url('{{item.img ? _meta_path + item.img : _res_path + 'gacha/imgs/no-avatar.webp'}}')">
+        <span>{{ds.num}}</span>
+      </div>
+      <b>{{item.name.length > 4 ? item.abbr : item.name}}</b>
+    </div>
+    {{/if}}
+    {{/each}}
+  </div>
+</section>
+{{/each}}
+
+{{if game === 'gs'}}
+<% include(_tpl_path + '/skin/foot.html', [{
+  tips: [
+    '#角色统计 / #武器统计 角色/武器池统计',
+    '#常驻统计 / #集录统计 常驻/集录池统计',
+    '#全部统计 全部抽卡统计',
+    '#抽卡帮助 获取帮助'
+  ]
+}]) %>
+{{else if game === 'sr'}}
+<% include(_tpl_path + '/skin/foot.html', [{
+  tips: [
+    '*角色统计 / *武器统计 角色/武器池统计',
+    '*常驻统计 常驻池统计',
+    '*全部统计 全部抽卡统计',
+    '*抽卡帮助 获取帮助'
+  ]
+}]) %>
+{{else}}
+<% include(_tpl_path + '/skin/foot.html', [{
+  tips: [
+    '%角色统计 / %音擎统计 独家/音擎频段统计',
+    '%常驻统计 常规频段统计',
+    '%全部统计 全部抽卡统计'
+  ]
+}]) %>
+{{/if}}
+{{/block}}

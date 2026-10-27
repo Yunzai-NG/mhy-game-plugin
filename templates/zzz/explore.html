@@ -1,0 +1,46 @@
+<!--
+  模块职责：区域收集（`%探索`）—— 区域、子区域与逐项收集品三层
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / foot
+  生命周期：静态模板
+  注意事项：两处判据。一是图标一律是米游社的绝对地址，**一处根都不加**（加了会拼成
+            `file:///…https://…`，那一格随之空白，见 `template-img-two-roots`）。
+            二是完成度是接口给的数字，直接印并补百分号；自己再除一次会少两位。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'EXPLORATION',
+  title: title,
+  sub: '共 ' + areas.length + ' 个区域',
+  who: {name: nickname || '绳匠', uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+{{each areas area}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: area.name, note: area.hasProgress ? area.progress + '%' : ''}]) %>
+  <!-- 照官方「区域收集」页：区域总进度一条渐变条，下面逐街区一行（图标、名字、街区探索度），再列逐项收集 -->
+  {{if area.hasProgress}}<div class="zx-bar"><i style="width:{{area.progress}}%"></i><b>{{area.progress}}%</b></div>{{/if}}
+  <div class="zx-maps">
+    {{each area.maps one}}
+    <div class="zx-map {{one.progress >= 100 ? 'full' : ''}}">
+      <div class="zx-ic" {{if one.icon}}style="background-image:url('{{one.icon}}')"{{/if}}></div>
+      <div class="zx-t">
+        <b>{{one.name}}</b>
+        <span>街区探索度：<em>{{one.progress}}%</em></span>
+      </div>
+      {{if one.items.length}}
+      <div class="zx-items">
+        {{each one.items it}}
+        <span class="{{it.full ? 'full' : ''}}">{{it.name}} {{it.num}}/{{it.total}}</span>
+        {{/each}}
+      </div>
+      {{/if}}
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/each}}
+
+<% include(_tpl_path + '/skin/foot.html', [{note: '完成度取自米游社返回'}]) %>
+{{/block}}

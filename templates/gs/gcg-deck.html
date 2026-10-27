@@ -1,0 +1,59 @@
+<!--
+  模块职责：七圣召唤牌组（`#七圣卡组1`）—— 逐副的角色牌与行动牌
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head
+  生命周期：静态模板
+  注意事项：三处判据。一是卡面 `one.image` 是米游社给的绝对地址，**一处根都不加**；底框、
+            容器与数字图在插件资源里，走 `_res_path`（见 `template-img-two-roots`）。
+            二是数字图只有 0 到 8 与 10、**没有 9** —— 随插件搬入的那份资源就是这样，照录未补，
+            故血量为 9 的那张会取不到图（由 whenError 换成占位图而非碎图标记）。
+            三是费用那一格要图标与数值两张图叠放（`c.type` 与 `c.value`），少一张只是那一格缺一半。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'GENIUS INVOKATION',
+  title: '七圣召唤牌组',
+  who: {name: nickname, uid: uid, level: level ? 'Lv.' + level : ''}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+<img class="game-logo" src="{{_res_path}}gs/other/原神.png" alt="">
+
+{{each decks deck}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '角色牌', note: deck.id ? '卡组' + deck.id : ''}]) %>
+  <div class="cards">
+    {{each deck.avatars one}}
+    <div class="cd">
+      <img src="{{one.image}}" onerror="whenError(this)" alt="">
+      <img class="cd-frame" src="{{_res_path}}gs/deck/边框.png" alt="">
+      <div class="cd-hp">
+        <img src="{{_res_path}}gs/deck/容器.png" alt="">
+        <img src="{{_res_path}}gs/deck/{{one.hp}}.png" onerror="whenError(this)" alt="">
+      </div>
+    </div>
+    {{/each}}
+  </div>
+</section>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '行动牌'}]) %>
+  <div class="cards">
+    {{each deck.actions one}}
+    <div class="cd">
+      <img src="{{one.image}}" onerror="whenError(this)" alt="">
+      <img class="cd-frame" src="{{_res_path}}gs/deck/边框.png" alt="">
+      <div class="cd-cost">
+        {{each one.cost c}}
+        <span>
+          <img src="{{_res_path}}gs/deck/{{c.type}}.png" onerror="whenError(this)" alt="">
+          <img src="{{_res_path}}gs/deck/{{c.value}}.png" onerror="whenError(this)" alt="">
+        </span>
+        {{/each}}
+      </div>
+      {{if one.num}}<em>{{one.num}}</em>{{/if}}
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/each}}
+{{/block}}

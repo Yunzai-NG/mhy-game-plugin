@@ -1,0 +1,55 @@
+<!--
+  模块职责：套装图鉴（`#追忆之注连`）—— 套装图、逐件数的效果说明与散件列表
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head
+  生命周期：静态模板
+  注意事项：三处判据。一是套装图与散件图都在元数据里，要 `_meta_path`（见 `template-img-two-roots`）。
+            二是效果说明里带 `<nobr>` 一类标签，走原样输出 —— 转义输出会把标签印成文字。
+            三是散件列表整块可缺（绝区零的驱动盘不分散件），缺时不画而非留一排空格子。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'ARTIFACT SET',
+  title: name,
+  sub: kind
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<section class="p-sec">
+  <div class="wk-hero icon">
+    <div class="wk-pic">
+      <img src="{{_meta_path}}{{mainImg}}" onerror="whenError(this)" alt="">
+    </div>
+    <div class="wk-side">
+      <div class="wk-ttl">
+        <b>{{name}}</b>
+        <small>{{kind}}</small>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '套装效果'}]) %>
+  {{each effects one}}
+  <div class="wk-skill">
+    <b>{{one.piece}}</b>
+    <div>{{@one.desc}}</div>
+  </div>
+  {{/each}}
+</section>
+
+{{if pieces.length}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '散件', note: pieces.length + ' 件'}]) %>
+  <div class="mats">
+    {{each pieces one}}
+    <div class="mat">
+      <div class="mat-ic s4"><img src="{{_meta_path}}{{one.img}}" onerror="whenError(this)" alt=""></div>
+      <div class="mat-t"><b>{{one.name}}</b></div>
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/if}}
+{{/block}}

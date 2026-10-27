@@ -1,0 +1,75 @@
+<!--
+  模块职责：用户与 CK 管理（`#用户统计`）—— 总量、两个服务各自的可用/失效，与逐个 CK 的请求次数
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head
+  生命周期：静态模板
+  注意事项：四处判据。一是 `servs` 是以服务名为键的对象（`mys` / `hoyolab`），故用 each 取键、
+            键名经 `servName` 换成中文 —— 照键名印会在图上留下英文。
+            二是逐个 CK 那一片**只画前 60 个**（`uidLimit`），其余归并成一句「还有 N 个」——
+            CK 多时全画会把图拉到几千像素高。
+            三是已停用的那些印「×」而非数字，并换一档配色；条长用视图算好的 `one.pct`（相对本组最多的那条）。
+            四是下方说明要与 commands/admin.ts 的实际行为一致：CK 只供绑定者本人查询，没有公共池。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+{{set servName = {mys: '米游社', hoyolab: 'HoyoLab'} }}
+{{set uidLimit = 60}}
+{{set mysCount = (servs.mys && servs.mys.count) || {} }}
+{{set hoyoCount = (servs.hoyolab && servs.hoyolab.count) || {} }}
+
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'USER ADMIN',
+  title: '用户与 CK 统计',
+  sub: '今日已查询 ' + count.query + '　米游社 ' + (mysCount.query || 0) + ' / HoyoLab ' + (hoyoCount.query || 0)
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<div class="p-stats" style="--n:3">
+  <div class="st hi"><b>{{count.total}}</b><span>总用户量</span></div>
+  <div class="st">
+    <b>{{mysCount.total}}</b>
+    <span>米游社（{{mysCount.normal}}/{{mysCount.disable}}）</span>
+  </div>
+  <div class="st">
+    <b>{{hoyoCount.total}}</b>
+    <span>HoyoLab（{{hoyoCount.normal}}/{{hoyoCount.disable}}）</span>
+  </div>
+</div>
+
+{{each servs servData servKey}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{
+    title: servName[servKey] + '-CK列表',
+    note: '请求次数 / CK-Ltuid'
+  }]) %>
+  {{if servData.list.length > 0}}
+  <div class="ck">
+    {{each servData.list one idx}}
+    {{if idx < uidLimit}}
+    <div class="ck-i {{one.disabled ? 'over' : ''}}">
+      <span><b>{{one.disabled ? '×' : one.num}}</b>{{one.ltuid}}</span>
+      <i style="width:{{one.pct}}%"></i>
+    </div>
+    {{/if}}
+    {{/each}}
+  </div>
+  {{if servData.list.length > uidLimit}}
+  <div class="notes"><p>还有{{servData.list.length - uidLimit}}个CK记录...</p></div>
+  {{/if}}
+  {{else}}
+  <div class="u-empty"><b>暂无</b></div>
+  {{/if}}
+</section>
+{{/each}}
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '说明与常用命令'}]) %>
+  <div class="notes">
+    <p>本页面统计的用户数量为 CK（通行证 ltuid）数量</p>
+    <p>每条 CK 只用于查询绑定者本人、且该 CK 名下的 uid，不借给别人查询</p>
+    <p>请求次数只作统计，不设上限；同一 uid 当日重复查询命中缓存，不重复计次</p>
+    <p><b>{{_hash}}刷新用户缓存</b>：把误判停用的 CK 恢复为可用，保留今日用量</p>
+    <p><b>{{_hash}}重置用户缓存</b>：恢复停用的 CK，并清零今日用量计数</p>
+    <p><b>{{_hash}}删除无效用户</b>：删掉已停用的 CK 及其设备信息与签到记录</p>
+  </div>
+</section>
+{{/block}}

@@ -1,0 +1,53 @@
+<!--
+  模块职责：账号数据总览卡（`#角色卡`）—— 数据总览若干格，加一排已有角色
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / avatar
+  生命周期：静态模板
+  注意事项：四处判据。一是头像与角色图都是米游社给的完整地址，**一处根都不加**（见
+            `template-img-two-roots`）。二是 `line` 是**二维数组**（视图已按行分好组），
+            此处两层 each 摊平成一组格子，列数交给 css 折行。三是命座为 0 的不印角标 ——
+            印出来看着像「0 命」而非「没有」。四是 `star` 与 `element` 由视图折好（小写英文元素、
+            4 / 5 星）：不传 `star` 时头像格按五星垫底，整排都是金底。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'TRAVELER CARD',
+  title: '数据总览',
+  who: {
+    face: role.game_head_icon,
+    fromMeta: false,
+    name: role.nickname,
+    uid: uid
+  }
+}, {_res_path, _meta_path, _face_path, who}]) %>
+<img class="game-logo" src="{{_res_path}}gs/other/原神.png" alt="">
+<!-- 顶部名片底图 gs/role-card/bg1.jpg -->
+<div class="rc-banner"></div>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '数据总览'}]) %>
+  <div class="kv">
+    {{each line val}}
+    {{each val item}}
+    <div class="kv-i">
+      <b>{{item.num}}</b>
+      <span>{{item.lable}}</span>
+    </div>
+    {{/each}}
+    {{/each}}
+  </div>
+</section>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '已有角色', note: avatars.length + ' 位'}]) %>
+  <div class="grid">
+    {{each avatars val}}
+    <% include(_tpl_path + '/skin/avatar.html', [{
+      face: val.img, fromMeta: false, elem: val.element, star: val.star,
+      level: val.level, cons: val.actived_constellation_num > 0 ? val.actived_constellation_num : ''
+    }, {_res_path, _meta_path, size: 'sm'}]) %>
+    {{/each}}
+  </div>
+</section>
+{{/block}}

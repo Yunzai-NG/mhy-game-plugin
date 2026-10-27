@@ -1,0 +1,45 @@
+<!--
+  模块职责：达成成就数（`*成就`）—— 金银铜枚数，加逐系列的达成进度
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head
+  生命周期：静态模板
+  注意事项：三处判据。一是系列图标是米游社接口给的绝对地址，**一处根都不加**（见
+            `template-img-two-roots`）。二是「满没满」取视图给的 `full` 而非在模板里比大小 ——
+            接口的 cur / max 是字符串，直接比会把 9/10 判成已满。三是 `pct` 视图已算成数字，
+            直接填进 width 的百分号前。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'ACHIEVEMENTS',
+  title: title,
+  sub: '已达成 ' + cur + ' / ' + max + ' 个成就',
+  who: {uid: uid, name: nickname || '开拓者'}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<div class="bigline">
+  <b>{{total}}</b>
+  <span class="p-sub">枚</span>
+</div>
+
+<div class="kv">
+  <div class="kv-i"><b>{{gold}}</b><span>金</span></div>
+  <div class="kv-i"><b>{{silver}}</b><span>银</span></div>
+  <div class="kv-i"><b>{{copper}}</b><span>铜</span></div>
+</div>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '成就系列', note: list.length + ' 个'}]) %>
+  <div class="bars">
+    {{each list one}}
+    <div class="bar">
+      <div class="bar-h">
+        <span>{{one.name}}</span>
+        <b class="{{one.full ? '' : 'hi'}}">{{one.cur}} / {{one.max}}</b>
+      </div>
+      <div class="bar-t"><i style="width:{{one.pct}}%"></i></div>
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/block}}

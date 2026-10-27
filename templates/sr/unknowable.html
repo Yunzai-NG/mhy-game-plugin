@@ -1,0 +1,109 @@
+<!--
+  模块职责：不可知域（`*不可知域`）—— 三项进度与两族记录（常规、自定义）
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / avatar
+  生命周期：静态模板
+  注意事项：三处判据。一是角色、奇物与「魔法」的图**全是米游社给的绝对地址**，一处根都不加，
+            故 `fromMeta` 恒为假（见 `template-img-two-roots`）。
+            二是记录分两族（`normals` 常规、`customs` 自定义），两族同形故用同一段版式印两遍；
+            视图层已滤掉「有条目但没打完」的那些，此处不再判。
+            三是三项进度接口直接给「0%」这样的串，照印、不再补百分号。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'UNKNOWABLE DOMAIN',
+  title: title,
+  sub: period + '　开拓等级 ' + level,
+  who: {name: nickname || '开拓者', uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<div class="p-stats" style="--n:4">
+  <!-- 四项名与次序照官方「数据总览」页 -->
+  <div class="st"><b>{{progress.tree}}</b><span>思维边界</span></div>
+  <div class="st"><b>{{progress.compendium}}</b><span>仿真记录</span></div>
+  <div class="st"><b>{{progress.secrets}}</b><span>开拓秘闻</span></div>
+  <div class="st{{task.full ? ' hi' : ''}}"><b>{{task.cur}}/{{task.max}}</b><span>重整模型</span></div>
+</div>
+
+{{if empty}}
+<!-- 照官方页：没打过时进度照印，记录区只放这一句 -->
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '近3个月的最新通关记录'}]) %>
+  <div class="u-empty"><b>近期暂无挑战数据~</b></div>
+</section>
+{{/if}}
+
+{{each groups g}}
+{{if g.list.length}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: g.name, note: g.list.length + ' 条'}]) %>
+  <div class="recs-g">
+    {{each g.list one}}
+    <div class="rec-c">
+      <div class="rec-h">
+        <b>{{one.name}}</b>
+        <span class="tags">
+          {{if one.level}}<span>难度 {{one.level}}</span>{{/if}}
+          <span>进度 {{one.floor.cur}}/{{one.floor.max}}</span>
+          {{if one.rounds}}<span>额外回合 {{one.rounds}}</span>{{/if}}
+          {{if one.problems}}<span>附加题 {{one.problems}}</span>{{/if}}
+          {{if one.time}}<span>{{one.time}}</span>{{/if}}
+        </span>
+      </div>
+
+      {{if one.tendency.name}}
+      <div class="sec-r">
+        <small>演算倾向</small>
+        <div class="chips">
+          <span class="chip">
+            {{if one.tendency.icon}}<img src="{{one.tendency.icon}}" onerror="whenError(this)" alt="">{{/if}}
+            <span>{{one.tendency.name}}</span>
+          </span>
+        </div>
+      </div>
+      {{/if}}
+
+      {{if one.avatars.length}}
+      <div class="sec-r">
+        <small>阵容</small>
+        <!-- 与忘却之庭同一张角色卡 -->
+        <div class="mcs">
+          {{each one.avatars a}}
+          <% include(_tpl_path + '/sr-stat-avatar.html', [a, {av: (avatars || {})[a.id], mysFailed: false, _res_path, _meta_path, _tpl_path}]) %>
+          {{/each}}
+        </div>
+      </div>
+      {{/if}}
+
+      {{if one.magics.length}}
+      <div class="sec-r">
+        <small>魔法</small>
+        <div class="chips">
+          {{each one.magics m}}
+          <span class="chip q{{m.rank}}">
+            {{if m.icon}}<img src="{{m.icon}}" onerror="whenError(this)" alt="">{{/if}}
+            <span>{{m.name}}</span>
+          </span>
+          {{/each}}
+        </div>
+      </div>
+      {{/if}}
+
+      {{if one.miracles.length}}
+      <div class="sec-r">
+        <small>奇物</small>
+        <div class="ics">
+          {{each one.miracles m}}
+          <div class="ic q{{m.rank}}"><img src="{{m.icon}}" title="{{m.name}}" onerror="whenError(this)" alt=""></div>
+          {{/each}}
+        </div>
+      </div>
+      {{/if}}
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/if}}
+{{/each}}
+{{/block}}

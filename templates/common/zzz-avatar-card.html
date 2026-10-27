@@ -1,0 +1,29 @@
+<!--
+  模块职责：绝区零战绩图上的一张代理人卡 —— 把 ZzzAvatarCardView 换成通用卡的形态，交给 common/avatar-card 画
+  依赖方向：include common/avatar-card.html；被 common/zzz-team.html 与 zzz/garden.html include
+  生命周期：静态片段
+  注意事项：入参不动（`$data[0]` 是 ZzzAvatarCardView、`$data[1]` 带三个根与 cardType），三族战绩图加苗圃共四处调用点。
+            **`_tpl_path` 必须由调用方传进来**：带第二参 include 时子模板不继承父数据，漏了则拼出 `undefined/avatar-card.html`、整格空白。
+            六个技能交给通用卡的 `t6` 档排成两行三格；`tals` 为空（面板库里没这位、或技能全为 0）时改印提示而非一排 0。
+            音擎图取不到时给空串，通用卡据此只画稀有度底、不画破图。下面那段 JS 里**不能写 `Boolean` 等全局名**
+            （art-template 把它解析成 `$data.Boolean` 即 undefined，报 `undefined is not a function`）。
+-->
+{{set c = $data[0] || false }}
+{{set {_res_path, _meta_path, _tpl_path, cardType} = $data[1] || {} }}
+{{if c}}
+{{set sets = c.sets || [] }}
+<% include(_tpl_path + '/avatar-card.html', [{
+  face: c.face,
+  gacha: c.gacha,
+  star: c.star,
+  cons: c.cons,
+  level: c.level,
+  abbr: c.abbr,
+  name: c.name,
+  tals: c.tals || [],
+  xtals: [],
+  weapon: c.weapon ? { star: c.weapon.star, img: c.weapon.img, affix: c.weapon.affix } : {},
+  artisSet: { imgs: sets.map(function (s) { return s.img }).filter(function (img) { return img }) },
+  noTalent: '暂无面板数据'
+}, {_res_path, _meta_path, cardType: cardType || 'mini'}]) %>
+{{/if}}

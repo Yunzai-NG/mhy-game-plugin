@@ -1,0 +1,15 @@
+<!--
+  模块职责：统一页脚 —— 左侧命令提示若干条，右侧数据说明一句
+  依赖方向：被各主模板 include，自己不引别的片段
+  生命周期：静态片段
+  注意事项：两侧都可空。`tips` 给的是已经拼好记号的整句（视图层用 `_hash` 拼），
+            此处不再补记号 —— 补了绝区零会印成 `%%更新面板`。
+-->
+{{set f = $data[0] || {} }}
+
+{{if (f.tips && f.tips.length) || f.note}}
+<footer class="p-foot">
+  <span class="tips">{{each f.tips one}}{{if one}}<span>{{one}}</span>{{/if}}{{/each}}</span>
+  {{if f.note}}<span>{{f.note}}</span>{{/if}}
+</footer>
+{{/if}}

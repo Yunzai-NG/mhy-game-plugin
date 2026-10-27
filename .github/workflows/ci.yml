@@ -1,0 +1,78 @@
+# 米哈游游戏插件 CI
+#
+# 与框架仓库的 CI 相比多出三步：
+#
+# 1. 检出框架仓库。`@yunzai-ng/core` 与 `types` 是 peerDependencies，且 `.npmrc` 中
+#    `auto-install-peers=false`，因此 `pnpm install` 不会安装它们。
+# 2. 构建框架。`tsc -b` 读的是框架的 `dist/*.d.ts`，仅检出源码不足以编译本插件。
+# 3. 把框架包链进 node_modules，否则 build 会报 `Cannot find module "@yunzai-ng/core"`。
+#
+# 另外覆盖 registry：仓库内 `.npmrc` 指向 npmmirror（国内网络环境），
+# 而 GitHub 的 runner 位于境外，走官方源更快且更稳。
+#
+# **不访问米游社，也不出图。** 全部用例均为纯函数级：DS 签名、Cookie 解析、设备指纹、
+# 区服判定与视图数据整形。templates.test.ts 只读 templates/ 下的文件做静态体检
+# （截图锚点、注释中的模板语句、include 目标是否存在），不引 art-template ——
+# 那是渲染器插件的依赖。因此本作业无须 Chromium，也无须任何账号凭据。
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: 检出本插件
+        uses: actions/checkout@v4
+        with:
+          path: plugin
+
+      - name: 检出框架
+        uses: actions/checkout@v4
+        with:
+          repository: Yunzai-NG/yunzai-ng
+          path: yunzai-ng
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - name: 安装 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.11.0
+          registry-url: https://registry.npmjs.org
+
+      - name: 构建框架
+        working-directory: yunzai-ng
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
+
+      - name: 安装本插件依赖
+        working-directory: plugin
+        run: pnpm install --frozen-lockfile
+
+      - name: 链接框架包
+        working-directory: plugin
+        run: |
+          mkdir -p node_modules/@yunzai-ng
+          for p in core types jsx; do
+            ln -sfn "$GITHUB_WORKSPACE/yunzai-ng/packages/$p" "node_modules/@yunzai-ng/$p"
+          done
+
+      - name: 校验
+        working-directory: plugin
+        run: pnpm run verify

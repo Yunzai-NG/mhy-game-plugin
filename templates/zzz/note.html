@@ -1,0 +1,46 @@
+<!--
+  模块职责：绝区零实时便笺（`%体力`）—— 电量、会员卡，每日任务、周期任务与随便观经营三块
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head
+  生命周期：静态模板
+  注意事项：块与行都由视图定（views/zzz/note.ts），模板只按 `groups` 逐块画；`member` 可缺。值为「-」的行
+            是接口没给上限的那项，不画说明。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'REAL TIME BATTERY',
+  title: '实时便笺',
+  sub: day,
+  who: {uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<div class="bigline zn-energy {{energy.hot ? 'hot' : ''}}">
+  <img class="zn-ic" src="{{_res_path}}{{energy.icon}}" alt="">
+  <b>{{energy.value}}</b>
+  <span class="p-sub">{{energy.desc}}</span>
+</div>
+
+{{if member}}
+<div class="nts bare zn-states zn-member">
+  <div class="nt {{member.hot ? 'hot' : ''}}">
+    <div class="nt-t"><b>{{member.label}}</b><span>{{member.desc}}</span></div>
+    <div class="nt-v {{member.text ? 'txt' : ''}}">{{member.value}}</div>
+  </div>
+</div>
+{{/if}}
+
+{{each groups g}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: g.title, note: g.note}]) %>
+  <div class="nts bare zn-states">
+    {{each g.rows one}}
+    <div class="nt {{one.hot ? 'hot' : ''}}">
+      <div class="nt-t"><b>{{one.label}}</b>{{if one.desc}}<span>{{one.desc}}</span>{{/if}}</div>
+      <div class="nt-v {{one.text ? 'txt' : ''}}">{{one.value}}</div>
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/each}}
+{{/block}}

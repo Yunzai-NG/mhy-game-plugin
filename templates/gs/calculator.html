@@ -1,0 +1,144 @@
+<!--
+  模块职责：角色养成计算（`#雷神养成`）—— 目标等级、技能等级与逐项材料缺口
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head
+  生命周期：静态模板
+  注意事项：一是图分三个根：角色头像 `role.face` 在元数据里（按 `meta-` 前缀判），武器、技能与材料图标是
+            米游社绝对地址、不加根（见 `template-img-two-roots`）；头像不可写成 `_res_path` + `/meta-gs/...`，
+            元数据在数据目录而非插件资源下。二是材料格印**缺口**（`lack`）而非需求量，已够的印对勾 ——
+            互换会让使用者按错的数去刷。三是全部练满时只印「毕业了，下一位 ！」，不画三块材料。
+            四是技能行的 `max` 是该技能上限、`current` / `target` 是当前与目标。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'ASCENSION PLAN',
+  title: '角色养成计算',
+  sub: role.name + '　Lv.' + role.level + ' → Lv.' + role.target,
+  who: {uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<section class="p-sec calc">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '目标'}]) %>
+  <div class="acs">
+    <div class="ac">
+      <div class="ac-top">
+        <% include(_tpl_path + '/skin/avatar.html', [{
+          face: role.face, star: role.star, cons: role.cons > 0 ? role.cons : '', size: 'sm'
+        }, {_res_path, _meta_path, size: 'sm'}]) %>
+        <div class="ac-txt">
+          <b>{{role.name}}</b>
+          <span>Lv{{role.level}} → Lv{{role.target}}</span>
+        </div>
+      </div>
+    </div>
+
+    {{if equip}}
+    <div class="ac">
+      <div class="ac-top">
+        <div class="cr-ic r{{equip.star == 4 ? 4 : (equip.star == 3 ? 3 : 5)}}" style="--av-fg:url('{{equip.icon}}')">
+        </div>
+        <div class="ac-txt">
+          <b>{{equip.name}}</b>
+          <span>Lv{{equip.level}} → Lv{{equip.target}}</span>
+        </div>
+      </div>
+    </div>
+    {{/if}}
+  </div>
+
+  {{if skills.length}}
+  <div class="tbl calc" style="--cols:28px minmax(0,1fr) 54px 54px">
+    <div class="tr th">
+      <span></span><span>技能</span><b>当前</b><b>目标</b>
+    </div>
+    {{each skills skill}}
+    <div class="tr">
+      <span><img class="kv-ic" src="{{skill.icon}}" onerror="whenError(this)" alt=""></span>
+      <span>{{skill.name}}</span>
+      <b>{{skill.current}}</b>
+      <b>{{skill.target}}</b>
+    </div>
+    {{/each}}
+  </div>
+  {{/if}}
+</section>
+
+{{if done}}
+<div class="notes"><p>毕业了，下一位 ！</p></div>
+{{else}}
+
+{{if avatarConsume.length > 0}}
+<section class="p-sec calc">
+  <% include(_tpl_path + '/skin/sec-head.html', [{
+    title: '角色消耗',
+    note: role.name + '　Lv.' + role.level + ' → Lv.' + role.target
+  }]) %>
+  <div class="mats calc">
+    {{each avatarConsume one}}
+    <div class="mat">
+      <div class="mat-ic"><img src="{{one.icon}}" onerror="whenError(this)" alt=""></div>
+      <div class="mat-t">
+        <b>{{one.name}}</b>
+        <span>x {{one.num}}</span>
+      </div>
+      {{if one.lack && one.lack !== '0'}}
+      <i class="mat-l">缺 {{one.lack}}</i>
+      {{else}}
+      <i class="mat-l ok">✅</i>
+      {{/if}}
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/if}}
+
+{{if skillConsume.length > 0}}
+<section class="p-sec calc">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: skillTitle}]) %>
+  <div class="mats calc">
+    {{each skillConsume one}}
+    <div class="mat">
+      <div class="mat-ic"><img src="{{one.icon}}" onerror="whenError(this)" alt=""></div>
+      <div class="mat-t">
+        <b>{{one.name}}</b>
+        <span>x {{one.num}}</span>
+      </div>
+      {{if one.lack && one.lack !== '0'}}
+      <i class="mat-l">缺 {{one.lack}}</i>
+      {{else}}
+      <i class="mat-l ok">✅</i>
+      {{/if}}
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/if}}
+
+{{if equipConsume.length > 0 && equip}}
+<section class="p-sec calc">
+  <% include(_tpl_path + '/skin/sec-head.html', [{
+    title: '武器消耗',
+    note: equip.name + '　Lv.' + equip.level + ' → Lv.' + equip.target
+  }]) %>
+  <div class="mats calc">
+    {{each equipConsume one}}
+    <div class="mat">
+      <div class="mat-ic"><img src="{{one.icon}}" onerror="whenError(this)" alt=""></div>
+      <div class="mat-t">
+        <b>{{one.name}}</b>
+        <span>x {{one.num}}</span>
+      </div>
+      {{if one.lack && one.lack !== '0'}}
+      <i class="mat-l">缺 {{one.lack}}</i>
+      {{else}}
+      <i class="mat-l ok">✅</i>
+      {{/if}}
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/if}}
+
+{{/if}}
+{{/block}}

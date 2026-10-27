@@ -1,0 +1,12 @@
+<!--
+  模块职责：末日幻影（`*末日幻影`）—— 薄壳，图身与混沌回忆、虚构叙事共用
+  依赖方向：extend skinLayout，include common/sr-challenge.html
+  生命周期：静态模板
+  注意事项：三张薄壳的差别只在视图给的 `kind`。末日幻影那一路 `kind === 'boss'`，图身据此
+            把「快速通关」挪到关卡名后、且不印轮次 —— 改这里的 kind 会让那两处同时走错。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/sr-challenge.html') %>
+{{/block}}

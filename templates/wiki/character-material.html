@@ -1,0 +1,65 @@
+<!--
+  模块职责：角色突破材料（`#雷神材料`）—— 立绘头图、基础属性与逐项突破材料
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head
+  生命周期：静态模板
+  注意事项：三处判据。一是本张与 `character-wiki` 同源而更简（不画持有率与常用装备），
+            属性那一段读的是**一维** `attr` 而不是 `attr.attr` —— 两张的视图层形态本就不同。
+            二是立绘与材料图标都在元数据里，要 `_meta_path`（见 `template-img-two-roots`）。
+            三是原神印命之座与生日、星铁不印，判错只是少印两行、不报错。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'ASCENSION MATERIAL',
+  title: data.name,
+  sub: data.title || ''
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<section class="p-sec">
+  <div class="wk-hero">
+    <div class="wk-pic">
+      <img src="{{_meta_path}}{{imgs.splash}}" onerror="whenError(this)" alt="">
+    </div>
+    <div class="wk-side">
+      <div class="wk-desc">{{@data.desc}}</div>
+      <ul class="wk-attrs">
+        <li><span>{{game == 'gs' ? '武器类型' : '光锥类型'}}</span><b>{{data.weaponTypeName || data.weapon}}</b></li>
+        {{if game == 'gs'}}
+        <li><span>命之座</span><b>{{data.astro}}</b></li>
+        <li><span>生日</span><b>{{data.birthday}}</b></li>
+        {{/if}}
+        <li><span>归属</span><b>{{data.allegiance}}</b></li>
+        <li><span>中文CV</span><b>{{data.cncv}}</b></li>
+        <li><span>日文CV</span><b>{{data.jpcv}}</b></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: (game == 'gs' ? 100 : 80) + '级基础属性'}]) %>
+  <ul class="wk-attrs">
+    {{each attr ds}}
+    <li><span>{{ds.title}}</span><b>{{ds.value}}</b></li>
+    {{/each}}
+  </ul>
+</section>
+
+{{if materials.length}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '突破与升级材料'}]) %>
+  <div class="mats">
+    {{each materials ds}}
+    <div class="mat">
+      <div class="mat-ic s{{ds.star}}"><img src="{{_meta_path}}{{ds.icon}}" onerror="whenError(this)" alt=""></div>
+      <div class="mat-t">
+        <b>{{ds.label}}</b>
+        <span>x {{ds.num}}</span>
+      </div>
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/if}}
+{{/block}}

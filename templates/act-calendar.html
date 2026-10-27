@@ -1,0 +1,132 @@
+<!--
+  模块职责：活动日历（`#活动日历`）—— 三游戏共用：卡池一节，活动若干节
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head 与 common/act-icon
+  生命周期：静态模板
+  注意事项：三处判据。一是图的根逐个判：头像与绝区零的属性角标以 `meta-` 开头走 `_meta_path`，绝区零调频格子退用接口图时是 https 地址、不加根，
+            其余（原神元素角标、奖励、类型图）走 `_res_path`（见 `template-img-two-roots`）；
+            同一格里两种根都有，不能整格写死一个。二是活动行的奖励与右侧两栏**空着也要占位**：
+            按有无内容省掉那一格，各行的数字就对不齐。三是哪块出不出现、印哪句全由视图定
+            （views/act-calendar.ts），模板只画；空数组即整块不画。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'EVENT CALENDAR',
+  title: '活动日历',
+  sub: day,
+  who: {uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+{{if groups.length}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: poolTitle}]) %>
+  {{each groups g}}
+  {{if g.title}}<div class="ec-gt">{{g.title}}</div>{{/if}}
+  <div class="ec-pools">
+    {{each g.pools p}}
+    <div class="ec-pool {{p.status}}">
+      <div class="ec-pool-l">
+        <div class="ec-pool-h">
+          {{if p.version}}<span class="ec-ver">{{p.version}}</span>{{/if}}
+          <b>{{p.name}}</b>
+          {{if p.time}}<span class="ec-time {{p.hot ? 'hot' : ''}}">{{if p.timeIcon}}<% include(_tpl_path + '/act-icon.html', [p.timeIcon, game]) %>{{/if}}<span>{{p.time}}</span></span>{{/if}}
+        </div>
+        <div class="ec-faces">
+          {{each p.faces f}}
+          {{set src = f.face ? (('' + f.face).indexOf('https://') === 0 ? '' : (('' + f.face).indexOf('meta-') === 0 ? _meta_path : _res_path)) + f.face : '' }}
+          {{set wp = f.kind === 'weapon' && src }}
+          <div class="av sm r{{f.star == 4 ? 4 : (f.star == 3 ? 3 : 5)}} {{f.elem ? 'e-' + f.elem : 'e-none'}} {{wp ? 'ec-wp' : ''}}">
+            <div class="av-img" {{if wp}}style="--av-fg:url('{{src}}')"{{/if}}>
+              {{if wp}}
+              {{else if src}}
+              <img src="{{src}}" onerror="whenError(this)" alt="">
+              {{else}}
+              <span>{{f.name ? f.name.slice(0, 1) : '?'}}</span>
+              {{/if}}
+              {{if f.rank}}<s class="av-rate rate-{{f.rank}}">{{f.rank}}</s>{{/if}}
+              {{each f.badges bd}}
+              <img class="ec-bd {{bd.at}}" src="{{('' + bd.icon).indexOf('meta-') === 0 ? _meta_path : _res_path}}{{bd.icon}}" alt="">
+              {{/each}}
+            </div>
+          </div>
+          {{/each}}
+        </div>
+        {{if p.note}}<div class="ec-pool-n">{{p.note}}</div>{{/if}}
+      </div>
+      {{if p.state}}<div class="ec-pool-s">{{p.state}}</div>{{/if}}
+      {{if p.bar}}<i class="ec-bar {{p.bar.tone}}" style="width:{{p.bar.pct}}%"></i>{{/if}}
+    </div>
+    {{/each}}
+  </div>
+  {{/each}}
+</section>
+{{/if}}
+
+{{each sections sec}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: sec.title, note: sec.note}]) %>
+  {{each sec.blocks bk}}
+  <div class="ec-rows">
+    {{each bk.rows r}}
+    <div class="ec-row {{r.status}} {{r.dim ? 'dim' : ''}}">
+      <div class="ec-row-l">
+        <div class="ec-name">
+          {{if r.icon}}<img class="ec-type" src="{{_res_path}}{{r.icon}}" alt="">{{/if}}
+          <b>{{r.name}}</b>
+          {{if r.check}}<i class="ec-check sm"></i>{{/if}}
+        </div>
+        {{if r.time}}
+        <span class="ec-time {{r.hot ? 'hot' : ''}}">{{if r.timeIcon}}<% include(_tpl_path + '/act-icon.html', [r.timeIcon, game]) %>{{/if}}<span>{{r.time}}</span></span>
+        {{/if}}
+      </div>
+      <div class="ec-reward">
+        {{if r.rewardIcon}}
+        <img src="{{('' + r.rewardIcon).indexOf('meta-') === 0 ? _meta_path : _res_path}}{{r.rewardIcon}}" alt="">
+        {{else if r.rewardName}}
+        <em>{{r.rewardName}}</em>
+        {{/if}}
+        {{if r.reward}}<span>{{r.reward}}</span>{{/if}}
+      </div>
+      <div class="ec-right">
+        {{if r.done}}
+        <i class="ec-check"></i>
+        {{else}}
+        {{if r.value}}
+        <div class="ec-v {{r.light ? 'light' : ''}} {{r.text ? 'txt' : ''}}">
+          {{if r.pre === 'star'}}<% include(_tpl_path + '/act-icon.html', ['star', game]) %>{{else if r.pre}}<img src="{{_res_path}}{{r.pre}}" alt="">{{/if}}<b>{{r.value}}</b>{{if r.total}}<small>{{r.total}}</small>{{/if}}{{if r.post === 'star'}}<% include(_tpl_path + '/act-icon.html', ['star', game]) %>{{else if r.post}}<img src="{{_res_path}}{{r.post}}" alt="">{{/if}}
+        </div>
+        {{/if}}
+        {{if r.desc}}<span class="ec-desc">{{r.desc}}</span>{{/if}}
+        {{/if}}
+      </div>
+      {{if r.bar}}<i class="ec-bar {{r.bar.tone}}" style="width:{{r.bar.pct}}%"></i>{{/if}}
+      {{if r.sub}}
+      <div class="ec-sub">
+        <span>{{r.sub.label}}</span>
+        <span class="ec-time {{r.sub.hot ? 'hot' : ''}}"><% include(_tpl_path + '/act-icon.html', ['clock', game]) %><span>{{r.sub.time}}</span></span>
+        <span class="ec-sub-v"><img src="{{_res_path}}{{r.sub.icon}}" alt=""><b>{{r.sub.value}}</b>{{r.sub.total}}</span>
+      </div>
+      {{/if}}
+      {{if r.items.length}}
+      <div class="ec-items">
+        {{each r.items it}}
+        <div class="ec-it">
+          <i class="ec-it-ic s{{it.star || 1}}">
+            {{if it.icon}}<img src="{{('' + it.icon).indexOf('meta-') === 0 ? _meta_path : _res_path}}{{it.icon}}" alt="">{{/if}}
+            {{if it.num}}<em>{{it.num}}</em>{{/if}}
+          </i>
+          <span>{{it.name}}</span>
+        </div>
+        {{/each}}
+      </div>
+      {{/if}}
+    </div>
+    {{/each}}
+  </div>
+  {{/each}}
+</section>
+{{/each}}
+
+<div class="p-sub">*数据以游戏内为准，此处仅供参考</div>
+{{/block}}

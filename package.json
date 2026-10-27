@@ -1,0 +1,43 @@
+{
+  "name": "@yunzai-ng/mhy-game-plugin",
+  "version": "1.0.0",
+  "description": "米哈游游戏插件：原神 / 星穹铁道 / 绝区零，米游社接口、Cookie 池与设备管理",
+  "type": "module",
+  "license": "AGPL-3.0-or-later",
+  "author": "Yunzai-NG",
+  "private": true,
+  "main": "./dist/index.js",
+  "yunzai": {
+    "name": "mhy-game"
+  },
+  "homepage": "https://github.com/Yunzai-NG/mhy-game-plugin",
+  "engines": {
+    "node": ">=20.11.0"
+  },
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "build": "tsc -b",
+    "build:clean": "tsc -b --clean",
+    "typecheck:test": "tsc -p tsconfig.test.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "verify": "pnpm run build && pnpm run typecheck:test && pnpm run lint && pnpm run test"
+  },
+  "peerDependencies": {
+    "@yunzai-ng/core": ">=0.7.0",
+    "@yunzai-ng/types": ">=0.4.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "@types/node": "^22.10.5",
+    "@typescript-eslint/eslint-plugin": "^8.20.0",
+    "@typescript-eslint/parser": "^8.20.0",
+    "art-template": "4.13.2",
+    "eslint": "^9.18.0",
+    "eslint-plugin-jsdoc": "^50.6.1",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}

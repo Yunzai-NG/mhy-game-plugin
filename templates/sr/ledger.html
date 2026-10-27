@@ -1,0 +1,18 @@
+<!--
+  模块职责：开拓月历（`*札记`）—— 页头加 common/ledger-body 那段正文
+  依赖方向：extend skinLayout，include common/skin/head 与 common/ledger-body
+  生命周期：静态模板
+  注意事项：正文与原神札记共用一段（见 common/ledger-body 的文件头），这里只管页头。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'TRAILBLAZE CALENDAR',
+  title: '开拓月历·' + day,
+  sub: nowDay + '　' + srday,
+  who: {uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<% include(_tpl_path + '/ledger-body.html', [$data, {_res_path, _meta_path, _tpl_path}]) %>
+{{/block}}

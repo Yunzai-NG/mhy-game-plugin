@@ -1,0 +1,89 @@
+<!--
+  模块职责：幽境危战（`#幽境危战`）—— 最佳纪录、逐场卡片（对手名、用时、上场队伍、两项亮眼记录、对手立绘与机制）
+  依赖方向：extend skinLayout，include common/skin 下的 head / foot 与 common/avatar-card.html；装饰图在 gs/hard/
+  生命周期：静态模板
+  注意事项：三处判据。一是玩家头像与对手图**是米游社给的绝对地址**，一处根都不能加（见 `template-img-two-roots`）；
+            角色卡与亮眼记录头像取自元数据，按 `meta-` 前缀判；奖牌在插件资源里（`medal`，路径由视图给）。
+            二是卡宽按队伍人数取（`cardTypes`），人数与表对不上时回落 `mini` —— 回落掉只是卡变窄。
+            三是 `role.nickname` 整项可缺（没绑 CK 时接口不给），缺时页头右侧只印 uid。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+{{set cardTypes = {1: ['wide wide2'], 2: ['wide', 'wide'], 3: ['wide', 'mini', 'mini'], 4: ['mini', 'mini', 'mini', 'mini']} }}
+
+<div class="hc">
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'HARD CHALLENGE',
+  title: '幽境危战',
+  sub: begin || end ? '统计周期：' + begin + (begin && end ? ' ~ ' : '') + end : '',
+  who: {
+    face: role.game_head_icon || role.AvatarUrl,
+    fromMeta: false,
+    name: role.nickname,
+    uid: uid,
+    level: role.level ? 'Lv.' + role.level : ''
+  }
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<p class="hc-mode"><span>单人模式</span></p>
+
+<!-- 最佳纪录一条：左名目，右奖牌 + 难度 + 用时 -->
+<div class="hc-best">
+  <span>最佳纪录</span>
+  <div class="hc-best-r">
+    {{if medal}}<img class="hc-medal" src="{{_res_path}}{{medal}}" alt="">{{/if}}
+    {{if difficultyName}}<small>{{difficultyName}}</small>{{/if}}
+    <b>{{bestTime || '-'}}</b>
+  </div>
+</div>
+
+{{each challenge one}}
+<!-- 一场一张卡：对手名、用时条、队伍、两项亮眼记录，对手立绘垫在右下；机制说明另起一块 -->
+<section class="hc-card">
+  <h4>{{one.name || '挑战'}}</h4>
+  {{if one.time}}<p class="hc-time"><span>战斗用时</span><b>{{one.time}}</b></p>{{/if}}
+  <div class="mcs hc-team">
+    {{each one.teams card idx}}
+    <% include(_tpl_path + '/avatar-card.html', [card, {
+      _res_path, _meta_path, _tpl_path,
+      cardType: (cardTypes[one.teams.length] ? cardTypes[one.teams.length][idx] : 'mini')
+    }]) %>
+    {{/each}}
+  </div>
+  {{if one.best.length}}
+  <div class="hc-bests">
+    {{each one.best b}}
+    <div class="hc-pill">
+      <i {{if b.icon}}style="background-image:url('{{b.icon.indexOf('meta-') === 0 ? _meta_path : ''}}{{b.icon}}')"{{/if}}></i>
+      <span>{{b.title}}</span>
+      <b>{{b.dps}}</b>
+    </div>
+    {{/each}}
+  </div>
+  {{/if}}
+  <div class="hc-boss">
+    {{if one.monsterIcon}}<img src="{{one.monsterIcon}}" onerror="this.remove()" alt="">{{/if}}
+    {{if one.monsterName && one.name.indexOf(one.monsterName) < 0}}<small>{{one.monsterName}}</small>{{/if}}
+    {{if one.monsterLevel > 0}}<span>Lv.{{one.monsterLevel}}</span>{{/if}}
+  </div>
+  {{if one.desc.length}}
+  <!-- 对手机制：着色段由视图按白名单拆好（只收 # 加十六进制），这里转义输出 -->
+  <ul class="hc-desc">
+    {{each one.desc line}}
+    <li>{{each line part}}{{if part.color}}<span style="color:{{part.color}}">{{part.text}}</span>{{else}}{{part.text}}{{/if}}{{/each}}</li>
+    {{/each}}
+  </ul>
+  {{/if}}
+</section>
+{{/each}}
+
+<% include(_tpl_path + '/skin/foot.html', [{
+  tips: [
+    '角色装备与圣遗物为当前最新状态，不是当时上场的配装',
+    '组队模式按你名下的面板认人：队友带的同名角色也会画成你那份'
+  ],
+  note: '数据来自米游社战绩'
+}]) %>
+</div>
+{{/block}}

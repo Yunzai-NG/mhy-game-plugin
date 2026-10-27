@@ -1,0 +1,121 @@
+<!--
+  模块职责：天赋 / 命座详情（`#雷神天赋`、`#雷神命座`）—— 头图、基础数据与逐个天赋的倍率表
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head 与 common/talent-detail.html
+  生命周期：静态模板
+  注意事项：一是天赋键随游戏与命途变（原神三个、星铁九个、绝区零五个分类），`minLv` / `maxLv` 逐键不同
+            （原神 6~13；星铁普攻与忆灵 1~7、其余 6~12；绝区零 1~12），判错只是块不画或列数不对。
+            二是 `line` 为空即元数据没有基础属性，只写「暂无详细数据」—— 判有没有而非 `num !== 'NaN'`；
+            星铁分两组（`line.ret` 基础 + `line.growret` 行迹加成），另两个游戏是一维数组。
+            三是说明文字原样输出（段落里嵌着标签）。四是 `_tpl_path` 须显式传给 `talent-detail.html`：
+            带第二参 include 时子模板不继承父数据。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+{{set gsKeys = ['a', 'e', 'q'] }}
+{{set srKeys = ['a', 'e', 'q', 't', 'z', 'me', 'mt', 'j', 'as'] }}
+{{set zzzKeys = ['basic', 'dodge', 'assist', 'special', 'chain'] }}
+{{set nums = ['1', '2'] }}
+{{set talentKey = game === 'gs' ? gsKeys : srKeys }}
+
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: mode == 'cons' ? (game === 'zzz' ? 'MINDSCAPE' : 'CONSTELLATION') : 'TALENTS',
+  title: game === 'gs' ? title + '·' + name : name,
+  who: {face: imgs.qFace || imgs.face, fromMeta: true}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<section class="p-sec">
+  <div class="wk-desc">
+    {{if game === 'sr'}}{{@detail.desc}}{{else}}{{@desc}}{{/if}}
+  </div>
+</section>
+
+<section class="p-sec">
+  {{if game === 'sr' ? (line.ret && line.ret.length) : line.length}}
+  {{if game !== 'sr'}}
+  <% include(_tpl_path + '/skin/sec-head.html', [{
+    title: game === 'zzz' ? '60级基础数据' : '100级基础数据'
+  }]) %>
+  <div class="kv">
+    {{each line item}}
+    <div class="kv-i"><b>{{item.num}}</b><span>{{item.label}}</span></div>
+    {{/each}}
+  </div>
+  {{else}}
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '80级满行迹基础数据'}]) %>
+  <div class="kv">
+    {{each line.ret item}}
+    <div class="kv-i"><b>{{item.num}}</b><span>{{item.label}}</span></div>
+    {{/each}}
+  </div>
+  <div class="kv">
+    <div class="kv-i"><b>{{detail.sp}}</b><span>能量上限</span></div>
+    {{each line.growret item}}
+    <div class="kv-i"><b>{{item.num}}</b><span>{{item.label}}</span></div>
+    {{/each}}
+  </div>
+  {{/if}}
+  {{else}}
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '基础数据'}]) %>
+  <div class="notes"><p>暂无详细数据</p></div>
+  {{/if}}
+</section>
+
+{{if mode == "talent"}}
+{{if game === 'zzz'}}
+<!-- 绝区零：五个技能分类各一块。逐级倍率在造包时就算好了（恒 1~12 级），
+     没有「命座提升某个天赋」那一套，故不走下面那一段。
+     图标六张全游戏共用（`character/common/imgs/talent-<键>.webp`），键即分类键，
+     故 `imgs[type]` 取得到；写死空串会让每块都退成无图标版式 -->
+{{each zzzKeys type}}
+{{if detail.talent[type]}}
+<section class="p-sec wk-tcard">
+  <% include(_tpl_path + '/talent-detail.html', [detail.talent[type], {_res_path, _meta_path, _tpl_path, frame, lvs, type, icon: imgs[type], minLv: 1, maxLv: 12, game}]) %>
+</section>
+{{/if}}
+{{/each}}
+{{else}}
+{{each talentKey type}}
+{{if detail.talent[type]}}
+<section class="p-sec wk-tcard">
+  {{set minLv = game === 'gs' ? 6 : (type === 'a' || type === 'me' || type === 'mt' ? 1 : 6) }}
+  {{set maxLv = game === 'gs' ? 13 : (type === 'a' || type === 'me' || type === 'mt' ? 7 : 12) }}
+  <% include(_tpl_path + '/talent-detail.html', [detail.talent[type], {_res_path, _meta_path, _tpl_path, frame, lvs, type, icon: imgs[type], minLv, maxLv, game}]) %>
+
+  {{each nums num}}
+  {{if detail.talent[type + num]}}
+  {{set minLv = game === 'gs' ? 6 : (type === 'a' || type === 'a2' || type === 'me' || type === 'me2' || type === 'mt' || type === 'mt1' || type === 'mt2' ? 1 : 6) }}
+  {{set maxLv = game === 'gs' ? 13 : (type === 'a' || type === 'a2' || type === 'me' || type === 'me2' || type === 'mt' || type === 'mt1' || type === 'mt2' ? 7 : 12) }}
+  <% include(_tpl_path + '/talent-detail.html', [detail.talent[type + num], {_res_path, _meta_path, _tpl_path, frame, lvs, type, icon: imgs[type + num], minLv, maxLv, game}]) %>
+  {{/if}}
+  {{/each}}
+</section>
+{{/if}}
+{{/each}}
+{{/if}}
+
+<section class="p-sec wk-tcard">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: game === 'sr' ? '行迹' : '固有天赋'}]) %>
+  {{if game !== 'sr'}}
+  {{each detail.passive pass idx}}
+  <% include(_tpl_path + '/talent-detail.html', [pass, {_res_path, _meta_path, _tpl_path, frame, icon: imgs['passive' + idx], game}]) %>
+  {{/each}}
+  {{else}}
+  {{each detail.treeData treeData}}
+  {{if treeData.type === 'skill'}}
+  <% include(_tpl_path + '/talent-detail.html', [treeData, {_res_path, _meta_path, _tpl_path, frame, icon: imgs['tree' + treeData.idx], game}]) %>
+  {{/if}}
+  {{/each}}
+  {{/if}}
+</section>
+{{/if}}
+
+{{if mode == "cons"}}
+<section class="p-sec wk-tcard">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: game === 'zzz' ? '影画' : '命之座'}]) %>
+  {{each detail.cons con idx}}
+  <% include(_tpl_path + '/talent-detail.html', [con, {_res_path, _meta_path, _tpl_path, frame, lvs, icon: imgs['cons' + idx], game}]) %>
+  {{/each}}
+</section>
+{{/if}}
+{{/block}}

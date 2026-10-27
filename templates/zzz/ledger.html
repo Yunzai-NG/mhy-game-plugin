@@ -1,0 +1,66 @@
+<!--
+  模块职责：菲林月报（`%札记`）—— 三种货币的本月收入，加菲林来源占比
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head / foot
+  生命周期：静态模板
+  注意事项：**只有收入没有对比**，与原神星铁的札记不同形，故只借 `lb-*` 那套样式、不 include
+            common/ledger-body —— 硬凑会多出一栏恒空的「上月」。玩家头像是米游社给的完整地址，
+            `fromMeta` 恒为假（见 `template-img-two-roots`）。百分数、环的角度都由视图算好，只印不算。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'FILM REPORT',
+  title: title,
+  sub: month + (isCurrent ? '' : '　历史月份'),
+  who: {
+    face: avatar,
+    fromMeta: false,
+    name: nickname || '绳匠',
+    uid: uid
+  }
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<section class="p-sec lb-main zl-hero">
+  <div class="lb-total">
+    <span class="lb-tag">{{month}}</span>
+    {{if lead}}
+    <div class="lb-big">
+      {{if lead.type === 'PolychromesData'}}<img src="{{_res_path}}zzz/act-calendar/菲林.png" alt="">{{/if}}
+      <b>{{lead.count}}</b>
+      <span>{{lead.name}}<br>≈ {{pulls}} 抽</span>
+    </div>
+    {{/if}}
+  </div>
+  <div class="zl-others">
+    {{each others one}}
+    <div class="zl-chip"><b>{{one.count}}</b><span>{{one.name}}</span></div>
+    {{/each}}
+  </div>
+</section>
+
+{{if sources.length}}
+<section class="p-sec">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '菲林来源', note: sources[0] ? '最多来自' + sources[0].name + '，占 ' + sources[0].percent + '%' : ''}]) %>
+  <div class="lb-src">
+    <!-- 环由视图算好的 conic-gradient 串画，不起 g2plot：一张环用不着那几百 KB 的脚本 -->
+    <div class="zl-ring" style="background: conic-gradient({{ring}})"><div><span>总计</span><b>{{total}}</b></div></div>
+    <ul class="lb-lgd">
+      {{each sources one}}
+      <li>
+        <i style="background: {{one.color}}"></i>
+        <span>{{one.name}}</span>
+        <b>{{one.num}}</b>
+        <em>{{one.percent}}%</em>
+        <s><u style="width:{{one.percent}}%;background:{{one.color}}"></u></s>
+      </li>
+      {{/each}}
+    </ul>
+  </div>
+</section>
+{{/if}}
+
+<% include(_tpl_path + '/skin/foot.html', [{
+  note: months.length ? '还可查询：' + months.join('、') : ''
+}]) %>
+{{/block}}

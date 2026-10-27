@@ -1,0 +1,48 @@
+<!--
+  模块职责：尘歌壶模数养成计算（`#模数`）—— 所需模具与消耗两张清单
+  依赖方向：extend skinLayout，include common/skin 下的 head / sec-head
+  生命周期：静态模板
+  注意事项：一处判据。这张图的图**全部**是米游社接口给的绝对地址（模具的 icon 与材料的 icon），
+            故一处根都不加（见 `template-img-two-roots`）；加了会拼成 `file:///…https://…`
+            而每一格都空白。
+-->
+{{extend skinLayout}}
+
+{{block 'main'}}
+<% include(_tpl_path + '/skin/head.html', [{
+  kick: 'FURNISHING BLUEPRINT',
+  title: '尘歌壶模数养成计算',
+  sub: '模数ID ' + code,
+  who: {uid: uid}
+}, {_res_path, _meta_path, _face_path, who}]) %>
+
+<section class="p-sec calc">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '所需模具'}]) %>
+  <div class="mats calc">
+    {{each molds one}}
+    <div class="mat">
+      <div class="mat-ic"><img src="{{one.icon}}" onerror="whenError(this)" alt=""></div>
+      <div class="mat-t">
+        <b>{{one.name}}</b>
+        <span>× {{one.num}}</span>
+      </div>
+    </div>
+    {{/each}}
+  </div>
+</section>
+
+<section class="p-sec calc">
+  <% include(_tpl_path + '/skin/sec-head.html', [{title: '所需消耗'}]) %>
+  <div class="mats calc">
+    {{each consume one}}
+    <div class="mat">
+      <div class="mat-ic"><img src="{{one.icon}}" onerror="whenError(this)" alt=""></div>
+      <div class="mat-t">
+        <b>{{one.name}}</b>
+        <span>× {{one.num}}</span>
+      </div>
+    </div>
+    {{/each}}
+  </div>
+</section>
+{{/block}}
