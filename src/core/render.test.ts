@@ -5,13 +5,17 @@
  * 注意事项：钉的都是**错了只出一张空白或发糊的图**的地方：布局变量须是文件系统路径、资源变量须是
  *          带尾斜杠的 file:// URL，`sys.scale` 恒被改写（行内倍率会压掉 css 里的基准，图就糊了）。
  */
-import { join } from "node:path"
+import { join, resolve, sep } from "node:path"
 import { pathToFileURL } from "node:url"
 import { describe, expect, it } from "vitest"
 import { META_TOKEN, RenderBridge, isTemplatePath, scaleStyle } from "./render.js"
 
-/** 一个形态与真实 `ctx.root` 一致的绝对路径 */
-const ROOT = join("C:", "yz", "plugins", "mhy-game-plugin")
+/**
+ * 一个形态与真实 `ctx.root` 一致的绝对路径
+ *
+ * 由 `resolve` 取当前平台的绝对形态：写死 `C:` 盘符在 Linux 上不算绝对路径，CI 上那几条判「是不是绝对路径」的断言就红。
+ */
+const ROOT = resolve(sep, "yz", "plugins", "mhy-game-plugin")
 
 /**
  * 造一个渲染桥
