@@ -172,6 +172,20 @@ describe("parseUigf v4", () => {
     expect(ret.records?.get("301")?.[0]?.rank).toBe(5)
   })
 
+  it("只给 item_id 而元数据没装时整份拒收 —— 落成「未知」后按 id 去重，装完再导也补不回来", () => {
+    const meta = { ready: (): boolean => false, find: (): undefined => undefined } as unknown as Parameters<typeof parseUigf>[2]
+    const file = {
+      info: { version: "v4.0" },
+      hk4e: [{ uid: "100000001", list: [{ id: "1700000000000000001", gacha_type: "301", item_id: "10000046", time: "2026-08-12 18:03:21" }] }]
+    }
+    const ret = parseUigf(file, "gs", meta)
+    expect(ret.ok).toBe(false)
+    expect(ret.message).toContain("#更新元数据")
+    // 带名字的文件不靠元数据，照收
+    const named = parseUigf({ info: { uid: "100000001" }, list: [item()] }, "gs", meta)
+    expect(named.ok).toBe(true)
+  })
+
   it("星铁的块也认", () => {
     const ret = parseUigf(
       {

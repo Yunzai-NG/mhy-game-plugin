@@ -216,6 +216,13 @@ export function parseUigf(
   }
   if (!uid) return { ok: false, message: "文件里没有 uid" }
 
+  // 只给 item_id 的那种文件，名字与星级全靠元数据补；没装就导会整批落成「未知 / 三星」，
+  // 而导入按 id 去重、装完再导一遍也补不回来，统计里的出金从此全丢 —— 故先拦下
+  const needNames = game !== "zzz" && list.some(it => !it.name && it.item_id)
+  if (needNames && meta && typeof meta.ready === "function" && !meta.ready(game)) {
+    return { ok: false, message: "这份文件只记了物品 id、没写名字，要靠元数据补名字与星级，请先让主人发送 #更新元数据 再导入" }
+  }
+
   // 同一 id 重复时追加序号 —— 一次十连的十条记录时间戳完全相同
   const seen = new Map<string, number>()
   const byPool = new Map<string, GachaRecord[]>()
