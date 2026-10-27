@@ -62,15 +62,16 @@ export default defineConfig({
     }
   },
 
+  // 图标与框架文档站同一套（云托南瓜），取自框架文档的 public/brand
   head: [
-    ["link", { rel: "icon", type: "image/svg+xml", href: `${BASE}brand/logo-rounded.svg` }],
-    ["link", { rel: "icon", type: "image/png", sizes: "1024x1024", href: `${BASE}brand/logo-rounded.png` }],
-    ["link", { rel: "apple-touch-icon", href: `${BASE}brand/logo-rounded.png` }],
+    ["link", { rel: "icon", type: "image/png", sizes: "64x64", href: `${BASE}brand/favicon-64.png` }],
+    ["link", { rel: "icon", type: "image/png", sizes: "256x256", href: `${BASE}brand/logo-mark-256.png` }],
+    ["link", { rel: "apple-touch-icon", href: `${BASE}brand/logo-square.png` }],
     ["meta", { name: "theme-color", content: "#0b0e16" }]
   ],
 
   themeConfig: {
-    logo: { src: "/brand/logo-mark.svg", alt: "" },
+    logo: { src: "/brand/logo-mark-256.png", alt: "" },
 
     nav: [
       { text: "使用指南", link: "/guide/start", activeMatch: "^/guide/" },
