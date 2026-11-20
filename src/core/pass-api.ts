@@ -1,24 +1,18 @@
 /**
- * 模块职责：扫码登录用到的接口与它们的请求头
- * 依赖方向：依赖 core/ds（签名）与 core/device-profile 的设备形态；不碰 IO
+ * 模块职责：扫码登录与换凭据的通行证接口请求
+ * 依赖方向：依赖 core/ds（签名），由扫码登录与刷新 CK 服务调用，无 IO
  * 生命周期：无状态纯函数
- * 注意事项：取到的是 stoken（权限大于 ltoken），凭据与 ticket 的保密约束见 service/qr-login.ts。
- *          走通行证那条路（{@link createQrRequest} → {@link queryQrRequest}），不走 `hk4e-sdk` ——
- *          那条实测报「当前设备或网络环境存在风险」，且 `app_id=4` 的码登录的是原神而非米游社。
- *          三处写错都不报错：地址参数叫 `tk` 不是 `ticket`；状态字段叫 `status`（只认旧接口的
- *          `stat` 就"扫了码却一直等待扫码"）；`tokens` 的项只有 `token_type` 没有 `name`
- *          （{@link TOKEN_KINDS}）。签名算法同 {@link signDs}、盐用 {@link SALT_PASS}，请求体须与签名时逐字节相同。
+ * 注意事项：凭据与 ticket 的保密约束见 service/qr-login.ts；地址取 tk、状态取 status、token 按
+ *          token_type 识别，否则确认扫码后仍取不到凭据。换 cookie_token 用通行证接口与 Cookie
+ *          请求头，设备沿用扫码或查询那一台；请求体须与签名时逐字节相同，否则接口拒绝换凭据。
  */
 import { SALT_PASS, signDs } from "./ds.js"
 
 /** 通行证接口域名 */
 export const PASS_HOST = "https://passport-api.mihoyo.com"
 
-/** 换 cookie_token 用的域名 */
-export const TAKUMI_HOST = "https://api-takumi.mihoyo.com"
-
 /** 米游社 App 版本号 */
-const APP_VERSION = "2.70.1"
+const APP_VERSION = "2.112.0"
 
 /** 通行证接口固定的应用标识 */
 const APP_ID = "bll8iq97cem8"
@@ -197,22 +191,16 @@ export function ltokenRequest(device: PassDevice, stoken: { stuid: string; stoke
 
 /**
  * 凭 stoken 换 cookie_token
- *
- * `game_biz` 固定为原神：这一条只是取通行证层面的 cookie_token，与查哪个游戏无关。
+ * @param device 换凭据使用的设备
  * @param stoken stoken 形态的 Cookie 片段
  * @returns 请求
  */
-export function cookieTokenRequest(stoken: { stuid: string; stoken: string; mid?: string }): PassRequest {
-  const query = [
-    "game_biz=hk4e_cn",
-    `uid=${stoken.stuid}`,
-    `stoken=${stoken.stoken}`,
-    ...(stoken.mid ? [`mid=${stoken.mid}`] : [])
-  ].join("&")
+export function cookieTokenRequest(device: PassDevice, stoken: { stuid: string; stoken: string; mid?: string }): PassRequest {
+  const cookie = `stuid=${stoken.stuid};stoken=${stoken.stoken};${stoken.mid ? `mid=${stoken.mid};` : ""}`
   return {
-    url: `${TAKUMI_HOST}/auth/api/getCookieAccountInfoBySToken?${query}`,
+    url: `${PASS_HOST}/account/auth/api/getCookieAccountInfoBySToken`,
     method: "GET",
-    headers: { "User-Agent": "okhttp/4.8.0" }
+    headers: { ...passHeaders(device, ""), Accept: "application/json", Cookie: cookie }
   }
 }
 

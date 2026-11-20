@@ -174,7 +174,7 @@ export class RefreshCkService {
     const lt = await this.#call<{ ltoken?: string; token?: { token?: string } }>(ltokenRequest(device, parts))
     const ltoken = lt?.data?.ltoken ?? lt?.data?.token?.token
 
-    const ck = await this.#call<{ cookie_token?: string }>(cookieTokenRequest(parts))
+    const ck = await this.#call<{ cookie_token?: string }>(cookieTokenRequest(device, parts))
     const cookieToken = ck?.data?.cookie_token
 
     if (!ltoken || !cookieToken) {

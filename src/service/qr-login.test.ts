@@ -230,6 +230,17 @@ describe("QrLoginService.wait", () => {
     expect(got.credentials.stoken).toContain("mid=m1_zzz")
   })
 
+  it("换 Cookie 使用通行证接口与扫码设备，凭据不进 URL", async () => {
+    const { service, calls } = make()
+    const got = await service.wait("qq:1", "t")
+    const req = calls.find(one => one.url.includes("getCookieAccountInfoBySToken"))
+
+    expect(got.ok).toBe(true)
+    expect(req?.url).toBe("https://passport-api.mihoyo.com/account/auth/api/getCookieAccountInfoBySToken")
+    expect(req?.headers["x-rpc-device_id"]).toBe("TESTDEVICE")
+    expect(req?.headers.Cookie).toBe("stuid=100000088;stoken=v2_SECRET;mid=m1_zzz;")
+  })
+
   it("`tokens` 里已有 ltoken 时不再多打一次接口", async () => {
     const withLt = {
       retcode: 0,
@@ -363,6 +374,17 @@ describe("QrLoginService.wait", () => {
     const { service } = make({ cookieToken: { retcode: -100, message: "登录失效" } })
 
     expect(await service.wait("qq:1", "t")).toMatchObject({ ok: false, kind: "fail" })
+  })
+
+  it("通行证拒绝换 Cookie 时返回原提示，不落残缺凭据或泄露 stoken", async () => {
+    logged.length = 0
+    const message = "请使用最新版本产品/链接以获得更佳体验，或前往user.mihoyo.com完成操作。"
+    const { service } = make({ cookieToken: { retcode: -464, message, data: null } })
+
+    expect(await service.wait("qq:1", "t")).toEqual({ ok: false, kind: "fail", message })
+    expect(logged.join(" ")).toContain("retcode=-464")
+    expect(logged.join(" ")).not.toContain("v2_SECRET")
+    expect(logged.join(" ")).not.toContain("m1_zzz")
   })
 
   it("换 ltoken 失败时整体失败，不落一份残缺凭据", async () => {

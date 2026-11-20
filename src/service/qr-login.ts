@@ -293,7 +293,7 @@ export class QrLoginService {
       if (!ltoken) this.#logger.warn(`[米游社][扫码登录] 换 ltoken 失败 retcode=${lt?.retcode ?? "无回应"}`)
     }
 
-    const ck = await this.#call<{ cookie_token?: string }>(cookieTokenRequest(parts))
+    const ck = await this.#call<{ cookie_token?: string }>(cookieTokenRequest(device, parts))
     const cookieToken = ck?.data?.cookie_token
     if (!ltoken || !cookieToken) {
       this.#logger.warn(

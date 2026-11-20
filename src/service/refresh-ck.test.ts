@@ -16,6 +16,9 @@ import { RefreshCkService } from "./refresh-ck.js"
 /** 一次跑测试期间发出去的请求 */
 let sent: string[] = []
 
+/** 换凭据请求的地址与请求头 */
+let requests: { url: string; headers: Record<string, string> }[] = []
+
 /** 各接口分别回什么 */
 interface Answers {
   /** 换 ltoken 那一条 */
@@ -35,7 +38,8 @@ const LOGGER = { info: (): void => {}, warn: (): void => {}, error: (): void => 
  */
 function makeHttp(answers: Answers): HttpClient {
   return {
-    request: async (url: string): Promise<{ status: number; data: unknown }> => {
+    request: async (url: string, opts: { headers: Record<string, string> }): Promise<{ status: number; data: unknown }> => {
+      requests.push({ url, headers: opts.headers })
       // 只记接口名，绝不记整条 URL —— stoken 就在 query 里
       const name = url.includes("getLTokenBySToken") ? "ltoken" : "cookieToken"
       sent.push(name)
@@ -79,6 +83,7 @@ function oldCookie(ltuid: string): string {
 
 beforeEach(() => {
   sent = []
+  requests = []
 })
 
 describe("刷新自己名下的凭据", () => {
@@ -95,6 +100,22 @@ describe("刷新自己名下的凭据", () => {
     expect(got?.cookie).toContain("cookie_token=CT-new")
     expect(got?.cookie).toContain("ltoken=LT-new")
     expect(got?.cookie).not.toContain("CT-old")
+  })
+
+  it("刷新 CK 与扫码登录共用通行证换 Cookie 请求", async () => {
+    const { service, cookies } = make()
+    await cookies.save(oldCookie("1001"), { owner: "onebot11:1" })
+    await cookies.setStoken("1001", "stuid=1001;stoken=v2_abc;mid=m1_xyz;")
+
+    const res = await service.refresh("onebot11:1")
+    const lt = requests.find(one => one.url.includes("getLTokenBySToken"))
+    const ck = requests.find(one => one.url.includes("getCookieAccountInfoBySToken"))
+
+    expect(res.ok).toBe(1)
+    expect(ck?.url).toBe("https://passport-api.mihoyo.com/account/auth/api/getCookieAccountInfoBySToken")
+    expect(ck?.headers.Cookie).toBe("stuid=1001;stoken=v2_abc;mid=m1_xyz;")
+    expect(ck?.headers["x-rpc-device_id"]).toBe(lt?.headers["x-rpc-device_id"])
+    expect(ck?.headers["x-rpc-device_id"]).toBeTruthy()
   })
 
   it("**刷新之后 stoken 那一份仍在** —— 丢了它就再也刷不了第二次", async () => {
@@ -170,6 +191,20 @@ describe("失败与去重", () => {
     await service.refresh("onebot11:1")
 
     expect((await cookies.get("1001"))?.cookie).toContain("CT-old")
+  })
+
+  it("拒绝换凭据时保留旧 CK 与 stoken，不当作登录失效", async () => {
+    const message = "请使用最新版本产品/链接以获得更佳体验，或前往user.mihoyo.com完成操作。"
+    const { service, cookies } = make({ cookieToken: { retcode: -464, message, data: null } })
+    await cookies.save(oldCookie("1001"), { owner: "onebot11:1" })
+    await cookies.setStoken("1001", "stuid=1001;stoken=v2_abc;mid=m1_xyz;")
+    const before = await cookies.get("1001")
+
+    const res = await service.refresh("onebot11:1")
+
+    expect(res.failed).toBe(1)
+    expect(res.items[0]?.message).toBe(message)
+    expect(await cookies.get("1001")).toEqual(before)
   })
 
   it("库里那段 stoken 认不出来时也只回一句，不发请求", async () => {
