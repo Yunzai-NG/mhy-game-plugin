@@ -179,14 +179,7 @@ export function tokenLabel(one: PassToken | undefined): string {
  * @returns 请求
  */
 export function ltokenRequest(device: PassDevice, stoken: { stuid: string; stoken: string; mid?: string }): PassRequest {
-  const query = [`stuid=${stoken.stuid}`, `stoken=${stoken.stoken}`, ...(stoken.mid ? [`mid=${stoken.mid}`] : [])].join(
-    "&"
-  )
-  return {
-    url: `${PASS_HOST}/account/auth/api/getLTokenBySToken?${query}`,
-    method: "GET",
-    headers: passHeaders(device, "")
-  }
+  return tokenRequest("getLTokenBySToken", device, stoken)
 }
 
 /**
@@ -196,9 +189,13 @@ export function ltokenRequest(device: PassDevice, stoken: { stuid: string; stoke
  * @returns 请求
  */
 export function cookieTokenRequest(device: PassDevice, stoken: { stuid: string; stoken: string; mid?: string }): PassRequest {
+  return tokenRequest("getCookieAccountInfoBySToken", device, stoken)
+}
+
+function tokenRequest(endpoint: string, device: PassDevice, stoken: { stuid: string; stoken: string; mid?: string }): PassRequest {
   const cookie = `stuid=${stoken.stuid};stoken=${stoken.stoken};${stoken.mid ? `mid=${stoken.mid};` : ""}`
   return {
-    url: `${PASS_HOST}/account/auth/api/getCookieAccountInfoBySToken`,
+    url: `${PASS_HOST}/account/auth/api/${endpoint}`,
     method: "GET",
     headers: { ...passHeaders(device, ""), Accept: "application/json", Cookie: cookie }
   }

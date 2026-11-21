@@ -10,6 +10,7 @@
  *          申请与轮询须是同一台设备，否则查不到这张码的状态。
  */
 import type { HttpClient, Logger } from "@yunzai-ng/types"
+import { redactUrl } from "../core/trace.js"
 import type { DeviceStore } from "../core/device.js"
 import type { PassDevice, PassRequest, PassToken } from "../core/pass-api.js"
 import {
@@ -159,8 +160,6 @@ export class QrLoginService {
 
   /**
    * 发一次通行证请求
-   *
-   * 不记 URL：换 ltoken 那一条把 stoken 放在 query 里，记下来等于把凭据写进日志。
    * @param req 请求
    * @returns 信封；网络层失败时 undefined
    */
@@ -175,12 +174,12 @@ export class QrLoginService {
         throwOnError: false
       })
       if (!res.ok) {
-        this.#logger.warn(`[米游社][扫码登录] HTTP ${res.status}`)
+        this.#logger.warn(`[米游社][扫码登录] ${redactUrl(req.url)} HTTP ${res.status}`)
         return undefined
       }
       return res.data
-    } catch (err) {
-      this.#logger.warn(`[米游社][扫码登录] 请求失败：${err instanceof Error ? err.message : String(err)}`)
+    } catch {
+      this.#logger.warn(`[米游社][扫码登录] ${redactUrl(req.url)} 请求失败`)
       return undefined
     }
   }
@@ -288,17 +287,20 @@ export class QrLoginService {
     // ltoken 可能已经在 tokens 里，那就不必再请求一次
     let ltoken = pickToken(data?.tokens, "ltoken")
     if (!ltoken) {
-      const lt = await this.#call<{ ltoken?: string; token?: { token?: string } }>(ltokenRequest(device, parts))
-      ltoken = lt?.data?.ltoken ?? lt?.data?.token?.token
-      if (!ltoken) this.#logger.warn(`[米游社][扫码登录] 换 ltoken 失败 retcode=${lt?.retcode ?? "无回应"}`)
+      const req = ltokenRequest(device, parts)
+      const lt = await this.#call<{ ltoken?: string; token?: { token?: string } }>(req)
+      if (lt?.retcode === 0) ltoken = lt.data?.ltoken || lt.data?.token?.token
+      if (!ltoken) {
+        this.#logger.warn(`[米游社][扫码登录] ${redactUrl(req.url)} retcode=${lt?.retcode ?? "无回应"}`)
+        return { ok: false, kind: "fail", message: lt?.message || "换取 ltoken 失败，请重试" }
+      }
     }
 
-    const ck = await this.#call<{ cookie_token?: string }>(cookieTokenRequest(device, parts))
-    const cookieToken = ck?.data?.cookie_token
-    if (!ltoken || !cookieToken) {
-      this.#logger.warn(
-        `[米游社][扫码登录] 换凭据失败 ltoken=${ltoken ? "有" : "无"} cookie_token retcode=${ck?.retcode}`
-      )
+    const req = cookieTokenRequest(device, parts)
+    const ck = await this.#call<{ cookie_token?: string }>(req)
+    const cookieToken = ck?.retcode === 0 && ck.data?.cookie_token
+    if (!cookieToken) {
+      this.#logger.warn(`[米游社][扫码登录] ${redactUrl(req.url)} retcode=${ck?.retcode ?? "无回应"}`)
       return { ok: false, kind: "fail", message: ck?.message || "换取 Cookie 失败，请重试" }
     }
 

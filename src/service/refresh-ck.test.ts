@@ -40,7 +40,6 @@ function makeHttp(answers: Answers): HttpClient {
   return {
     request: async (url: string, opts: { headers: Record<string, string> }): Promise<{ status: number; data: unknown }> => {
       requests.push({ url, headers: opts.headers })
-      // 只记接口名，绝不记整条 URL —— stoken 就在 query 里
       const name = url.includes("getLTokenBySToken") ? "ltoken" : "cookieToken"
       sent.push(name)
       const body =
@@ -112,6 +111,8 @@ describe("刷新自己名下的凭据", () => {
     const ck = requests.find(one => one.url.includes("getCookieAccountInfoBySToken"))
 
     expect(res.ok).toBe(1)
+    expect(lt?.url).toBe("https://passport-api.mihoyo.com/account/auth/api/getLTokenBySToken")
+    expect(lt?.headers.Cookie).toBe("stuid=1001;stoken=v2_abc;mid=m1_xyz;")
     expect(ck?.url).toBe("https://passport-api.mihoyo.com/account/auth/api/getCookieAccountInfoBySToken")
     expect(ck?.headers.Cookie).toBe("stuid=1001;stoken=v2_abc;mid=m1_xyz;")
     expect(ck?.headers["x-rpc-device_id"]).toBe(lt?.headers["x-rpc-device_id"])
@@ -191,6 +192,18 @@ describe("失败与去重", () => {
     await service.refresh("onebot11:1")
 
     expect((await cookies.get("1001"))?.cookie).toContain("CT-old")
+  })
+
+  it("换 ltoken 被拒时不请求 cookie_token，也不覆盖旧凭据", async () => {
+    const { service, cookies } = make({ ltoken: { retcode: -464, message: "拒绝换取", data: { ltoken: "ignored" } } })
+    await cookies.save(oldCookie("1001"), { owner: "onebot11:1" })
+    await cookies.setStoken("1001", "stuid=1001;stoken=v2_abc;")
+    const before = await cookies.get("1001")
+
+    const res = await service.refresh("onebot11:1")
+    expect(res.items[0]?.message).toBe("拒绝换取")
+    expect(sent).toEqual(["ltoken"])
+    expect(await cookies.get("1001")).toEqual(before)
   })
 
   it("拒绝换凭据时保留旧 CK 与 stoken，不当作登录失效", async () => {

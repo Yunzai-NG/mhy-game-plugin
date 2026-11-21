@@ -17,6 +17,7 @@
  */
 import type { HttpClient, Logger } from "@yunzai-ng/types"
 import { parseCookie } from "../core/cookie.js"
+import { redactUrl } from "../core/trace.js"
 import type { DeviceStore } from "../core/device.js"
 import type { PassDevice, PassRequest } from "../core/pass-api.js"
 import { cookieTokenRequest, ltokenRequest } from "../core/pass-api.js"
@@ -144,12 +145,12 @@ export class RefreshCkService {
         responseType: "json"
       })
       if (res.status !== 200) {
-        this.#logger.warn(`[米游社][刷新ck] HTTP ${res.status}`)
+        this.#logger.warn(`[米游社][刷新ck] ${redactUrl(req.url)} HTTP ${res.status}`)
         return undefined
       }
       return res.data
-    } catch (err) {
-      this.#logger.warn(`[米游社][刷新ck] 请求失败：${err instanceof Error ? err.message : String(err)}`)
+    } catch {
+      this.#logger.warn(`[米游社][刷新ck] ${redactUrl(req.url)} 请求失败`)
       return undefined
     }
   }
@@ -171,24 +172,21 @@ export class RefreshCkService {
     const parts = { stuid, stoken, ...(mid ? { mid } : {}) }
     const device = await this.#device(ltuid)
 
-    const lt = await this.#call<{ ltoken?: string; token?: { token?: string } }>(ltokenRequest(device, parts))
-    const ltoken = lt?.data?.ltoken ?? lt?.data?.token?.token
-
-    const ck = await this.#call<{ cookie_token?: string }>(cookieTokenRequest(device, parts))
-    const cookieToken = ck?.data?.cookie_token
-
-    if (!ltoken || !cookieToken) {
-      this.#logger.warn(
-        `[米游社][刷新ck] ${mask(ltuid)} 换凭据失败 ltoken=${ltoken ? "有" : "无"} ` +
-          `cookie_token retcode=${ck?.retcode ?? "无回应"}`
-      )
-      // `-100` 与 `10001` 都是 stoken 自己也过期了，唯一出路是重新扫码，故直接说出来
-      const code = ck?.retcode ?? lt?.retcode
-      if (code === -100 || code === 10_001) {
-        return { message: "stoken 也已失效，请重新「#扫码登录」" }
-      }
-      return { message: ck?.message || lt?.message || "米游社没有给出新的 Cookie，请稍后重试" }
+    const failure = (req: PassRequest, res?: Envelope<unknown>): { message: string } => {
+      const code = res?.retcode
+      this.#logger.warn(`[米游社][刷新ck] ${mask(ltuid)} ${redactUrl(req.url)} retcode=${code ?? "无回应"}`)
+      if (code === -100 || code === 10_001) return { message: "stoken 也已失效，请重新「#扫码登录」" }
+      return { message: res?.message || "米游社没有给出新的 Cookie，请稍后重试" }
     }
+    const ltReq = ltokenRequest(device, parts)
+    const lt = await this.#call<{ ltoken?: string; token?: { token?: string } }>(ltReq)
+    const ltoken = lt?.retcode === 0 && (lt.data?.ltoken || lt.data?.token?.token)
+    if (!ltoken) return failure(ltReq, lt)
+
+    const ckReq = cookieTokenRequest(device, parts)
+    const ck = await this.#call<{ cookie_token?: string }>(ckReq)
+    const cookieToken = ck?.retcode === 0 && ck.data?.cookie_token
+    if (!cookieToken) return failure(ckReq, ck)
 
     return { cookie: `ltoken=${ltoken};ltuid=${stuid};cookie_token=${cookieToken};account_id=${stuid};` }
   }

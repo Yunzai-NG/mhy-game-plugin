@@ -382,15 +382,17 @@ describe("QrLoginService.wait", () => {
     const { service } = make({ cookieToken: { retcode: -464, message, data: null } })
 
     expect(await service.wait("qq:1", "t")).toEqual({ ok: false, kind: "fail", message })
-    expect(logged.join(" ")).toContain("retcode=-464")
+    expect(logged.join(" ")).toContain("passport-api.mihoyo.com/account/auth/api/getCookieAccountInfoBySToken retcode=-464")
     expect(logged.join(" ")).not.toContain("v2_SECRET")
     expect(logged.join(" ")).not.toContain("m1_zzz")
   })
 
   it("换 ltoken 失败时整体失败，不落一份残缺凭据", async () => {
-    const { service } = make({ ltoken: { retcode: -100, message: "登录失效" } })
+    const { service, calls } = make({ ltoken: { retcode: -100, message: "登录失效", data: { ltoken: "ignored" } } })
 
-    expect(await service.wait("qq:1", "t")).toMatchObject({ ok: false, kind: "fail" })
+    expect(await service.wait("qq:1", "t")).toMatchObject({ ok: false, kind: "fail", message: "登录失效" })
+    expect(calls.map(one => new URL(one.url).pathname.split("/").pop())).toEqual(["queryQRLoginStatus", "getLTokenBySToken"])
+    expect(logged.join(" ")).toContain("passport-api.mihoyo.com/account/auth/api/getLTokenBySToken retcode=-100")
   })
 
   it("三步的顺序固定：轮询 → 换 ltoken → 换 cookie_token", async () => {
