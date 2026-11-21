@@ -7,7 +7,7 @@
  */
 import type { ArtiGame, ArtiMetaTable, AttrMeta, AttrWeight } from "../../meta/arti.js"
 import { isElemKey } from "../../meta/arti.js"
-import { isElem } from "../../meta/elem.js"
+import { isElem, sameElem } from "../../meta/elem.js"
 import { byWeightDesc } from "./pick.js"
 
 /** 一条已格式化的词条 */
@@ -278,7 +278,7 @@ export function markOne(arg: {
     if (key !== "recharge") {
       // 该 id 特判：其元素伤害要按主词条自身的元素算
       if (char.id === "10000128" && isElemKey(key)) elem = key
-      if (idx === DMG_POS[game] && elem && elem === key) mainKey = "dmg"
+      if (idx === DMG_POS[game] && elem && sameElem(elem, key, game)) mainKey = "dmg"
       const mMax = posMaxMark[`m${idx}`] ?? 0
       const weight = attrs[mainKey]?.weight ?? 0
       fixPct = mMax > 0 ? Math.max(0, Math.min(1, weight / mMax)) : 1

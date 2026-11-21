@@ -398,6 +398,14 @@ describe("markOne", () => {
     expect(one).toBeGreaterThan(0)
   })
 
+  it("星铁元素球的主词条别名与角色元素匹配时按 dmg 权重计入评分", () => {
+    const char = { id: "1208", name: "符玄", abbr: "符玄", elem: "火", baseAttr: { hp: 1000, atk: 500, def: 400 } }
+    const cfg = markCfg(cfgInput({ game: "sr", char }), table())
+    const one = markOne({ char, cfg, idx: 5, arti: arti({ key: "fire", value: 38.88 }), elem: char.elem, game: "sr" })
+
+    expect(one).toBeGreaterThan(0)
+  })
+
   it("没有主词条时得零分，不抛错 —— 面板可能给来一件空的", () => {
     const cfg = markCfg(cfgInput(), table())
     expect(markOne({ char: HUTAO, cfg, idx: 3, arti: {}, game: "gs" })).toBe(0)
