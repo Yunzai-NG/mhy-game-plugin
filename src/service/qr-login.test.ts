@@ -106,7 +106,7 @@ function make(answers: Answers = {}): { service: QrLoginService; calls: Call[] }
       return {
         ok: true,
         status: 200,
-        data: answers.cookieToken ?? { retcode: 0, data: { cookie_token: "CT" } }
+        data: answers.cookieToken ?? { retcode: 0, data: { token: { token: "CT" } } }
       } as T
     }
   } as unknown as HttpClient
@@ -230,15 +230,19 @@ describe("QrLoginService.wait", () => {
     expect(got.credentials.stoken).toContain("mid=m1_zzz")
   })
 
-  it("换 Cookie 使用通行证接口与扫码设备，凭据不进 URL", async () => {
+  it("换 Cookie 使用通行证 exchange 与扫码设备，stoken 放在签名请求体", async () => {
     const { service, calls } = make()
     const got = await service.wait("qq:1", "t")
-    const req = calls.find(one => one.url.includes("getCookieAccountInfoBySToken"))
+    const req = calls.find(one => one.url.includes("ma-cn-session/app/exchange"))
 
     expect(got.ok).toBe(true)
-    expect(req?.url).toBe("https://passport-api.mihoyo.com/account/auth/api/getCookieAccountInfoBySToken")
+    expect(req?.url).toBe("https://passport-api.mihoyo.com/account/ma-cn-session/app/exchange")
     expect(req?.headers["x-rpc-device_id"]).toBe("TESTDEVICE")
-    expect(req?.headers.Cookie).toBe("stuid=100000088;stoken=v2_SECRET;mid=m1_zzz;")
+    expect(JSON.parse(req?.body ?? "null")).toEqual({
+      src_token: { token: "v2_SECRET", token_type: 1 },
+      mid: "m1_zzz",
+      dst_token_type: 4
+    })
   })
 
   it("`tokens` 里已有 ltoken 时不再多打一次接口", async () => {
@@ -382,7 +386,7 @@ describe("QrLoginService.wait", () => {
     const { service } = make({ cookieToken: { retcode: -464, message, data: null } })
 
     expect(await service.wait("qq:1", "t")).toEqual({ ok: false, kind: "fail", message })
-    expect(logged.join(" ")).toContain("passport-api.mihoyo.com/account/auth/api/getCookieAccountInfoBySToken retcode=-464")
+    expect(logged.join(" ")).toContain("passport-api.mihoyo.com/account/ma-cn-session/app/exchange retcode=-464")
     expect(logged.join(" ")).not.toContain("v2_SECRET")
     expect(logged.join(" ")).not.toContain("m1_zzz")
   })

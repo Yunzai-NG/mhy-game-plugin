@@ -142,6 +142,7 @@ export class RefreshCkService {
       const res = await this.#http.request<Envelope<T>>(req.url, {
         method: req.method,
         headers: req.headers,
+        ...(req.body === undefined ? {} : { body: req.body }),
         responseType: "json"
       })
       if (res.status !== 200) {
@@ -184,8 +185,8 @@ export class RefreshCkService {
     if (!ltoken) return failure(ltReq, lt)
 
     const ckReq = cookieTokenRequest(device, parts)
-    const ck = await this.#call<{ cookie_token?: string }>(ckReq)
-    const cookieToken = ck?.retcode === 0 && ck.data?.cookie_token
+    const ck = await this.#call<{ token?: { token?: string } }>(ckReq)
+    const cookieToken = ck?.retcode === 0 && ck.data?.token?.token
     if (!cookieToken) return failure(ckReq, ck)
 
     return { cookie: `ltoken=${ltoken};ltuid=${stuid};cookie_token=${cookieToken};account_id=${stuid};` }

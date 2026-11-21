@@ -297,8 +297,8 @@ export class QrLoginService {
     }
 
     const req = cookieTokenRequest(device, parts)
-    const ck = await this.#call<{ cookie_token?: string }>(req)
-    const cookieToken = ck?.retcode === 0 && ck.data?.cookie_token
+    const ck = await this.#call<{ token?: { token?: string } }>(req)
+    const cookieToken = ck?.retcode === 0 && ck.data?.token?.token
     if (!cookieToken) {
       this.#logger.warn(`[米游社][扫码登录] ${redactUrl(req.url)} retcode=${ck?.retcode ?? "无回应"}`)
       return { ok: false, kind: "fail", message: ck?.message || "换取 Cookie 失败，请重试" }

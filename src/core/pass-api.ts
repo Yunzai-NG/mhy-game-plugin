@@ -3,8 +3,8 @@
  * 依赖方向：依赖 core/ds（签名），由扫码登录与刷新 CK 服务调用，无 IO
  * 生命周期：无状态纯函数
  * 注意事项：凭据与 ticket 的保密约束见 service/qr-login.ts；地址取 tk、状态取 status、token 按
- *          token_type 识别，否则确认扫码后仍取不到凭据。换 cookie_token 用通行证接口与 Cookie
- *          请求头，设备沿用扫码或查询那一台；请求体须与签名时逐字节相同，否则接口拒绝换凭据。
+ *          token_type 识别，否则确认扫码后仍取不到凭据。换 cookie_token 走 exchange，stoken 放进签名请求体，
+ *          请求头沿用同一台设备；请求体须与签名时逐字节相同，否则接口拒绝换凭据。
  */
 import { SALT_PASS, signDs } from "./ds.js"
 
@@ -185,11 +185,21 @@ export function ltokenRequest(device: PassDevice, stoken: { stuid: string; stoke
 /**
  * 凭 stoken 换 cookie_token
  * @param device 换凭据使用的设备
- * @param stoken stoken 形态的 Cookie 片段
+ * @param stoken stoken 形态的凭据
  * @returns 请求
  */
 export function cookieTokenRequest(device: PassDevice, stoken: { stuid: string; stoken: string; mid?: string }): PassRequest {
-  return tokenRequest("getCookieAccountInfoBySToken", device, stoken)
+  const body = JSON.stringify({
+    src_token: { token: stoken.stoken, token_type: 1 },
+    mid: stoken.mid,
+    dst_token_type: 4
+  })
+  return {
+    url: `${PASS_HOST}/account/ma-cn-session/app/exchange`,
+    method: "POST",
+    headers: passHeaders(device, body),
+    body
+  }
 }
 
 function tokenRequest(endpoint: string, device: PassDevice, stoken: { stuid: string; stoken: string; mid?: string }): PassRequest {

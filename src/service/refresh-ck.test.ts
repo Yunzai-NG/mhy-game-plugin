@@ -17,7 +17,7 @@ import { RefreshCkService } from "./refresh-ck.js"
 let sent: string[] = []
 
 /** 换凭据请求的地址与请求头 */
-let requests: { url: string; headers: Record<string, string> }[] = []
+let requests: { url: string; headers: Record<string, string>; body?: string }[] = []
 
 /** 各接口分别回什么 */
 interface Answers {
@@ -38,14 +38,14 @@ const LOGGER = { info: (): void => {}, warn: (): void => {}, error: (): void => 
  */
 function makeHttp(answers: Answers): HttpClient {
   return {
-    request: async (url: string, opts: { headers: Record<string, string> }): Promise<{ status: number; data: unknown }> => {
-      requests.push({ url, headers: opts.headers })
+    request: async (url: string, opts: { headers: Record<string, string>; body?: string }): Promise<{ status: number; data: unknown }> => {
+      requests.push({ url, headers: opts.headers, ...(opts.body === undefined ? {} : { body: opts.body }) })
       const name = url.includes("getLTokenBySToken") ? "ltoken" : "cookieToken"
       sent.push(name)
       const body =
         name === "ltoken"
           ? (answers.ltoken ?? { retcode: 0, data: { ltoken: "LT-new" } })
-          : (answers.cookieToken ?? { retcode: 0, data: { cookie_token: "CT-new" } })
+          : (answers.cookieToken ?? { retcode: 0, data: { token: { token: "CT-new" } } })
       return { status: 200, data: body }
     }
   } as unknown as HttpClient
@@ -101,20 +101,24 @@ describe("刷新自己名下的凭据", () => {
     expect(got?.cookie).not.toContain("CT-old")
   })
 
-  it("刷新 CK 与扫码登录共用通行证换 Cookie 请求", async () => {
+  it("刷新 CK 与扫码登录共用通行证 exchange 请求", async () => {
     const { service, cookies } = make()
     await cookies.save(oldCookie("1001"), { owner: "onebot11:1" })
     await cookies.setStoken("1001", "stuid=1001;stoken=v2_abc;mid=m1_xyz;")
 
     const res = await service.refresh("onebot11:1")
     const lt = requests.find(one => one.url.includes("getLTokenBySToken"))
-    const ck = requests.find(one => one.url.includes("getCookieAccountInfoBySToken"))
+    const ck = requests.find(one => one.url.includes("ma-cn-session/app/exchange"))
 
     expect(res.ok).toBe(1)
     expect(lt?.url).toBe("https://passport-api.mihoyo.com/account/auth/api/getLTokenBySToken")
     expect(lt?.headers.Cookie).toBe("stuid=1001;stoken=v2_abc;mid=m1_xyz;")
-    expect(ck?.url).toBe("https://passport-api.mihoyo.com/account/auth/api/getCookieAccountInfoBySToken")
-    expect(ck?.headers.Cookie).toBe("stuid=1001;stoken=v2_abc;mid=m1_xyz;")
+    expect(ck?.url).toBe("https://passport-api.mihoyo.com/account/ma-cn-session/app/exchange")
+    expect(JSON.parse(ck?.body ?? "null")).toEqual({
+      src_token: { token: "v2_abc", token_type: 1 },
+      mid: "m1_xyz",
+      dst_token_type: 4
+    })
     expect(ck?.headers["x-rpc-device_id"]).toBe(lt?.headers["x-rpc-device_id"])
     expect(ck?.headers["x-rpc-device_id"]).toBeTruthy()
   })
